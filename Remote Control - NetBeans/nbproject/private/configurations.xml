@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configurationDescriptor version="100">
+  <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
+    <df root="/Users/mafaneh/Ebook Project/Remote Control" name="0">
+      <df name="battery_level">
+        <in>battery_voltage.c</in>
+        <in>battery_voltage.h</in>
+      </df>
+      <df name="hex">
+      </df>
+      <df name="pca10056">
+        <df name="s140">
+          <df name="arm4">
+          </df>
+          <df name="arm5_no_packs">
+          </df>
+          <df name="armgcc">
+            <df name="_build">
+              <df name="nrf52840_xxaa">
+              </df>
+            </df>
+          </df>
+          <df name="config">
+            <in>sdk_config.h</in>
+          </df>
+          <df name="iar">
+          </df>
+          <df name="ses">
+            <df name="Output">
+              <df name="ble_app_hrs_pca10056_s140 Debug">
+                <df name="Obj">
+                </df>
+              </df>
+              <df name="Debug">
+                <df name="Exe">
+                </df>
+              </df>
+            </df>
+          </df>
+        </df>
+      </df>
+      <df name="services">
+        <in>button_service.c</in>
+        <in>button_service.h</in>
+      </df>
+      <in>main.c</in>
+      <in>main.h</in>
+    </df>
+  </logicalFolder>
+  <projectmakefile>/Users/mafaneh/Ebook Project/Remote Control/pca10056/s140/armgcc/Makefile</projectmakefile>
+  <confs>
+    <conf name="Default" type="0">
+      <toolsSet>
+        <developmentServer>localhost</developmentServer>
+        <platform>4</platform>
+      </toolsSet>
+      <compile>
+        <compiledirpicklist>
+          <compiledirpicklistitem>.</compiledirpicklistitem>
+          <compiledirpicklistitem>${AUTO_FOLDER}</compiledirpicklistitem>
+        </compiledirpicklist>
+        <compiledir>${AUTO_FOLDER}</compiledir>
+        <compilecommandpicklist>
+          <compilecommandpicklistitem>${MAKE} ${ITEM_NAME}.o</compilecommandpicklistitem>
+          <compilecommandpicklistitem>${AUTO_COMPILE}</compilecommandpicklistitem>
+        </compilecommandpicklist>
+        <compilecommand>${AUTO_COMPILE}</compilecommand>
+      </compile>
+      <dbx_gdbdebugger version="1">
+        <gdb_pathmaps>
+        </gdb_pathmaps>
+        <gdb_interceptlist>
+          <gdbinterceptoptions gdb_all="false" gdb_unhandled="true" gdb_unexpected="true"/>
+        </gdb_interceptlist>
+        <gdb_options>
+          <DebugOptions>
+          </DebugOptions>
+        </gdb_options>
+        <gdb_buildfirst gdb_buildfirst_overriden="false" gdb_buildfirst_old="false"/>
+      </dbx_gdbdebugger>
+      <nativedebugger version="1">
+        <engine>gdb</engine>
+      </nativedebugger>
+      <runprofile version="9">
+        <runcommandpicklist>
+          <runcommandpicklistitem>"${OUTPUT_PATH}"</runcommandpicklistitem>
+          <runcommandpicklistitem>make flash_softdevice flash</runcommandpicklistitem>
+        </runcommandpicklist>
+        <runcommand>make flash_softdevice flash</runcommand>
+        <rundir>/Users/mafaneh/Ebook Project/Remote Control/pca10056/s140/armgcc</rundir>
+        <buildfirst>false</buildfirst>
+        <terminal-type>0</terminal-type>
+        <remove-instrumentation>0</remove-instrumentation>
+        <environment>
+        </environment>
+      </runprofile>
+    </conf>
+  </confs>
+</configurationDescriptor>
