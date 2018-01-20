@@ -45,8 +45,7 @@
 /**< Structure used to identify the battery service. */
 BLE_BAS_DEF(m_bas);
 
-ble_button_service_t on_button_service;
-ble_button_service_t off_button_service;
+ble_button_service_t button_service;
 
 /**< Battery timer. */
 APP_TIMER_DEF(m_battery_timer_id);
@@ -252,12 +251,8 @@ static void services_init(void)
     uint32_t       err_code;
     ble_bas_init_t bas_init;
 
-    // Initialize the ON Button service
-    err_code = ble_button_service_init(&on_button_service);
-    APP_ERROR_CHECK(err_code);
-
-    // Initialize the OFF Button service
-    err_code = ble_button_service_init(&off_button_service);
+    // Initialize the Button service
+    err_code = ble_button_service_init(&button_service);
     APP_ERROR_CHECK(err_code);
 
     // Initialize Battery Service.
@@ -376,8 +371,12 @@ static void sleep_mode_enter(void)
     APP_ERROR_CHECK(err_code);
 
     // Go to system-off mode (this function will not return; wakeup will cause a reset).
-    err_code = sd_power_system_off();
-    APP_ERROR_CHECK(err_code);
+    #ifdef DEBUG_NRF
+     (void) sd_power_system_off();
+     while(1);
+    #else
+      APP_ERROR_CHECK(sd_power_system_off());
+    #endif  // DEBUG_NRF
 }
 
 
@@ -610,6 +609,14 @@ static void bsp_event_handler(bsp_event_t event)
                 }
             }
             break; // BSP_EVENT_KEY_0
+
+        case BSP_EVENT_KEY_2:
+            NRF_LOG_DEBUG("Button 3 pushed.");
+            break;
+
+        case BSP_EVENT_KEY_3:
+            NRF_LOG_DEBUG("Button 4 pushed.");
+            break;
 
         default:
             break;
