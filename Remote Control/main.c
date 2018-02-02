@@ -47,6 +47,17 @@ BLE_BAS_DEF(m_bas);
 
 ble_button_service_t button_service;
 
+#define NUM_OF_BUTTONS 2
+
+static void button_event_handler(uint8_t pin_no, uint8_t button_action);
+
+//Configure 2 buttons with pullup and detection on low state
+static const app_button_cfg_t app_buttons[NUM_OF_BUTTONS] =
+{
+    {BUTTON_1, false, BUTTON_PULL, button_event_handler},
+    {BUTTON_2, false, BUTTON_PULL, button_event_handler},
+};
+
 /**< Battery timer. */
 APP_TIMER_DEF(m_battery_timer_id);
 
@@ -430,6 +441,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             err_code = bsp_indication_set(BSP_INDICATE_CONNECTED);
             APP_ERROR_CHECK(err_code);
             m_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
+            button_service.conn_handle = m_conn_handle;
             break;
 
 #if defined(S132)
@@ -500,6 +512,25 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             // No implementation needed.
             break;
     }
+}
+
+static void button_event_handler(uint8_t pin_no, uint8_t button_action)
+{
+    ret_code_t err_code;
+
+    switch (pin_no)
+    {
+        case BUTTON_1:
+        case BUTTON_2:
+            NRF_LOG_INFO("Button %s %s\r\n", pin_no == BUTTON_1? "1":"2", button_action == 1 ? "pressed":"released");
+            button_characteristic_update(&button_service, pin_no, &button_action);
+            break;
+
+        default:
+            APP_ERROR_HANDLER(pin_no);
+            break;
+    }
+
 }
 
 
@@ -610,14 +641,6 @@ static void bsp_event_handler(bsp_event_t event)
             }
             break; // BSP_EVENT_KEY_0
 
-        case BSP_EVENT_KEY_2:
-            NRF_LOG_DEBUG("Button 3 pushed.");
-            break;
-
-        case BSP_EVENT_KEY_3:
-            NRF_LOG_DEBUG("Button 4 pushed.");
-            break;
-
         default:
             break;
     }
@@ -661,10 +684,16 @@ static void buttons_leds_init(bool * p_erase_bonds)
     ret_code_t err_code;
     bsp_event_t startup_event;
 
-    err_code = bsp_init(BSP_INIT_LED | BSP_INIT_BUTTONS, bsp_event_handler);
+    err_code = bsp_init(BSP_INIT_LED, bsp_event_handler);
     APP_ERROR_CHECK(err_code);
 
-    err_code = bsp_btn_ble_init(NULL, &startup_event);
+    //init app_button module, 50ms detection delay (button debouncing)
+    err_code = app_button_init((app_button_cfg_t *)app_buttons,
+                                   NUM_OF_BUTTONS,
+                                   APP_TIMER_TICKS(50));
+    APP_ERROR_CHECK(err_code);
+
+    err_code = app_button_enable();
     APP_ERROR_CHECK(err_code);
 
     *p_erase_bonds = (startup_event == BSP_EVENT_CLEAR_BONDING_DATA);
@@ -674,7 +703,7 @@ static void buttons_leds_init(bool * p_erase_bonds)
 static void battery_level_update(void)
 {
     ret_code_t err_code;
-    
+
     uint8_t  battery_level;
     uint16_t vbatt;              // Variable to hold voltage reading
     battery_voltage_get(&vbatt); // Get new battery voltage

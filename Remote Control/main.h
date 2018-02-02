@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-/* 
+/*
  * File:   main.h
  * Author: mafaneh
  *
@@ -48,13 +48,13 @@ extern "C" {
 
 #include "ble_bas.h"
 #include "services/button_service.h"
-    
+
 #include "battery_level/battery_voltage.h"
 
 
 #define APP_FEATURE_NOT_SUPPORTED       BLE_GATT_STATUS_ATTERR_APP_BEGIN + 2    /**< Reply when unsupported features are requested. */
 
-#define DEVICE_NAME                     "NovelBits Remote Control"              /**< Name of device. Will be included in the advertising data. */
+#define DEVICE_NAME                     "NovelBits RC"              /**< Name of device. Will be included in the advertising data. */
 #define MANUFACTURER_NAME               "NordicSemiconductor"                   /**< Manufacturer. Will be passed to Device Information Service. */
 #define APP_ADV_INTERVAL                300                                     /**< The advertising interval (in units of 0.625 ms. This value corresponds to 187.5 ms). */
 #define APP_ADV_TIMEOUT_IN_SECONDS      0                                     /**< The advertising timeout in units of seconds. */
@@ -85,10 +85,10 @@ extern "C" {
 #define BATTERY_LEVEL_MEAS_INTERVAL      APP_TIMER_TICKS(2000)  /**< Battery level measurement interval (ticks). */
 
 #define ADC_REF_VOLTAGE_IN_MILLIVOLTS           1200
-#define ADC_PRE_SCALING_COMPENSATION            3 
+#define ADC_PRE_SCALING_COMPENSATION            3
 #define DIODE_FWD_VOLT_DROP_MILLIVOLTS          270
-#define ADC_RESULT_IN_MILLI_VOLTS(ADC_VALUE)    ((((ADC_VALUE) * ADC_REF_VOLTAGE_IN_MILLIVOLTS) / 1023) * ADC_PRE_SCALING_COMPENSATION)																	 
-#define ADC_BUFFER_SIZE 6                                                            /**< Size of buffer for ADC samples.  */									
+#define ADC_RESULT_IN_MILLI_VOLTS(ADC_VALUE)    ((((ADC_VALUE) * ADC_REF_VOLTAGE_IN_MILLIVOLTS) / 1023) * ADC_PRE_SCALING_COMPENSATION)
+#define ADC_BUFFER_SIZE 6                                                            /**< Size of buffer for ADC samples.  */
 
 
 #ifdef __cplusplus
