@@ -1,18 +1,18 @@
 /*
  * The MIT License (MIT)
  * Copyright (c) 2017 Novel Bits
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, 
+ * to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
- * 
+ *
  */
 
 #include <string.h>
@@ -165,7 +165,7 @@ uint32_t ble_button_service_init(ble_button_service_t * p_button_service)
 
     // Initialize service structure
     p_button_service->conn_handle = BLE_CONN_HANDLE_INVALID;
-    
+
     // Add service UUID
     ble_uuid128_t base_uuid = {BLE_UUID_BUTTON_SERVICE_BASE_UUID};
     err_code = sd_ble_uuid_vs_add(&base_uuid, &p_button_service->uuid_type);
@@ -173,7 +173,7 @@ uint32_t ble_button_service_init(ble_button_service_t * p_button_service)
     {
         return err_code;
     }
-    
+
     // Set up the UUID for the service (base + service-specific)
     ble_uuid.type = p_button_service->uuid_type;
     ble_uuid.uuid = BLE_UUID_BUTTON_SERVICE_UUID;
@@ -184,23 +184,23 @@ uint32_t ble_button_service_init(ble_button_service_t * p_button_service)
     {
         return err_code;
     }
-    
+
     // Add the different characteristics in the service:
     //   ON Button press characteristic:   E54B0002-67F5-479E-8711-B3B99198CE6C
-    //   OFF Button press characteristic:  E54B0003-67F5-479E-8711-B3B99198CE6C 
+    //   OFF Button press characteristic:  E54B0003-67F5-479E-8711-B3B99198CE6C
     err_code = button_on_press_char_add(p_button_service);
     if (err_code != NRF_SUCCESS)
     {
         return err_code;
     }
-    
+
     err_code = button_off_press_char_add(p_button_service);
     if (err_code != NRF_SUCCESS)
     {
         return err_code;
     }
-    
-    return NRF_SUCCESS;  
+
+    return NRF_SUCCESS;
 }
 
 void ble_button_service_on_ble_evt(ble_button_service_t * p_button_service, ble_evt_t * p_ble_evt)
@@ -223,5 +223,30 @@ void ble_button_service_on_ble_evt(ble_button_service_t * p_button_service, ble_
         default:
             // No implementation needed.
             break;
+    }
+}
+
+void button_characteristic_update(ble_button_service_t * p_button_service, uint8_t pin_no, uint8_t *button_action)
+{
+    if (p_button_service->conn_handle != BLE_CONN_HANDLE_INVALID)
+    {
+        uint16_t               len = sizeof (uint8_t);
+        ble_gatts_hvx_params_t hvx_params;
+        memset(&hvx_params, 0, sizeof(hvx_params));
+
+        if (pin_no == BUTTON_1)
+        {
+            hvx_params.handle = p_button_service->button_on_press_char_handles.value_handle;
+        }
+        else
+        {
+            hvx_params.handle = p_button_service->button_off_press_char_handles.value_handle;
+        }
+        hvx_params.type   = BLE_GATT_HVX_NOTIFICATION;
+        hvx_params.offset = 0;
+        hvx_params.p_len  = &len;
+        hvx_params.p_data = (uint8_t*)button_action;
+
+        sd_ble_gatts_hvx(p_button_service->conn_handle, &hvx_params);
     }
 }
