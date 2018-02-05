@@ -432,8 +432,8 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
     {
         case BLE_GAP_EVT_DISCONNECTED:
             NRF_LOG_INFO("Disconnected.");
-            err_code = bsp_indication_set(BSP_INDICATE_IDLE);
-            APP_ERROR_CHECK(err_code);
+            //err_code = bsp_indication_set(BSP_INDICATE_IDLE);
+            //APP_ERROR_CHECK(err_code);
             break;
 
         case BLE_GAP_EVT_CONNECTED:
