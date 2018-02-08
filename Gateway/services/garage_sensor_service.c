@@ -16,6 +16,11 @@
  */
 
 #include <string.h>
+
+#include "nrf_log.h"
+#include "nrf_log_ctrl.h"
+#include "nrf_log_default_backends.h"
+
 #include "garage_sensor_service.h"
 
 
@@ -53,30 +58,61 @@ static void on_disconnect(ble_garage_sensor_service_t * p_garage_sensor_service,
  */
 static void on_write(ble_garage_sensor_service_t * p_garage_sensor_service, ble_evt_t * p_ble_evt)
 {
-    //ble_gatts_evt_write_t * p_evt_write = &p_ble_evt->evt.gatts_evt.params.write;
+    ble_gatts_evt_write_t const * p_evt_write = &p_ble_evt->evt.gatts_evt.params.write;
 
-//    // Handle enabling/disabling notifications
-//    // Notifications are enabled/disabled by writing to the
-//    // Client Characteristic Configuration Descriptor (CCCD)
-//    if (p_evt_write->len == 2)
-//    {
-//        ble_garage_sensor_evt_t evt;
-//
-//        switch(p_evt_write->handle)
-//        {
-//            case p_garage_sensor->door_status_char_handles.cccd_handle:
-//                break;
-//            case p_garage_sensor->garage_temp_char_handles.cccd_handle:
-//                break;
-//            case p_garage_sensor->garage_humidity_char_handles.cccd_handle:
-//                break;
-//            case p_garage_sensor->garage_co2_char_handles.cccd_handle:
-//                break;
-//            default:
-//                ;
-//        }
-//    }
+    // Handle enabling/disabling notifications
+    // Notifications are enabled/disabled by writing to the
+    // Client Characteristic Configuration Descriptor (CCCD)
+    if (p_evt_write->len == 2)
+    {
+        // CCCD written, update notification state
+        if (p_evt_write->handle == p_garage_sensor_service->door_status_char_handles.cccd_handle)
+        {
+            if (ble_srv_is_notification_enabled(p_evt_write->data))
+            {
+                NRF_LOG_INFO("Notification ENABLED for Garage Door Status\r\n");
+            }
+            else
+            {
+                NRF_LOG_INFO("Notification DISABLED for Garage Door Status\r\n");
+            }
+        }
+        else if (p_evt_write->handle == p_garage_sensor_service->garage_temp_char_handles.cccd_handle)
+        {
+            if (ble_srv_is_notification_enabled(p_evt_write->data))
+            {
+                NRF_LOG_INFO("Notification ENABLED for Garage Temperature\r\n");
+            }
+            else
+            {
+                NRF_LOG_INFO("Notification DISABLED for Garage Temperature\r\n");
+            }
+        }
+        else if (p_evt_write->handle == p_garage_sensor_service->garage_humidity_char_handles.cccd_handle)
+        {
+            if (ble_srv_is_notification_enabled(p_evt_write->data))
+            {
+                NRF_LOG_INFO("Notification ENABLED for Garage Humidity\r\n");
+            }
+            else
+            {
+                NRF_LOG_INFO("Notification DISABLED for Garage Humidity\r\n");
+            }
+        }
+        else if (p_evt_write->handle == p_garage_sensor_service->battery_level_char_handles.cccd_handle)
+        {
+            if (ble_srv_is_notification_enabled(p_evt_write->data))
+            {
+                NRF_LOG_INFO("Notification ENABLED for Garage Sensor Battery level\r\n");
+            }
+            else
+            {
+                NRF_LOG_INFO("Notification DISABLED for Garage Sensor Battery level\r\n");
+            }
+        }
+    }
 }
+
 
 /**@brief Function for adding the Door Status characteristic.
  *
@@ -150,7 +186,7 @@ static uint32_t door_status_char_add(ble_garage_sensor_service_t * p_garage_sens
  */
 static uint32_t temperature_char_add(ble_garage_sensor_service_t * p_garage_sensor_service)
 {
-    int8_t initial_temp = -20;
+    int8_t initial_temp = 70;
     ble_gatts_char_md_t char_md;
     ble_gatts_attr_md_t cccd_md;
     ble_gatts_attr_t    attr_char_value;
@@ -174,7 +210,7 @@ static uint32_t temperature_char_add(ble_garage_sensor_service_t * p_garage_sens
     // Presentation format
     presentation_fmt.format = BLE_GATT_CPF_FORMAT_SINT8;
     presentation_fmt.unit = 0x272F;
-    
+
     // CCCD settings (needed for notifications and/or indications)
     cccd_md.vloc = BLE_GATTS_VLOC_STACK;
     char_md.char_props.read          = 1;
@@ -286,13 +322,13 @@ static uint32_t battery_level_char_add(ble_garage_sensor_service_t * p_garage_se
     // Set permissions on the CCCD and Characteristic value
     BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cccd_md.read_perm);
     BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cccd_md.write_perm);
-    
+
     BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&attr_md.write_perm);
     BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.read_perm);
 
     // CCCD settings (needed for notifications and/or indications)
     cccd_md.vloc = BLE_GATTS_VLOC_STACK;
-    
+
     char_md.char_props.read          = 1;
     char_md.char_props.notify        = 1;
     char_md.p_char_user_desc         = NULL;
@@ -379,6 +415,7 @@ uint32_t ble_garage_sensor_service_init(ble_garage_sensor_service_t * p_garage_s
         return err_code;
     }
 
+    NRF_LOG_INFO("Completed init of garage door service\r\n");
     return NRF_SUCCESS;
 }
 

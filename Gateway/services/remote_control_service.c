@@ -1,18 +1,18 @@
 /*
  * The MIT License (MIT)
  * Copyright (c) 2017 Novel Bits
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, 
+ * to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
- * 
+ *
  */
 
 #include <string.h>
@@ -42,6 +42,30 @@ static void on_disconnect(ble_remote_control_service_t * p_remote_control_servic
     p_remote_control_service->conn_handle = BLE_CONN_HANDLE_INVALID;
 }
 
+static void on_write(ble_remote_control_service_t * p_remote_control_service, ble_evt_t * p_ble_evt)
+{
+    ble_gatts_evt_write_t const * p_evt_write = &p_ble_evt->evt.gatts_evt.params.write;
+
+    // Handle enabling/disabling notifications
+    // Notifications are enabled/disabled by writing to the
+    // Client Characteristic Configuration Descriptor (CCCD)
+    if (p_evt_write->len == 2)
+    {
+        // CCCD written, update notification state
+        if (p_evt_write->handle == p_remote_control_service->battery_level_char_handles.cccd_handle)
+        {
+            if (ble_srv_is_notification_enabled(p_evt_write->data))
+            {
+                NRF_LOG_INFO("Notification ENABLED for Remote Control Battery level\r\n");
+            }
+            else
+            {
+                NRF_LOG_INFO("Notification DISABLED for Remote Control Battery level\r\n");
+            }
+        }
+    }
+}
+
 /**@brief Function for adding the Battery Level characteristic.
  *
  */
@@ -61,7 +85,7 @@ static uint32_t battery_level_char_add(ble_remote_control_service_t * p_remote_c
     // Set permissions on the CCCD and Characteristic value
     BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cccd_md.read_perm);
     BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cccd_md.write_perm);
-    
+
     BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&attr_md.write_perm);
     BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.read_perm);
 
@@ -104,7 +128,7 @@ uint32_t ble_remote_control_service_init(ble_remote_control_service_t * p_remote
 
     // Initialize service structure
     p_remote_control_service->conn_handle = BLE_CONN_HANDLE_INVALID;
-    
+
     // Add service UUID
     ble_uuid128_t base_uuid = {BLE_UUID_REMOTE_CONTROL_SERVICE_BASE_UUID};
     err_code = sd_ble_uuid_vs_add(&base_uuid, &p_remote_control_service->uuid_type);
@@ -112,7 +136,7 @@ uint32_t ble_remote_control_service_init(ble_remote_control_service_t * p_remote
     {
         return err_code;
     }
-    
+
     // Set up the UUID for the service (base + service-specific)
     ble_uuid.type = p_remote_control_service->uuid_type;
     ble_uuid.uuid = BLE_UUID_REMOTE_CONTROL_SERVICE_UUID;
@@ -123,17 +147,17 @@ uint32_t ble_remote_control_service_init(ble_remote_control_service_t * p_remote
     {
         return err_code;
     }
-    
+
     // Add the different characteristics in the service:
     // - Remote Control battery characteristic: 0x2A19 (16-bit UUID)
-    
+
     err_code = battery_level_char_add(p_remote_control_service);
     if (err_code != NRF_SUCCESS)
     {
         return err_code;
     }
-    
-    return NRF_SUCCESS;  
+
+    return NRF_SUCCESS;
 }
 
 void ble_remote_control_service_on_ble_evt(ble_remote_control_service_t * p_remote_control_service, ble_evt_t * p_ble_evt)
@@ -152,7 +176,7 @@ void ble_remote_control_service_on_ble_evt(ble_remote_control_service_t * p_remo
         case BLE_GAP_EVT_DISCONNECTED:
             on_disconnect(p_remote_control_service, p_ble_evt);
             break;
-            
+
         default:
             // No implementation needed.
             break;

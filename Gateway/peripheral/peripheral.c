@@ -254,6 +254,7 @@ bool ble_evt_is_advertising_timeout(ble_evt_t const * p_ble_evt)
           && (p_ble_evt->evt.gap_evt.params.timeout.src == BLE_GAP_TIMEOUT_SRC_ADVERTISING));
 }
 
+
 /**@brief   Function for handling BLE events from peripheral applications.
  * @details Updates the status LEDs used to report the activity of the peripheral applications.
  *
@@ -262,6 +263,10 @@ bool ble_evt_is_advertising_timeout(ble_evt_t const * p_ble_evt)
 void on_ble_peripheral_evt(ble_evt_t const * p_ble_evt)
 {
     ret_code_t err_code;
+
+    ble_garage_sensor_service_on_ble_evt(&garage_service, p_ble_evt);
+    ble_playbulb_service_on_ble_evt(&playbulb_service, p_ble_evt);
+    ble_remote_control_service_on_ble_evt(&remote_control_service, p_ble_evt);
 
     switch (p_ble_evt->header.evt_id)
     {

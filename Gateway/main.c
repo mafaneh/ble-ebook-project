@@ -198,11 +198,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
     // Based on the role this device plays in the connection, dispatch to the right handler.
     if (role == BLE_GAP_ROLE_PERIPH || ble_evt_is_advertising_timeout(p_ble_evt))
     {
-        // Pass on to each of the services: Garage Sensor, Playbulb, Remote Control
-        //ble_hrs_on_ble_evt(p_ble_evt, &m_hrs);
-        //ble_rscs_on_ble_evt(p_ble_evt, &m_rscs);
-
-        // Generic BLE event handler
+        // Generic BLE event handler (passes on to services + generic handler)
         on_ble_peripheral_evt(p_ble_evt);
     }
     else if ((role == BLE_GAP_ROLE_CENTRAL) || (p_ble_evt->header.evt_id == BLE_GAP_EVT_ADV_REPORT))
@@ -243,7 +239,6 @@ static void application_timers_start(void)
        ret_code_t err_code;
        err_code = app_timer_start(m_app_timer_id, TIMER_INTERVAL, NULL);
        APP_ERROR_CHECK(err_code); */
-
 }
 
 
@@ -448,7 +443,6 @@ int main(void)
     {
         // Scanning and advertising is done upon PM_EVT_PEERS_DELETE_SUCCEEDED event.
         delete_bonds();
-        // Scanning and advertising is done by
     }
     else
     {

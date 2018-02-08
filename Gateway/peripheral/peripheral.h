@@ -53,7 +53,6 @@ void restart_advertising_without_whitelist(void);
 bool ble_evt_is_advertising_timeout(ble_evt_t const * p_ble_evt);
 
 /**@brief   Function for handling BLE events from peripheral applications.
- * @details Updates the status LEDs used to report the activity of the peripheral applications.
  *
  * @param[in]   p_ble_evt   Bluetooth stack event.
  */

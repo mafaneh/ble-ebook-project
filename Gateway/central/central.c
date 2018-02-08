@@ -63,7 +63,7 @@ BLE_DB_DISCOVERY_ARRAY_DEF(m_db_discovery, 2);                      /**< Databas
 /**@brief names which the central applications will scan for, and which will be advertised by the peripherals.
  *  if these are set to empty strings, the UUIDs defined below will be used
  */
-static char const m_target_periph_name[] = "";
+static char const m_target_periph_name[] = "Thingy";
 
 /**@brief Parameters used when scanning. */
 static ble_gap_scan_params_t const m_scan_params =
@@ -259,6 +259,8 @@ void on_ble_central_evt(ble_evt_t const * p_ble_evt)
             {
                 if (find_adv_name(&p_gap_evt->params.adv_report, m_target_periph_name))
                 {
+                    NRF_LOG_INFO("We found a device named: %s", m_target_periph_name);
+
                     // Initiate connection.
                     err_code = sd_ble_gap_connect(&p_gap_evt->params.adv_report.peer_addr,
                                                   &m_scan_params,
@@ -267,6 +269,10 @@ void on_ble_central_evt(ble_evt_t const * p_ble_evt)
                     if (err_code != NRF_SUCCESS)
                     {
                         NRF_LOG_INFO("Connection Request Failed, reason %d", err_code);
+                    }
+                    else
+                    {
+                        NRF_LOG_INFO("Connection Request SUCCEEDED");
                     }
                 }
             }
