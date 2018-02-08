@@ -162,6 +162,28 @@ void scan_start(void)
     }
 }
 
+/**@brief Garage Sensor (Thingy:52) Client initialization.
+ */
+ //TODO
+//static void thingy_client_init(void)
+//{
+//    ret_code_t       err_code;
+//    thingy_client_init_t thingy_client_init_obj;
+//
+//    thingy_client_init_obj.evt_handler = hrs_c_evt_handler;
+//
+//    err_code = ble_hrs_c_init(&m_hrs_c, &thingy_client_init_obj);
+//    APP_ERROR_CHECK(err_code);
+//}
+
+
+/**@brief Playbulb Central connection initialization.
+ */
+
+
+/**@brief Remote Control Central connection initialization.
+ */
+
 
 /**@brief   Function for handling BLE events from central applications.
  *

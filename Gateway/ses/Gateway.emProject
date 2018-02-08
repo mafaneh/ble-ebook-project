@@ -87,12 +87,12 @@
       <file file_name="../main.c" />
       <file file_name="../pca10056/s140/config/sdk_config.h" />
       <file file_name="../main.h" />
-      <folder
-        Name="Central"
-        exclude=""
-        filter=""
-        path="../central"
-        recurse="Yes" />
+      <folder Name="Central">
+        <file file_name="../central/central.c" />
+        <file file_name="../central/central.h" />
+        <file file_name="../central/thingy_client.c" />
+        <file file_name="../central/thingy_client.h" />
+      </folder>
       <folder
         Name="Peripheral"
         exclude=""
