@@ -160,7 +160,7 @@ uint32_t ble_remote_control_service_init(ble_remote_control_service_t * p_remote
     return NRF_SUCCESS;
 }
 
-void ble_remote_control_service_on_ble_evt(ble_remote_control_service_t * p_remote_control_service, ble_evt_t * p_ble_evt)
+void ble_remote_control_service_on_ble_evt(ble_remote_control_service_t * p_remote_control_service, ble_evt_t const * p_ble_evt)
 {
     if (p_remote_control_service == NULL || p_ble_evt == NULL)
     {

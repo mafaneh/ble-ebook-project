@@ -40,3 +40,5 @@ void scan_start(void);
  */
 void on_ble_central_evt(ble_evt_t const * p_ble_evt);
 
+void central_init(void);
+

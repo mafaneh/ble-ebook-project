@@ -17,6 +17,7 @@
 
  #include <stdbool.h>
 
+#include "sdk_errors.h"
  #include "ble.h"
 
   /**@brief Function for the GAP initialization.
@@ -58,3 +59,8 @@ bool ble_evt_is_advertising_timeout(ble_evt_t const * p_ble_evt);
  */
 void on_ble_peripheral_evt(ble_evt_t const * p_ble_evt);
 
+ret_code_t send_temperature_to_client(int8_t temp);
+
+ret_code_t send_humidity_to_client(uint8_t humidity);
+
+ret_code_t send_garage_sensor_battery_level_to_client(uint8_t battery_level);

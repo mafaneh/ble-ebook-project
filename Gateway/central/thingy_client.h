@@ -137,6 +137,7 @@ struct thingy_client_s
 {
     uint16_t                    conn_handle;      /**< Connection handle as provided by the SoftDevice. */
     thingy_db_t                 peer_thingy_db;   /**< Handles related to Thingy Environment Service on the peer*/
+    ble_uuid_t                  service_uuid;     /**< Thingy Environment Service UUID */
     thingy_client_evt_handler_t evt_handler;      /**< Application event handler to be called when there is an event related to the Thingy Environment service. */
 };
 
@@ -236,9 +237,9 @@ void thingy_on_db_disc_evt(thingy_client_t * p_thingy_client, const ble_db_disco
  * @param[in] p_peer_thingy_handles  Attribute handles for the Thingy server you want this Thingy client to
  *                                   interact with.
  */
-uint32_t ble_hrs_c_handles_assign(thingy_client_t *    p_thingy_client,
-                                  uint16_t         conn_handle,
-                                  const thingy_db_t * p_peer_hrs_handles);
+uint32_t thingy_client_handles_assign(thingy_client_t * p_thingy_client,
+                                  uint16_t conn_handle,
+                                  const thingy_db_t * p_peer_thingy_handles);
 
 
 #ifdef __cplusplus

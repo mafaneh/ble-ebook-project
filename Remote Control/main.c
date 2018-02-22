@@ -262,11 +262,11 @@ static void services_init(void)
     uint32_t       err_code;
     ble_bas_init_t bas_init;
 
-    // Initialize the Button service
+    // 1. Initialize the Button service
     err_code = ble_button_service_init(&button_service);
     APP_ERROR_CHECK(err_code);
 
-    // Initialize Battery Service.
+    // 2. Initialize Battery Service.
     memset(&bas_init, 0, sizeof(bas_init));
 
     // Here the sec level for the Battery Service can be changed/increased.
@@ -699,7 +699,7 @@ static void buttons_leds_init(bool * p_erase_bonds)
     *p_erase_bonds = (startup_event == BSP_EVENT_CLEAR_BONDING_DATA);
 }
 
-/**@brief Function for updating the VBATT field of TLM*/
+/**@brief Function for updating the Battery Level measurement*/
 static void battery_level_update(void)
 {
     ret_code_t err_code;
@@ -794,5 +794,3 @@ int main(void)
         }
     }
 }
-
-

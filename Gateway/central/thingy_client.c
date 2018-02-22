@@ -37,7 +37,7 @@
 // Base UUID for Enviornment service: EF68xxxx-9B35-4933-9B10-52FFA9740042
 // Base UUID: 13BB0000-5884-4C5D-B75B-8768DE741149
 #define BLE_UUID_ENVIRONMENT_SERVICE_BASE_UUID  {0x42, 0x00, 0x74, 0xA9, 0xFF, 0x52, 0x10, 0x9B, \
-                                                   0x33, 0x49, 0x35, 0x9B, 0x00, 0x00, 0x68, 0xEFs }
+                                                   0x33, 0x49, 0x35, 0x9B, 0x00, 0x00, 0x68, 0xEF }
 
 // Service & characteristics UUIDs
 #define BLE_UUID_ENVIRONMENT_SERVICE_UUID   0x0200
@@ -147,20 +147,18 @@ static void on_hvx(thingy_client_t * p_thingy_client, const ble_evt_t * p_ble_ev
         return;
     }
 
-//    NRF_LOG_DEBUG("Received HVX on link 0x%x, hrm_handle 0x%x",
-//    p_ble_evt->evt.gattc_evt.params.hvx.handle,
-//    p_thingy_client->peer_thingy_db._handle);
-
     // Check if this is a temperature notification.
     if (p_ble_evt->evt.gattc_evt.params.hvx.handle == p_thingy_client->peer_thingy_db.temp_handle)
     {
         thingy_client_evt_t thingy_client_evt;
 
+        NRF_LOG_INFO("Temperature notification received");
+
         thingy_client_evt.evt_type     = THINGY_CLIENT_EVT_TEMP_NOTIFICATION;
         thingy_client_evt.conn_handle  = p_thingy_client->conn_handle;
 
-        thingy_client_evt.params.temp.temp_integer = p_ble_evt->evt.gattc_evt.params.hvx.data[1];
-        thingy_client_evt.params.temp.temp_decimal = p_ble_evt->evt.gattc_evt.params.hvx.data[0];
+        thingy_client_evt.params.temp.temp_integer = p_ble_evt->evt.gattc_evt.params.hvx.data[0];
+        thingy_client_evt.params.temp.temp_decimal = p_ble_evt->evt.gattc_evt.params.hvx.data[1];
 
         p_thingy_client->evt_handler(p_thingy_client, &thingy_client_evt);
     }
@@ -168,10 +166,12 @@ static void on_hvx(thingy_client_t * p_thingy_client, const ble_evt_t * p_ble_ev
     {
         thingy_client_evt_t thingy_client_evt;
 
+        NRF_LOG_INFO("Humidity notification received");
+
         thingy_client_evt.evt_type     = THINGY_CLIENT_EVT_HUMIDITY_NOTIFICATION;
         thingy_client_evt.conn_handle  = p_thingy_client->conn_handle;
 
-        thingy_client_evt.params.temp.temp_integer = p_ble_evt->evt.gattc_evt.params.hvx.data[1];
+        thingy_client_evt.params.humidity.humidity = p_ble_evt->evt.gattc_evt.params.hvx.data[0];
 
         p_thingy_client->evt_handler(p_thingy_client, &thingy_client_evt);
     }
@@ -200,18 +200,19 @@ static void on_disconnected(thingy_client_t * p_thingy_client, const ble_evt_t *
 }
 
 
-void ble_thingy_on_db_disc_evt(thingy_client_t * p_thingy_client, const ble_db_discovery_evt_t * p_evt)
+void thingy_on_db_disc_evt(thingy_client_t * p_thingy_client, const ble_db_discovery_evt_t * p_evt)
 {
     if (p_evt->evt_type == BLE_DB_DISCOVERY_COMPLETE)
     {
         // Debug log
-        NRF_LOG_INFO("BLE DB Discovery complete");
+        NRF_LOG_INFO("BLE DB Discovery complete - Thingy Client. Discovered UUID:%d, Type: %d",
+                      p_evt->params.discovered_db.srv_uuid.uuid, p_evt->params.discovered_db.srv_uuid.type);
     }
 
     // Check if the Thingy Environment Service was discovered.
     if (p_evt->evt_type == BLE_DB_DISCOVERY_COMPLETE &&
-        p_evt->params.discovered_db.srv_uuid.uuid == BLE_UUID_HEART_RATE_SERVICE &&
-        p_evt->params.discovered_db.srv_uuid.type == BLE_UUID_TYPE_BLE)
+        p_evt->params.discovered_db.srv_uuid.uuid == BLE_UUID_ENVIRONMENT_SERVICE_UUID &&
+        p_evt->params.discovered_db.srv_uuid.type == p_thingy_client->service_uuid.type)
     {
         // Find the CCCD Handle of the Temperature Measurement characteristic.
         uint32_t i;
@@ -221,30 +222,44 @@ void ble_thingy_on_db_disc_evt(thingy_client_t * p_thingy_client, const ble_db_d
         evt.evt_type    = THINGY_CLIENT_EVT_DISCOVERY_COMPLETE;
         evt.conn_handle = p_evt->conn_handle;
 
+        NRF_LOG_DEBUG("Thingy Environment Service discovered.");
+
+        // Look for the characteristics of interest
         for (i = 0; i < p_evt->params.discovered_db.char_count; i++)
         {
-//            if (p_evt->params.discovered_db.charateristics[i].characteristic.uuid.uuid ==
-//                BLE_UUID_HEART_RATE_MEASUREMENT_CHAR)
-//            {
-//                // Found Temperature characteristic. Store CCCD handle and break.
-//                evt.params.peer_db.hrm_cccd_handle =
-//                    p_evt->params.discovered_db.charateristics[i].cccd_handle;
-//                evt.params.peer_db.hrm_handle =
-//                    p_evt->params.discovered_db.charateristics[i].characteristic.handle_value;
-//                continue;
-//            }
+            if (p_evt->params.discovered_db.charateristics[i].characteristic.uuid.uuid ==
+                BLE_UUID_TEMPERATURE_CHAR_UUID)
+            {
+                // Found Temperature characteristic. Store CCCD handle and continue.
+                evt.params.peer_db.temp_cccd_handle =
+                    p_evt->params.discovered_db.charateristics[i].cccd_handle;
+                evt.params.peer_db.temp_handle =
+                    p_evt->params.discovered_db.charateristics[i].characteristic.handle_value;
+                continue;
+            }
+            if (p_evt->params.discovered_db.charateristics[i].characteristic.uuid.uuid ==
+                BLE_UUID_HUMIDITY_CHAR_UUID)
+            {
+                // Found Humidity characteristic. Store CCCD handle and continue.
+                evt.params.peer_db.humidity_cccd_handle =
+                    p_evt->params.discovered_db.charateristics[i].cccd_handle;
+                evt.params.peer_db.humidity_handle =
+                    p_evt->params.discovered_db.charateristics[i].characteristic.handle_value;
+                continue;
+            }
         }
 
-        NRF_LOG_DEBUG("Environment Service discovered at peer.");
         //If the instance has been assigned prior to db_discovery, assign the db_handles
-//        if (p_thingy_client->conn_handle != BLE_CONN_HANDLE_INVALID)
-//        {
-//            if ((p_thingy_client->peer_hrs_db.hrm_cccd_handle == BLE_GATT_HANDLE_INVALID)&&
-//                (p_thingy_client->peer_hrs_db.hrm_handle == BLE_GATT_HANDLE_INVALID))
-//            {
-//                p_thingy_client->peer_hrs_db = evt.params.peer_db;
-//            }
-//        }
+        if (p_thingy_client->conn_handle != BLE_CONN_HANDLE_INVALID)
+        {
+            if ((p_thingy_client->peer_thingy_db.temp_cccd_handle == BLE_GATT_HANDLE_INVALID)&&
+                (p_thingy_client->peer_thingy_db.temp_handle == BLE_GATT_HANDLE_INVALID)&&
+                (p_thingy_client->peer_thingy_db.humidity_cccd_handle == BLE_GATT_HANDLE_INVALID)&&
+                (p_thingy_client->peer_thingy_db.humidity_handle == BLE_GATT_HANDLE_INVALID))
+            {
+                p_thingy_client->peer_thingy_db = evt.params.peer_db;
+            }
+        }
 
         p_thingy_client->evt_handler(p_thingy_client, &evt);
     }
@@ -253,13 +268,24 @@ void ble_thingy_on_db_disc_evt(thingy_client_t * p_thingy_client, const ble_db_d
 
 uint32_t thingy_client_init(thingy_client_t * p_thingy_client, thingy_client_init_t * p_thingy_client_init)
 {
+    ret_code_t err_code;
+
     VERIFY_PARAM_NOT_NULL(p_thingy_client);
     VERIFY_PARAM_NOT_NULL(p_thingy_client_init);
 
-    ble_uuid_t thingy_environment_service_uuid;
+    // Initialize service structure
+    p_thingy_client->conn_handle = BLE_CONN_HANDLE_INVALID;
 
-    thingy_environment_service_uuid.type = BLE_UUID_TYPE_BLE;
-    thingy_environment_service_uuid.uuid = BLE_UUID_HEART_RATE_SERVICE;
+    // Add service UUID
+    ble_uuid128_t base_uuid = {BLE_UUID_ENVIRONMENT_SERVICE_BASE_UUID};
+    err_code = sd_ble_uuid_vs_add(&base_uuid, &p_thingy_client->service_uuid.type);
+    if (err_code != NRF_SUCCESS)
+    {
+        return err_code;
+    }
+
+    // Set up the UUID for the service (base + service-specific)
+    p_thingy_client->service_uuid.uuid = BLE_UUID_ENVIRONMENT_SERVICE_UUID;
 
     p_thingy_client->evt_handler                         = p_thingy_client_init->evt_handler;
     p_thingy_client->conn_handle                         = BLE_CONN_HANDLE_INVALID;
@@ -268,7 +294,7 @@ uint32_t thingy_client_init(thingy_client_t * p_thingy_client, thingy_client_ini
     p_thingy_client->peer_thingy_db.humidity_cccd_handle = BLE_GATT_HANDLE_INVALID;
     p_thingy_client->peer_thingy_db.humidity_handle      = BLE_GATT_HANDLE_INVALID;
 
-    return ble_db_discovery_evt_register(&thingy_environment_service_uuid);
+    return ble_db_discovery_evt_register(&p_thingy_client->service_uuid);
 }
 
 void thingy_client_on_ble_evt(ble_evt_t const * p_ble_evt, void * p_context)
@@ -328,18 +354,22 @@ static uint32_t cccd_configure(uint16_t conn_handle, uint16_t handle_cccd, bool 
 }
 
 
-uint32_t thingy_temperature_notify_enable(thingy_client_t * p_thingy_client)
+uint32_t thingy_client_temp_notify_enable(thingy_client_t * p_thingy_client)
 {
     VERIFY_PARAM_NOT_NULL(p_thingy_client);
+
+    NRF_LOG_INFO("Enabling notifications for Temperature readings from Thingy");
 
     return cccd_configure(p_thingy_client->conn_handle,
                           p_thingy_client->peer_thingy_db.temp_cccd_handle,
                           true);
 }
 
-uint32_t thingy_humidity_notify_enable(thingy_client_t * p_thingy_client)
+uint32_t thingy_client_humidity_notify_enable(thingy_client_t * p_thingy_client)
 {
     VERIFY_PARAM_NOT_NULL(p_thingy_client);
+
+    NRF_LOG_INFO("Enabling notifications for Humidity readings from Thingy");
 
     return cccd_configure(p_thingy_client->conn_handle,
                           p_thingy_client->peer_thingy_db.humidity_cccd_handle,

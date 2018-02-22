@@ -247,7 +247,7 @@ uint32_t ble_playbulb_service_init(ble_playbulb_service_t * p_playbulb_service)
     return NRF_SUCCESS;
 }
 
-void ble_playbulb_service_on_ble_evt(ble_playbulb_service_t * p_playbulb_service, ble_evt_t * p_ble_evt)
+void ble_playbulb_service_on_ble_evt(ble_playbulb_service_t * p_playbulb_service, ble_evt_t const * p_ble_evt)
 {
     if (p_playbulb_service == NULL || p_ble_evt == NULL)
     {

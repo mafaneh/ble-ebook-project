@@ -31,7 +31,10 @@
 #include "bsp_btn_ble.h"
 #include "ble_hci.h"
 #include "app_timer.h"
+#include "ble_bas_c.h"
 
+#include "thingy_client.h"
+#include "../peripheral/peripheral.h"
 #include "central.h"
 
 #define APP_BLE_CONN_CFG_TAG            1                                       /**< A tag identifying the SoftDevice BLE configuration. */
@@ -44,7 +47,7 @@
 #define SCAN_TIMEOUT                    0
 
 #define MIN_CONNECTION_INTERVAL         (uint16_t) MSEC_TO_UNITS(7.5, UNIT_1_25_MS) /**< Determines minimum connection interval in milliseconds. */
-#define MAX_CONNECTION_INTERVAL         (uint16_t) MSEC_TO_UNITS(30, UNIT_1_25_MS)  /**< Determines maximum connection interval in milliseconds. */
+#define MAX_CONNECTION_INTERVAL         (uint16_t) MSEC_TO_UNITS(100, UNIT_1_25_MS)  /**< Determines maximum connection interval in milliseconds. */
 #define SLAVE_LATENCY                   0                                           /**< Determines slave latency in terms of connection events. */
 #define SUPERVISION_TIMEOUT             (uint16_t) MSEC_TO_UNITS(4000, UNIT_10_MS)  /**< Determines supervision time-out in units of 10 milliseconds. */
 
@@ -52,12 +55,15 @@
 #define NEXT_CONN_PARAMS_UPDATE_DELAY   APP_TIMER_TICKS(30000)                      /**< Time between each call to sd_ble_gap_conn_param_update after the first call (30 seconds). */
 #define MAX_CONN_PARAMS_UPDATE_COUNT    3                                           /**< Number of attempts before giving up the connection parameter negotiation. */
 
-/**@brief   Priority of the application BLE event handler.
- * @note    You shouldn't need to modify this value.
- */
-#define APP_BLE_OBSERVER_PRIO           3
+BLE_DB_DISCOVERY_ARRAY_DEF(m_db_discovery, 3);                      /**< Database discovery module instances. */
 
-BLE_DB_DISCOVERY_ARRAY_DEF(m_db_discovery, 2);                      /**< Database discovery module instances. */
+static uint16_t m_conn_handle_thingy_client  = BLE_CONN_HANDLE_INVALID;          /**< Connection handle for the Thingy client application */
+static uint16_t m_conn_handle_remote_control_client = BLE_CONN_HANDLE_INVALID;   /**< Connection handle for the Remote Control client application */
+static uint16_t m_conn_handle_playbulb_client = BLE_CONN_HANDLE_INVALID;         /**< Connection handle for the Remote Control client application */
+
+//TODO: Add definition for each of the clients
+static thingy_client_t m_thingy_client;
+BLE_BAS_C_DEF(m_bas_client);                                                 /**< Battery Service client module instance. */
 
 // TODO: Use Thingy:52, and Playbulb Candle names(?)
 /**@brief names which the central applications will scan for, and which will be advertised by the peripherals.
@@ -133,8 +139,10 @@ void conn_params_init(void)
 static void db_disc_handler(ble_db_discovery_evt_t * p_evt)
 {
     // Call event handlers for each of the peripherals (Thingy:52, Remote Control, Playbulb Candle)
-    //ble_hrs_on_db_disc_evt(&m_hrs_c, p_evt);
-    //ble_rscs_on_db_disc_evt(&m_rscs_c, p_evt);
+    thingy_on_db_disc_evt(&m_thingy_client, p_evt);
+    ble_bas_on_db_disc_evt(&m_bas_client, p_evt);
+    //TODO: Add for each client
+
 }
 
 /**
@@ -162,28 +170,156 @@ void scan_start(void)
     }
 }
 
-/**@brief Garage Sensor (Thingy:52) Client initialization.
+/**@brief Function for handling Battery Level Collector events.
+ *
+ * @param[in] p_bas_c       Pointer to Battery Service Client structure.
+ * @param[in] p_bas_c_evt   Pointer to event structure.
  */
- //TODO
-//static void thingy_client_init(void)
-//{
-//    ret_code_t       err_code;
-//    thingy_client_init_t thingy_client_init_obj;
-//
-//    thingy_client_init_obj.evt_handler = hrs_c_evt_handler;
-//
-//    err_code = ble_hrs_c_init(&m_hrs_c, &thingy_client_init_obj);
-//    APP_ERROR_CHECK(err_code);
-//}
+static void bas_c_evt_handler(ble_bas_c_t * p_bas_c, ble_bas_c_evt_t * p_bas_c_evt)
+{
+    ret_code_t err_code;
 
+    switch (p_bas_c_evt->evt_type)
+    {
+        case BLE_BAS_C_EVT_DISCOVERY_COMPLETE:
+            err_code = ble_bas_c_handles_assign(p_bas_c,
+                                                p_bas_c_evt->conn_handle,
+                                                &p_bas_c_evt->params.bas_db);
+            APP_ERROR_CHECK(err_code);
 
-/**@brief Playbulb Central connection initialization.
+            // Initiate bonding.
+            err_code = pm_conn_secure(p_bas_c_evt->conn_handle, false);
+            if (err_code != NRF_ERROR_INVALID_STATE)
+            {
+                APP_ERROR_CHECK(err_code);
+            }
+
+            // Batttery service discovered. Enable notification of Battery Level.
+            NRF_LOG_DEBUG("Battery Service discovered. Reading battery level.");
+
+            err_code = ble_bas_c_bl_read(p_bas_c);
+            APP_ERROR_CHECK(err_code);
+
+            NRF_LOG_DEBUG("Enabling Battery Level Notification. ");
+            err_code = ble_bas_c_bl_notif_enable(p_bas_c);
+            APP_ERROR_CHECK(err_code);
+            break;
+
+        case BLE_BAS_C_EVT_BATT_NOTIFICATION:
+            NRF_LOG_DEBUG("Battery Level received %d %%", p_bas_c_evt->params.battery_level);
+            send_garage_sensor_battery_level_to_client(p_bas_c_evt->params.battery_level);
+            break;
+
+        case BLE_BAS_C_EVT_BATT_READ_RESP:
+            NRF_LOG_INFO("Battery Level Read as %d %%", p_bas_c_evt->params.battery_level);
+            break;
+
+        default:
+            break;
+    }
+}
+
+/**@brief Handles events coming from the Thingy central module.
  */
+static void thingy_c_evt_handler(thingy_client_t * p_thingy_c, thingy_client_evt_t * p_thingy_c_evt)
+{
+    switch (p_thingy_c_evt->evt_type)
+    {
+        case THINGY_CLIENT_EVT_DISCOVERY_COMPLETE:
+        {
+            if (m_conn_handle_thingy_client == BLE_CONN_HANDLE_INVALID)
+            {
+                ret_code_t err_code;
+
+                m_conn_handle_thingy_client = p_thingy_c_evt->conn_handle;
+                NRF_LOG_INFO("Thingy Environment Service discovered on conn_handle 0x%x", m_conn_handle_thingy_client);
+
+                err_code = thingy_client_handles_assign(p_thingy_c,
+                                                    m_conn_handle_thingy_client,
+                                                    &p_thingy_c_evt->params.peer_db);
+                APP_ERROR_CHECK(err_code);
+
+//                // Initiate bonding.
+//                err_code = pm_conn_secure(m_conn_handle_thingy_client, false);
+//                if (err_code != NRF_ERROR_INVALID_STATE)
+//                {
+//                    APP_ERROR_CHECK(err_code);
+//                }
+
+                // Environment service discovered. Enable notification of Temperature and Humidity readings.
+                err_code = thingy_client_temp_notify_enable(p_thingy_c);
+                APP_ERROR_CHECK(err_code);
+
+                err_code = thingy_client_humidity_notify_enable(p_thingy_c);
+                APP_ERROR_CHECK(err_code);
+            }
+        } break; // THINGY_CLIENT_EVT_DISCOVERY_COMPLETE
+
+        case THINGY_CLIENT_EVT_TEMP_NOTIFICATION:
+        {
+            ret_code_t err_code;
+
+            NRF_LOG_INFO("Temperature = %d.%d Celsius", p_thingy_c_evt->params.temp.temp_integer, p_thingy_c_evt->params.temp.temp_decimal);
+
+            // Send value to the Client device
+            err_code = send_temperature_to_client(p_thingy_c_evt->params.temp.temp_integer);
+            if ((err_code != NRF_SUCCESS) &&
+                (err_code != NRF_ERROR_INVALID_STATE) &&
+                (err_code != NRF_ERROR_RESOURCES) &&
+                (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
+                )
+            {
+                APP_ERROR_HANDLER(err_code);
+            }
+        } break; // THINGY_CLIENT_EVT_TEMP_NOTIFICATION
+
+        case THINGY_CLIENT_EVT_HUMIDITY_NOTIFICATION:
+        {
+            ret_code_t err_code;
+
+            NRF_LOG_INFO("Humidity percentage = %u%", p_thingy_c_evt->params.humidity.humidity);
+
+            // Send value to the Client device
+            err_code = send_humidity_to_client(p_thingy_c_evt->params.humidity.humidity);
+            if ((err_code != NRF_SUCCESS) &&
+                (err_code != NRF_ERROR_INVALID_STATE) &&
+                (err_code != NRF_ERROR_RESOURCES) &&
+                (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
+                )
+            {
+                APP_ERROR_HANDLER(err_code);
+            }
+        } break; // THINGY_CLIENT_EVT_HUMIDITY_NOTIFICATION
+
+        default:
+            // No implementation needed.
+            break;
+    }
+}
 
 
-/**@brief Remote Control Central connection initialization.
+/**@brief Central Clients initialization.
  */
+void central_init(void)
+{
+    ret_code_t       err_code;
+    thingy_client_init_t thingy_init_obj;
+    ble_bas_c_init_t bas_c_init_obj;
 
+    thingy_init_obj.evt_handler = thingy_c_evt_handler;
+
+    // Initialize the different clients:
+
+    // Initialize the Thingy Client
+    err_code = thingy_client_init(&m_thingy_client, &thingy_init_obj);
+    APP_ERROR_CHECK(err_code);
+
+    // Initialize the Battery Service client
+    bas_c_init_obj.evt_handler = bas_c_evt_handler;
+
+    err_code = ble_bas_c_init(&m_bas_client, &bas_c_init_obj);
+    APP_ERROR_CHECK(err_code);
+}
 
 /**@brief   Function for handling BLE events from central applications.
  *
@@ -198,6 +334,11 @@ void on_ble_central_evt(ble_evt_t const * p_ble_evt)
     ret_code_t            err_code;
     ble_gap_evt_t const * p_gap_evt = &p_ble_evt->evt.gap_evt;
 
+    // Call the event handlers for each of the clients
+    thingy_client_on_ble_evt(p_ble_evt, &m_thingy_client);
+
+    //TODO: Add for each of the clients
+
     switch (p_ble_evt->header.evt_id)
     {
         // Upon connection, check which peripheral has connected (HR or RSC), initiate DB
@@ -205,24 +346,28 @@ void on_ble_central_evt(ble_evt_t const * p_ble_evt)
         case BLE_GAP_EVT_CONNECTED:
         {
             NRF_LOG_INFO("Central connected");
-            //TODO
-            // If no Heart Rate sensor or RSC sensor is currently connected, try to find them on this peripheral.
-//            if (   (m_conn_handle_hrs_c  == BLE_CONN_HANDLE_INVALID)
-//                || (m_conn_handle_rscs_c == BLE_CONN_HANDLE_INVALID))
-//            {
-//                NRF_LOG_INFO("Attempt to find HRS or RSC on conn_handle 0x%x", p_gap_evt->conn_handle);
-//
-//                err_code = ble_db_discovery_start(&m_db_discovery[0], p_gap_evt->conn_handle);
-//                if (err_code == NRF_ERROR_BUSY)
-//                {
-//                    err_code = ble_db_discovery_start(&m_db_discovery[1], p_gap_evt->conn_handle);
-//                    APP_ERROR_CHECK(err_code);
-//                }
-//                else
-//                {
-//                    APP_ERROR_CHECK(err_code);
-//                }
-//            }
+            // If no Thingy  is currently connected, try to find them on this peripheral.
+            if (   (m_conn_handle_thingy_client  == BLE_CONN_HANDLE_INVALID)
+                || (m_conn_handle_remote_control_client == BLE_CONN_HANDLE_INVALID)
+                || (m_conn_handle_playbulb_client == BLE_CONN_HANDLE_INVALID))
+            {
+                NRF_LOG_INFO("Attempt to find Thingy, Playbulb or Remote Control on conn_handle 0x%x", p_gap_evt->conn_handle);
+
+                err_code = ble_db_discovery_start(&m_db_discovery[0], p_gap_evt->conn_handle);
+                if (err_code == NRF_ERROR_BUSY)
+                {
+                    err_code = ble_db_discovery_start(&m_db_discovery[1], p_gap_evt->conn_handle);
+                    if (err_code == NRF_ERROR_BUSY)
+                    {
+                        err_code = ble_db_discovery_start(&m_db_discovery[2], p_gap_evt->conn_handle);
+                        APP_ERROR_CHECK(err_code);
+                    }
+                }
+                else
+                {
+                    APP_ERROR_CHECK(err_code);
+                }
+            }
 
             // Update LEDs status, and check if we should be looking for more peripherals to connect to.
             bsp_board_led_on(CENTRAL_CONNECTED_LED);
@@ -242,14 +387,13 @@ void on_ble_central_evt(ble_evt_t const * p_ble_evt)
         // update the LEDs status and start scanning again.
         case BLE_GAP_EVT_DISCONNECTED:
         {
-            //TODO
-//            if (p_gap_evt->conn_handle == m_conn_handle_hrs_c)
-//            {
-//                NRF_LOG_INFO("HRS central disconnected (reason: %d)",
-//                             p_gap_evt->params.disconnected.reason);
-//
-//                m_conn_handle_hrs_c = BLE_CONN_HANDLE_INVALID;
-//            }
+            if (p_gap_evt->conn_handle == m_conn_handle_thingy_client)
+            {
+                NRF_LOG_INFO("Thingy central disconnected (reason: %d)",
+                             p_gap_evt->params.disconnected.reason);
+
+                m_conn_handle_thingy_client = BLE_CONN_HANDLE_INVALID;
+            }
 //            if (p_gap_evt->conn_handle == m_conn_handle_rscs_c)
 //            {
 //                NRF_LOG_INFO("RSC central disconnected (reason: %d)",
@@ -257,21 +401,21 @@ void on_ble_central_evt(ble_evt_t const * p_ble_evt)
 //
 //                m_conn_handle_rscs_c = BLE_CONN_HANDLE_INVALID;
 //            }
-//
-//            if (   (m_conn_handle_rscs_c == BLE_CONN_HANDLE_INVALID)
-//                || (m_conn_handle_hrs_c  == BLE_CONN_HANDLE_INVALID))
-//            {
-//                // Start scanning
-//                scan_start();
-//
-//                // Update LEDs status.
-//                bsp_board_led_on(CENTRAL_SCANNING_LED);
-//            }
-//
-//            if (ble_conn_state_n_centrals() == 0)
-//            {
-//                bsp_board_led_off(CENTRAL_CONNECTED_LED);
-//            }
+
+//TODO: Add check for other clients too
+            if (m_conn_handle_thingy_client  == BLE_CONN_HANDLE_INVALID)
+            {
+                // Start scanning
+                scan_start();
+
+                // Update LEDs status.
+                bsp_board_led_on(CENTRAL_SCANNING_LED);
+            }
+
+            if (ble_conn_state_n_centrals() == 0)
+            {
+                bsp_board_led_off(CENTRAL_CONNECTED_LED);
+            }
         } break; // BLE_GAP_EVT_DISCONNECTED
 
         case BLE_GAP_EVT_ADV_REPORT:

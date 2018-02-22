@@ -34,7 +34,7 @@ static const uint8_t humidityCharName[] = "Garage Humidity";
  * @param[in]   p_garage_sensor_service  Garage Sensor Service structure.
  * @param[in]   p_ble_evt                Event received from the BLE stack.
  */
-static void on_connect(ble_garage_sensor_service_t * p_garage_sensor_service, ble_evt_t * p_ble_evt)
+static void on_connect(ble_garage_sensor_service_t * p_garage_sensor_service, ble_evt_t const * p_ble_evt)
 {
     p_garage_sensor_service->conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
 }
@@ -45,7 +45,7 @@ static void on_connect(ble_garage_sensor_service_t * p_garage_sensor_service, bl
  * @param[in]   p_garage_sensor_service  Garage Sensor Service structure.
  * @param[in]   p_ble_evt                Event received from the BLE stack.
  */
-static void on_disconnect(ble_garage_sensor_service_t * p_garage_sensor_service, ble_evt_t * p_ble_evt)
+static void on_disconnect(ble_garage_sensor_service_t * p_garage_sensor_service, ble_evt_t const * p_ble_evt)
 {
     UNUSED_PARAMETER(p_ble_evt);
     p_garage_sensor_service->conn_handle = BLE_CONN_HANDLE_INVALID;
@@ -56,7 +56,7 @@ static void on_disconnect(ble_garage_sensor_service_t * p_garage_sensor_service,
  * @param[in]   p_garage_sensor_service  Garage Sensor Service structure.
  * @param[in]   p_ble_evt                Event received from the BLE stack.
  */
-static void on_write(ble_garage_sensor_service_t * p_garage_sensor_service, ble_evt_t * p_ble_evt)
+static void on_write(ble_garage_sensor_service_t * p_garage_sensor_service, ble_evt_t const * p_ble_evt)
 {
     ble_gatts_evt_write_t const * p_evt_write = &p_ble_evt->evt.gatts_evt.params.write;
 
@@ -419,7 +419,7 @@ uint32_t ble_garage_sensor_service_init(ble_garage_sensor_service_t * p_garage_s
     return NRF_SUCCESS;
 }
 
-void ble_garage_sensor_service_on_ble_evt(ble_garage_sensor_service_t * p_garage_sensor_service, ble_evt_t * p_ble_evt)
+void ble_garage_sensor_service_on_ble_evt(ble_garage_sensor_service_t * p_garage_sensor_service, ble_evt_t const * p_ble_evt)
 {
     if (p_garage_sensor_service == NULL || p_ble_evt == NULL)
     {
@@ -444,4 +444,118 @@ void ble_garage_sensor_service_on_ble_evt(ble_garage_sensor_service_t * p_garage
             // No implementation needed.
             break;
     }
+}
+
+uint32_t garage_sensor_temperature_send(ble_garage_sensor_service_t * p_garage_sensor_service, int8_t temperature)
+{
+    uint32_t err_code;
+
+    // Send value if connected and notifying
+    if (p_garage_sensor_service->conn_handle != BLE_CONN_HANDLE_INVALID)
+    {
+        int8_t                 temp;
+        uint16_t               len;
+        uint16_t               hvx_len;
+        ble_gatts_hvx_params_t hvx_params;
+
+        temp = temperature;
+        len     = sizeof(int8_t);
+        hvx_len = len;
+
+        memset(&hvx_params, 0, sizeof(hvx_params));
+
+        hvx_params.handle = p_garage_sensor_service->garage_temp_char_handles.value_handle;
+        hvx_params.type   = BLE_GATT_HVX_NOTIFICATION;
+        hvx_params.offset = 0;
+        hvx_params.p_len  = &hvx_len;
+        hvx_params.p_data = &temperature;
+
+        err_code = sd_ble_gatts_hvx(p_garage_sensor_service->conn_handle, &hvx_params);
+        if ((err_code == NRF_SUCCESS) && (hvx_len != len))
+        {
+            err_code = NRF_ERROR_DATA_SIZE;
+        }
+    }
+    else
+    {
+        err_code = NRF_ERROR_INVALID_STATE;
+    }
+
+    return err_code;
+}
+
+uint32_t garage_sensor_humidity_send(ble_garage_sensor_service_t * p_garage_sensor_service, uint8_t humidity)
+{
+    uint32_t err_code;
+
+    // Send value if connected and notifying
+    if (p_garage_sensor_service->conn_handle != BLE_CONN_HANDLE_INVALID)
+    {
+        uint8_t                hum;
+        uint16_t               len;
+        uint16_t               hvx_len;
+        ble_gatts_hvx_params_t hvx_params;
+
+        hum = humidity;
+        len     = sizeof(uint8_t);
+        hvx_len = len;
+
+        memset(&hvx_params, 0, sizeof(hvx_params));
+
+        hvx_params.handle = p_garage_sensor_service->garage_humidity_char_handles.value_handle;
+        hvx_params.type   = BLE_GATT_HVX_NOTIFICATION;
+        hvx_params.offset = 0;
+        hvx_params.p_len  = &hvx_len;
+        hvx_params.p_data = &humidity;
+
+        err_code = sd_ble_gatts_hvx(p_garage_sensor_service->conn_handle, &hvx_params);
+        if ((err_code == NRF_SUCCESS) && (hvx_len != len))
+        {
+            err_code = NRF_ERROR_DATA_SIZE;
+        }
+    }
+    else
+    {
+        err_code = NRF_ERROR_INVALID_STATE;
+    }
+
+    return err_code;
+}
+
+uint32_t garage_sensor_battery_level_send(ble_garage_sensor_service_t * p_garage_sensor_service, uint8_t battery_level)
+{
+    uint32_t err_code;
+
+    // Send value if connected and notifying
+    if (p_garage_sensor_service->conn_handle != BLE_CONN_HANDLE_INVALID)
+    {
+        uint8_t                batt_level;
+        uint16_t               len;
+        uint16_t               hvx_len;
+        ble_gatts_hvx_params_t hvx_params;
+
+        batt_level = battery_level;
+        len     = sizeof(uint8_t);
+        hvx_len = len;
+
+        memset(&hvx_params, 0, sizeof(hvx_params));
+
+        hvx_params.handle = p_garage_sensor_service->battery_level_char_handles.value_handle;
+        hvx_params.type   = BLE_GATT_HVX_NOTIFICATION;
+        hvx_params.offset = 0;
+        hvx_params.p_len  = &hvx_len;
+        hvx_params.p_data = &battery_level;
+
+        err_code = sd_ble_gatts_hvx(p_garage_sensor_service->conn_handle, &hvx_params);
+        if ((err_code == NRF_SUCCESS) && (hvx_len != len))
+        {
+            err_code = NRF_ERROR_DATA_SIZE;
+        }
+    }
+    else
+    {
+        err_code = NRF_ERROR_INVALID_STATE;
+    }
+
+    return err_code;
 }

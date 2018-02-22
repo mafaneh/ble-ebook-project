@@ -40,11 +40,6 @@ static ble_garage_sensor_service_t garage_service;
 static ble_playbulb_service_t playbulb_service;
 static ble_remote_control_service_t remote_control_service;
 
-/**@brief   Priority of the application BLE event handler.
- * @note    You shouldn't need to modify this value.
- */
-#define APP_BLE_OBSERVER_PRIO           3
-
 #define APP_BLE_CONN_CFG_TAG            1                                       /**< A tag identifying the SoftDevice BLE configuration. */
 
 #define APP_FEATURE_NOT_SUPPORTED       BLE_GATT_STATUS_ATTERR_APP_BEGIN + 2    /**< Reply when unsupported features are requested. */
@@ -57,8 +52,8 @@ static ble_remote_control_service_t remote_control_service;
 #define APP_ADV_INTERVAL                300                                     /**< The advertising interval (in units of 0.625 ms. This value corresponds to 187.5 ms). */
 #define APP_ADV_TIMEOUT_IN_SECONDS      180                                     /**< The advertising timeout in units of seconds. */
 
-#define MIN_CONNECTION_INTERVAL         (uint16_t) MSEC_TO_UNITS(7.5, UNIT_1_25_MS) /**< Determines minimum connection interval in milliseconds. */
-#define MAX_CONNECTION_INTERVAL         (uint16_t) MSEC_TO_UNITS(30, UNIT_1_25_MS)  /**< Determines maximum connection interval in milliseconds. */
+#define MIN_CONNECTION_INTERVAL         (uint16_t) MSEC_TO_UNITS(15, UNIT_1_25_MS) /**< Determines minimum connection interval in milliseconds. */
+#define MAX_CONNECTION_INTERVAL         (uint16_t) MSEC_TO_UNITS(15, UNIT_1_25_MS)  /**< Determines maximum connection interval in milliseconds. */
 #define SLAVE_LATENCY                   0                                           /**< Determines slave latency in terms of connection events. */
 #define SUPERVISION_TIMEOUT             (uint16_t) MSEC_TO_UNITS(4000, UNIT_10_MS)  /**< Determines supervision time-out in units of 10 milliseconds. */
 
@@ -79,8 +74,6 @@ static ble_uuid_t m_adv_uuids[] =
 //{
 //    {BLE_UUID_DEVICE_INFORMATION_SERVICE, BLE_UUID_TYPE_BLE}
 //};
-
-
 
 
 
@@ -278,6 +271,7 @@ void on_ble_peripheral_evt(ble_evt_t const * p_ble_evt)
 
         case BLE_GAP_EVT_DISCONNECTED:
             NRF_LOG_INFO("Peripheral disconnected");
+            NRF_LOG_DEBUG("Disconnected: reason 0x%x.", p_ble_evt->evt.gap_evt.params.disconnected.reason);
             bsp_board_led_off(PERIPHERAL_CONNECTED_LED);
             break;
 
@@ -349,4 +343,19 @@ void on_ble_peripheral_evt(ble_evt_t const * p_ble_evt)
             // No implementation needed.
             break;
     }
+}
+
+ret_code_t send_temperature_to_client(int8_t temp)
+{
+    return garage_sensor_temperature_send (&garage_service, temp);
+}
+
+ret_code_t send_humidity_to_client(uint8_t humidity)
+{
+    return garage_sensor_humidity_send (&garage_service, humidity);
+}
+
+ret_code_t send_garage_sensor_battery_level_to_client(uint8_t battery_level)
+{
+    return garage_sensor_battery_level_send(&garage_service, battery_level);
 }

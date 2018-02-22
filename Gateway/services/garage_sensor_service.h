@@ -117,8 +117,14 @@ uint32_t ble_garage_sensor_service_init(ble_garage_sensor_service_t * p_garage_s
  * @param[in]   p_garage_sensor_service      Garage Sensor Service structure.
  * @param[in]   p_ble_evt  Event received from the BLE stack.
  */
-void ble_garage_sensor_service_on_ble_evt(ble_garage_sensor_service_t * p_garage_sensor_service, ble_evt_t * p_ble_evt);
+void ble_garage_sensor_service_on_ble_evt(ble_garage_sensor_service_t * p_garage_sensor_service, ble_evt_t const * p_ble_evt);
 
+
+uint32_t garage_sensor_temperature_send(ble_garage_sensor_service_t * p_garage_sensor_service, int8_t temperature);
+
+uint32_t garage_sensor_humidity_send(ble_garage_sensor_service_t * p_garage_sensor_service, uint8_t humidity);
+
+uint32_t garage_sensor_battery_level_send(ble_garage_sensor_service_t * p_garage_sensor_service, uint8_t battery_level);
 
 #endif /* GARAGE_SENSOR_SERVICE_H */
 
