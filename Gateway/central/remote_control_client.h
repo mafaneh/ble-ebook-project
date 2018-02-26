@@ -185,7 +185,7 @@ void remote_control_client_on_ble_evt(ble_evt_t const * p_ble_evt, void * p_cont
  *                      Otherwise, an error code. This function propagates the error code returned
  *                      by the SoftDevice API @ref sd_ble_gattc_write.
  */
-uint32_t uint32_t remote_control_client_on_button_notify_enable(remote_control_client_t * p_remote_control_client);
+uint32_t remote_control_client_on_button_notify_enable(remote_control_client_t * p_remote_control_client);
 
 /**@brief   Function for requesting the peer to start sending notification of Humidity
  *          Measurement.
