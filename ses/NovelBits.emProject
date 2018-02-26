@@ -95,20 +95,20 @@
         <file file_name="../Gateway/central/remote_control_client.c" />
         <file file_name="../Gateway/central/remote_control_client.h" />
       </folder>
-      <folder
-        Name="Peripheral"
-        exclude=""
-        filter=""
-        path="../Gateway/peripheral"
-        recurse="Yes" />
+      <folder Name="Peripheral">
+        <file file_name="../Gateway/peripheral/peripheral.c" />
+        <file file_name="../Gateway/peripheral/peripheral.h" />
+      </folder>
       <file file_name="../Gateway/tools.c" />
       <file file_name="../Gateway/tools.h" />
-      <folder
-        Name="Services"
-        exclude=""
-        filter=""
-        path="../Gateway/services"
-        recurse="Yes" />
+      <folder Name="Services">
+        <file file_name="../Gateway/services/garage_sensor_service.c" />
+        <file file_name="../Gateway/services/garage_sensor_service.h" />
+        <file file_name="../Gateway/services/playbulb_service.c" />
+        <file file_name="../Gateway/services/playbulb_service.h" />
+        <file file_name="../Gateway/services/remote_control_service.c" />
+        <file file_name="../Gateway/services/remote_control_service.h" />
+      </folder>
     </folder>
     <folder Name="nRF_Segger_RTT">
       <file file_name="../nRF5_SDK_14.2.0_17b948a/external/segger_rtt/SEGGER_RTT.c" />
@@ -276,18 +276,18 @@
       <file file_name="../nRF5_SDK_14.2.0_17b948a/components/softdevice/common/nrf_sdh_ble.c" />
       <file file_name="../nRF5_SDK_14.2.0_17b948a/components/softdevice/common/nrf_sdh_soc.c" />
     </folder>
-    <folder
-      Name="Battery Level"
-      exclude=""
-      filter=""
-      path="../Remote Control/battery_level"
-      recurse="Yes" />
-    <folder
-      Name="Button Service"
-      exclude=""
-      filter=""
-      path="../Remote Control/services"
-      recurse="Yes" />
+    <folder Name="Battery Level">
+      <file file_name="../Remote Control/battery_level/battery_voltage.c" />
+      <file file_name="../Remote Control/battery_level/battery_voltage.h" />
+    </folder>
+    <folder Name="Button Service">
+      <file file_name="../Remote Control/services/button_service.c" />
+      <file file_name="../Remote Control/services/button_service.c.bak" />
+      <file file_name="../Remote Control/services/button_service.c.bak.2" />
+      <file file_name="../Remote Control/services/button_service.h" />
+      <file file_name="../Remote Control/services/button_service.h.bak" />
+      <file file_name="../Remote Control/services/button_service.h.bak.2" />
+    </folder>
   </project>
   <configuration
     Name="Release"
