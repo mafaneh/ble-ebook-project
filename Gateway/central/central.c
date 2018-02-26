@@ -34,6 +34,7 @@
 #include "ble_bas_c.h"
 
 #include "thingy_client.h"
+#include "remote_control_client.h"
 #include "../peripheral/peripheral.h"
 #include "central.h"
 
@@ -63,13 +64,15 @@ static uint16_t m_conn_handle_playbulb_client = BLE_CONN_HANDLE_INVALID;        
 
 //TODO: Add definition for each of the clients
 static thingy_client_t m_thingy_client;
+static remote_control_client_t m_remote_control_client;
 BLE_BAS_C_DEF(m_bas_client);                                                 /**< Battery Service client module instance. */
 
 // TODO: Use Thingy:52, and Playbulb Candle names(?)
 /**@brief names which the central applications will scan for, and which will be advertised by the peripherals.
  *  if these are set to empty strings, the UUIDs defined below will be used
  */
-static char const m_target_periph_name[] = "Thingy";
+ #define NUMBER_OF_TARGET_PERIPHERALS 2
+static char const *m_target_periph_names[NUMBER_OF_TARGET_PERIPHERALS] = { "Thingy", "NovelBits RC"};
 
 /**@brief Parameters used when scanning. */
 static ble_gap_scan_params_t const m_scan_params =
@@ -140,6 +143,7 @@ static void db_disc_handler(ble_db_discovery_evt_t * p_evt)
 {
     // Call event handlers for each of the peripherals (Thingy:52, Remote Control, Playbulb Candle)
     thingy_on_db_disc_evt(&m_thingy_client, p_evt);
+    remote_control_on_db_disc_evt (&m_remote_control_client, p_evt);
     ble_bas_on_db_disc_evt(&m_bas_client, p_evt);
     //TODO: Add for each client
 
@@ -187,13 +191,6 @@ static void bas_c_evt_handler(ble_bas_c_t * p_bas_c, ble_bas_c_evt_t * p_bas_c_e
                                                 &p_bas_c_evt->params.bas_db);
             APP_ERROR_CHECK(err_code);
 
-            // Initiate bonding.
-            err_code = pm_conn_secure(p_bas_c_evt->conn_handle, false);
-            if (err_code != NRF_ERROR_INVALID_STATE)
-            {
-                APP_ERROR_CHECK(err_code);
-            }
-
             // Batttery service discovered. Enable notification of Battery Level.
             NRF_LOG_DEBUG("Battery Service discovered. Reading battery level.");
 
@@ -238,13 +235,6 @@ static void thingy_c_evt_handler(thingy_client_t * p_thingy_c, thingy_client_evt
                                                     m_conn_handle_thingy_client,
                                                     &p_thingy_c_evt->params.peer_db);
                 APP_ERROR_CHECK(err_code);
-
-//                // Initiate bonding.
-//                err_code = pm_conn_secure(m_conn_handle_thingy_client, false);
-//                if (err_code != NRF_ERROR_INVALID_STATE)
-//                {
-//                    APP_ERROR_CHECK(err_code);
-//                }
 
                 // Environment service discovered. Enable notification of Temperature and Humidity readings.
                 err_code = thingy_client_temp_notify_enable(p_thingy_c);
@@ -297,6 +287,56 @@ static void thingy_c_evt_handler(thingy_client_t * p_thingy_c, thingy_client_evt
     }
 }
 
+/**@brief Handles events coming from the Remote Control central module.
+ */
+static void remote_control_c_evt_handler(remote_control_client_t * p_remote_control_c, remote_control_client_evt_t * p_remote_control_c_evt)
+{
+    switch (p_remote_control_c_evt->evt_type)
+    {
+        case REMOTE_CONTROL_CLIENT_EVT_DISCOVERY_COMPLETE:
+        {
+            if (m_conn_handle_remote_control_client == BLE_CONN_HANDLE_INVALID)
+            {
+                ret_code_t err_code;
+
+                m_conn_handle_remote_control_client = p_remote_control_c_evt->conn_handle;
+                NRF_LOG_INFO("Remote Control Button Service discovered on conn_handle 0x%x", m_conn_handle_remote_control_client);
+
+                err_code = remote_control_client_handles_assign(p_remote_control_c,
+                                                    m_conn_handle_remote_control_client,
+                                                    &p_remote_control_c_evt->params.peer_db);
+                APP_ERROR_CHECK(err_code);
+
+                // Button service discovered. Enable notification of ON and OFF Buttons readings.
+                err_code = remote_control_client_on_button_notify_enable(p_remote_control_c);
+                APP_ERROR_CHECK(err_code);
+
+                err_code = remote_control_client_off_button_notify_enable(p_remote_control_c);
+                APP_ERROR_CHECK(err_code);
+            }
+        } break; // REMOTE_CONTROL_CLIENT_EVT_DISCOVERY_COMPLETE
+
+        case REMOTE_CONTROL_EVT_ON_BUTTON_PRESS_NOTIFICATION:
+        {
+            NRF_LOG_INFO("ON Button = %s", p_remote_control_c_evt->params.on_button.button_pressed == 1? "Pressed":"Released");
+
+           //TODO
+           // Send command to turn on Playbulb candle when ON Button is pressed
+        } break; // REMOTE_CONTROL_EVT_ON_BUTTON_PRESS_NOTIFICATION
+
+        case REMOTE_CONTROL_EVT_OFF_BUTTON_PRESS_NOTIFICATION:
+        {
+            NRF_LOG_INFO("OFF Button = %s", p_remote_control_c_evt->params.off_button.button_pressed == 1? "Pressed":"Released");
+
+            //TODO
+           // Send command to turn OFF Playbulb candle when OFF Button is pressed
+        } break; // REMOTE_CONTROL_EVT_OFF_BUTTON_PRESS_NOTIFICATION
+
+        default:
+            // No implementation needed.
+            break;
+    }
+}
 
 /**@brief Central Clients initialization.
  */
@@ -304,14 +344,20 @@ void central_init(void)
 {
     ret_code_t       err_code;
     thingy_client_init_t thingy_init_obj;
+    remote_control_client_init_t remote_control_init_obj;
     ble_bas_c_init_t bas_c_init_obj;
 
     thingy_init_obj.evt_handler = thingy_c_evt_handler;
+    remote_control_init_obj.evt_handler = remote_control_c_evt_handler;
 
     // Initialize the different clients:
 
     // Initialize the Thingy Client
     err_code = thingy_client_init(&m_thingy_client, &thingy_init_obj);
+    APP_ERROR_CHECK(err_code);
+
+    // Initialize the Remote Control Client
+    err_code = remote_control_client_init (&m_remote_control_client, &remote_control_init_obj);
     APP_ERROR_CHECK(err_code);
 
     // Initialize the Battery Service client
@@ -336,12 +382,13 @@ void on_ble_central_evt(ble_evt_t const * p_ble_evt)
 
     // Call the event handlers for each of the clients
     thingy_client_on_ble_evt(p_ble_evt, &m_thingy_client);
-
+    remote_control_client_on_ble_evt(p_ble_evt, &m_remote_control_client);
+    //playbulb_client_on_ble_evt();
     //TODO: Add for each of the clients
 
     switch (p_ble_evt->header.evt_id)
     {
-        // Upon connection, check which peripheral has connected (HR or RSC), initiate DB
+        // Upon connection, check which peripheral has connected (Thingy, Playbulb, or Remote Control), initiate DB
         // discovery, update LEDs status and resume scanning if necessary.
         case BLE_GAP_EVT_CONNECTED:
         {
@@ -389,21 +436,29 @@ void on_ble_central_evt(ble_evt_t const * p_ble_evt)
         {
             if (p_gap_evt->conn_handle == m_conn_handle_thingy_client)
             {
-                NRF_LOG_INFO("Thingy central disconnected (reason: %d)",
+                NRF_LOG_INFO("Thingy client disconnected (reason: %d)",
                              p_gap_evt->params.disconnected.reason);
 
                 m_conn_handle_thingy_client = BLE_CONN_HANDLE_INVALID;
             }
-//            if (p_gap_evt->conn_handle == m_conn_handle_rscs_c)
-//            {
-//                NRF_LOG_INFO("RSC central disconnected (reason: %d)",
-//                             p_gap_evt->params.disconnected.reason);
-//
-//                m_conn_handle_rscs_c = BLE_CONN_HANDLE_INVALID;
-//            }
+            if (p_gap_evt->conn_handle == m_conn_handle_remote_control_client)
+            {
+                NRF_LOG_INFO("Remote Control client disconnected (reason: %d)",
+                             p_gap_evt->params.disconnected.reason);
 
-//TODO: Add check for other clients too
-            if (m_conn_handle_thingy_client  == BLE_CONN_HANDLE_INVALID)
+                m_conn_handle_remote_control_client = BLE_CONN_HANDLE_INVALID;
+            }
+            if (p_gap_evt->conn_handle == m_conn_handle_playbulb_client)
+            {
+                NRF_LOG_INFO("Playbulb client disconnected (reason: %d)",
+                             p_gap_evt->params.disconnected.reason);
+
+                m_conn_handle_playbulb_client = BLE_CONN_HANDLE_INVALID;
+            }
+
+            if ((m_conn_handle_thingy_client  == BLE_CONN_HANDLE_INVALID) ||
+                (m_conn_handle_remote_control_client == BLE_CONN_HANDLE_INVALID) ||
+                (m_conn_handle_playbulb_client == BLE_CONN_HANDLE_INVALID))
             {
                 // Start scanning
                 scan_start();
@@ -420,49 +475,26 @@ void on_ble_central_evt(ble_evt_t const * p_ble_evt)
 
         case BLE_GAP_EVT_ADV_REPORT:
         {
-            // Find the devices of interest: Thingy:52, Playbulb Candle, Remote Control
-            if (strlen(m_target_periph_name) != 0)
-            {
-                if (find_adv_name(&p_gap_evt->params.adv_report, m_target_periph_name))
-                {
-                    NRF_LOG_INFO("We found a device named: %s", m_target_periph_name);
+            int8_t index;
 
-                    // Initiate connection.
-                    err_code = sd_ble_gap_connect(&p_gap_evt->params.adv_report.peer_addr,
-                                                  &m_scan_params,
-                                                  &m_connection_param,
-                                                  APP_BLE_CONN_CFG_TAG);
-                    if (err_code != NRF_SUCCESS)
-                    {
-                        NRF_LOG_INFO("Connection Request Failed, reason %d", err_code);
-                    }
-                    else
-                    {
-                        NRF_LOG_INFO("Connection Request SUCCEEDED");
-                    }
-                }
-            }
-            else
+            // Find the devices of interest: Thingy:52, Playbulb Candle, Remote Control
+            if ((index = find_adv_name(&p_gap_evt->params.adv_report, m_target_periph_names, NUMBER_OF_TARGET_PERIPHERALS)) >= 0)
             {
-                // We do not want to connect to two peripherals offering the same service, so when
-                // a UUID is matched, we check that we are not already connected to a peer which
-                // offers the same service.
-                //TODO
-//                if (   (find_adv_uuid(&p_gap_evt->params.adv_report, BLE_UUID_HEART_RATE_SERVICE)
-//                        && (m_conn_handle_hrs_c == BLE_CONN_HANDLE_INVALID))
-//                    || (find_adv_uuid(&p_gap_evt->params.adv_report, BLE_UUID_RUNNING_SPEED_AND_CADENCE)
-//                        && (m_conn_handle_rscs_c == BLE_CONN_HANDLE_INVALID)))
-//                {
-//                    // Initiate connection.
-//                    err_code = sd_ble_gap_connect(&p_gap_evt->params.adv_report.peer_addr,
-//                                                  &m_scan_params,
-//                                                  &m_connection_param,
-//                                                  APP_BLE_CONN_CFG_TAG);
-//                    if (err_code != NRF_SUCCESS)
-//                    {
-//                        NRF_LOG_WARNING("Connection Request Failed, reason %d", err_code);
-//                    }
-//                }
+                NRF_LOG_INFO("We found a device named: %s", m_target_periph_names[index]);
+
+                // Initiate connection.
+                err_code = sd_ble_gap_connect(&p_gap_evt->params.adv_report.peer_addr,
+                                              &m_scan_params,
+                                              &m_connection_param,
+                                              APP_BLE_CONN_CFG_TAG);
+                if (err_code != NRF_SUCCESS)
+                {
+                    NRF_LOG_INFO("Connection Request Failed, reason %d", err_code);
+                }
+                else
+                {
+                    NRF_LOG_INFO("Connection Request SUCCEEDED");
+                }
             }
         } break; // BLE_GAP_ADV_REPORT
 

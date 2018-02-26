@@ -16,6 +16,7 @@
  */
 
 #include <string.h>
+#include "nrf_log.h"
 
 #include "ble_bas.h"
 #include "remote_control_service.h"

@@ -64,11 +64,11 @@ BLE_ADVERTISING_DEF(m_advertising);                                             
 /**@brief UUIDs which the central applications will scan for if the name above is set to an empty string,
  * and which will be advertised by the peripherals.
  */
-static ble_uuid_t m_adv_uuids[] =
-{
-    {BLE_UUID_HEART_RATE_SERVICE,        BLE_UUID_TYPE_BLE},
-    {BLE_UUID_RUNNING_SPEED_AND_CADENCE, BLE_UUID_TYPE_BLE}
-};
+//static ble_uuid_t m_adv_uuids[] =
+//{
+//    {BLE_UUID_HEART_RATE_SERVICE,        BLE_UUID_TYPE_BLE},
+//    {BLE_UUID_RUNNING_SPEED_AND_CADENCE, BLE_UUID_TYPE_BLE}
+//};
 // YOUR_JOB: Use UUIDs for service(s) used in your application.
 //static ble_uuid_t m_adv_uuids[] =                                               /**< Universally unique service identifiers. */
 //{
@@ -177,8 +177,8 @@ void advertising_init(void)
     init.advdata.name_type               = BLE_ADVDATA_FULL_NAME;
     init.advdata.include_appearance      = true;
     init.advdata.flags                   = BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE;
-    init.advdata.uuids_complete.uuid_cnt = sizeof(m_adv_uuids) / sizeof(m_adv_uuids[0]);
-    init.advdata.uuids_complete.p_uuids  = m_adv_uuids;
+    //init.advdata.uuids_complete.uuid_cnt = sizeof(m_adv_uuids) / sizeof(m_adv_uuids[0]);
+    //init.advdata.uuids_complete.p_uuids  = m_adv_uuids;
 
     init.config.ble_adv_fast_enabled  = true;
     init.config.ble_adv_fast_interval = APP_ADV_INTERVAL;
@@ -270,8 +270,7 @@ void on_ble_peripheral_evt(ble_evt_t const * p_ble_evt)
             break;
 
         case BLE_GAP_EVT_DISCONNECTED:
-            NRF_LOG_INFO("Peripheral disconnected");
-            NRF_LOG_DEBUG("Disconnected: reason 0x%x.", p_ble_evt->evt.gap_evt.params.disconnected.reason);
+            NRF_LOG_INFO("Peripheral disconnected: reason 0x%x.", p_ble_evt->evt.gap_evt.params.disconnected.reason);
             bsp_board_led_off(PERIPHERAL_CONNECTED_LED);
             break;
 

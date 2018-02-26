@@ -205,11 +205,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
     }
     else if ((role == BLE_GAP_ROLE_CENTRAL) || (p_ble_evt->header.evt_id == BLE_GAP_EVT_ADV_REPORT))
     {
-        // BLE event handlers for each connection
-        //ble_hrs_c_on_ble_evt(p_ble_evt, &m_hrs_c);
-        //ble_rscs_c_on_ble_evt(p_ble_evt, &m_rscs_c);
-
-        // Generic BLE event handler
+        // Generic BLE Central event handler - calls event handlers for each of the clients
         on_ble_central_evt(p_ble_evt);
     }
 }

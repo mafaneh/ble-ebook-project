@@ -5125,12 +5125,12 @@
 
 // <o> NRF_SDH_BLE_CENTRAL_LINK_COUNT - Maximum number of central links.
 #ifndef NRF_SDH_BLE_CENTRAL_LINK_COUNT
-#define NRF_SDH_BLE_CENTRAL_LINK_COUNT 3
+#define NRF_SDH_BLE_CENTRAL_LINK_COUNT 4
 #endif
 
 // <o> NRF_SDH_BLE_TOTAL_LINK_COUNT - Maximum number of total concurrent connections using the default configuration.
 #ifndef NRF_SDH_BLE_TOTAL_LINK_COUNT
-#define NRF_SDH_BLE_TOTAL_LINK_COUNT 4
+#define NRF_SDH_BLE_TOTAL_LINK_COUNT 5
 #endif
 
 // <o> NRF_SDH_BLE_GAP_EVENT_LENGTH - The time set aside for this connection on every connection interval in 1.25 ms units.
@@ -5150,7 +5150,7 @@
 
 // <o> NRF_SDH_BLE_VS_UUID_COUNT - The number of vendor-specific UUIDs.
 #ifndef NRF_SDH_BLE_VS_UUID_COUNT
-#define NRF_SDH_BLE_VS_UUID_COUNT 4
+#define NRF_SDH_BLE_VS_UUID_COUNT 6
 #endif
 
 // <q> NRF_SDH_BLE_SERVICE_CHANGED  - Include the Service Changed characteristic in the Attribute Table.

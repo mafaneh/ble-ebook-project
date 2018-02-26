@@ -415,7 +415,6 @@ uint32_t ble_garage_sensor_service_init(ble_garage_sensor_service_t * p_garage_s
         return err_code;
     }
 
-    NRF_LOG_INFO("Completed init of garage door service\r\n");
     return NRF_SUCCESS;
 }
 

@@ -51,10 +51,10 @@
  * name in them either as 'complete_local_name' or as 'short_local_name'.
  *
  * @param[in]   p_adv_report   advertising data to parse.
- * @param[in]   name_to_find   name to search.
+ * @param[in]   names_to_find   names to search for.
  * @return   true if the given name was found, false otherwise.
  */
-bool find_adv_name(ble_gap_evt_adv_report_t const * p_adv_report, char const * name_to_find);
+int8_t find_adv_name(ble_gap_evt_adv_report_t const * p_adv_report, char const ** names_to_find, uint8_t number_of_names);
 
 /**@brief Function for searching a UUID in the advertisement packets.
  *

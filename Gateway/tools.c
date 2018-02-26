@@ -43,7 +43,8 @@
  #include <string.h>
 
 #include "sdk_errors.h"
- #include "ble.h"
+#include "nrf_log.h"
+#include "ble.h"
 
 #define UUID16_SIZE                     2                                           /**< Size of a UUID, in bytes. */
 
@@ -107,11 +108,12 @@ static uint32_t adv_report_parse(uint8_t type, data_t * p_advdata, data_t * p_ty
  * name in them either as 'complete_local_name' or as 'short_local_name'.
  *
  * @param[in]   p_adv_report   advertising data to parse.
- * @param[in]   name_to_find   name to search.
+ * @param[in]   names_to_find   names to search for.
  * @return   true if the given name was found, false otherwise.
  */
-bool find_adv_name(ble_gap_evt_adv_report_t const * p_adv_report, char const * name_to_find)
+int8_t find_adv_name(ble_gap_evt_adv_report_t const * p_adv_report, char const ** names_to_find, uint8_t number_of_names)
 {
+    uint8_t    i = 0;
     ret_code_t err_code;
     data_t     adv_data;
     data_t     dev_name;
@@ -124,28 +126,16 @@ bool find_adv_name(ble_gap_evt_adv_report_t const * p_adv_report, char const * n
     err_code = adv_report_parse(BLE_GAP_AD_TYPE_COMPLETE_LOCAL_NAME, &adv_data, &dev_name);
     if (err_code == NRF_SUCCESS)
     {
-        if (memcmp(name_to_find, dev_name.p_data, dev_name.data_len)== 0)
+        for (i = 0; i < number_of_names; i++)
         {
-            return true;
+            if (memcmp(names_to_find[i], dev_name.p_data, dev_name.data_len)== 0)
+            {
+                return i;
+            }
         }
     }
-    else
-    {
-        // Look for the short local name if it was not found as complete
-        err_code = adv_report_parse(BLE_GAP_AD_TYPE_SHORT_LOCAL_NAME,
-                                    &adv_data,
-                                    &dev_name);
-        if (err_code != NRF_SUCCESS)
-        {
-            return false;
-        }
-        //TODO
-//        if (memcmp(m_target_periph_name, dev_name.p_data, dev_name.data_len)== 0)
-//        {
-//            return true;
-//        }
-    }
-    return false;
+
+    return -1;
 }
 
 
