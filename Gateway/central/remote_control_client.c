@@ -147,8 +147,6 @@ static void on_hvx(remote_control_client_t * p_remote_control_client, const ble_
     {
         remote_control_client_evt_t remote_control_client_evt;
 
-        NRF_LOG_INFO("ON Button notification received");
-
         remote_control_client_evt.evt_type     = REMOTE_CONTROL_EVT_ON_BUTTON_PRESS_NOTIFICATION;
         remote_control_client_evt.conn_handle  = p_remote_control_client->conn_handle;
 
@@ -159,8 +157,6 @@ static void on_hvx(remote_control_client_t * p_remote_control_client, const ble_
     else if (p_ble_evt->evt.gattc_evt.params.hvx.handle == p_remote_control_client->peer_remote_control_db.off_button_handle)
     {
         remote_control_client_evt_t remote_control_client_evt;
-
-        NRF_LOG_INFO("OFF Button notification received");
 
         remote_control_client_evt.evt_type     = REMOTE_CONTROL_EVT_OFF_BUTTON_PRESS_NOTIFICATION;
         remote_control_client_evt.conn_handle  = p_remote_control_client->conn_handle;
