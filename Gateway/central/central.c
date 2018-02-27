@@ -35,6 +35,7 @@
 
 #include "thingy_client.h"
 #include "remote_control_client.h"
+#include "playbulb_client.h"
 #include "../peripheral/peripheral.h"
 #include "central.h"
 
@@ -62,17 +63,18 @@ static uint16_t m_conn_handle_thingy_client  = BLE_CONN_HANDLE_INVALID;         
 static uint16_t m_conn_handle_remote_control_client = BLE_CONN_HANDLE_INVALID;   /**< Connection handle for the Remote Control client application */
 static uint16_t m_conn_handle_playbulb_client = BLE_CONN_HANDLE_INVALID;         /**< Connection handle for the Remote Control client application */
 
-//TODO: Add definition for each of the clients
+//Definition for each of the clients
 static thingy_client_t m_thingy_client;
 static remote_control_client_t m_remote_control_client;
+static playbulb_client_t       m_playbulb_client;
+
 BLE_BAS_C_DEF(m_bas_client);                                                 /**< Battery Service client module instance. */
 
-// TODO: Use Thingy:52, and Playbulb Candle names(?)
 /**@brief names which the central applications will scan for, and which will be advertised by the peripherals.
  *  if these are set to empty strings, the UUIDs defined below will be used
  */
- #define NUMBER_OF_TARGET_PERIPHERALS 2
-static char const *m_target_periph_names[NUMBER_OF_TARGET_PERIPHERALS] = { "Thingy", "NovelBits RC"};
+ #define NUMBER_OF_TARGET_PERIPHERALS 3
+static char const *m_target_periph_names[NUMBER_OF_TARGET_PERIPHERALS] = { "Thingy", "NovelBits RC", "Playbulb Candle"};
 
 /**@brief Parameters used when scanning. */
 static ble_gap_scan_params_t const m_scan_params =
@@ -331,6 +333,34 @@ static void remote_control_c_evt_handler(remote_control_client_t * p_remote_cont
             //TODO
            // Send command to turn OFF Playbulb candle when OFF Button is pressed
         } break; // REMOTE_CONTROL_EVT_OFF_BUTTON_PRESS_NOTIFICATION
+
+        default:
+            // No implementation needed.
+            break;
+    }
+}
+
+/**@brief Handles events coming from the Thingy central module.
+ */
+static void playbulb_c_evt_handler(playbulb_client_t * p_playbulb_c, playbulb_client_evt_t * p_playbulb_c_evt)
+{
+    switch (p_playbulb_c_evt->evt_type)
+    {
+        case PLAYBULB_CLIENT_EVT_DISCOVERY_COMPLETE:
+        {
+            if (m_conn_handle_playbulb_client == BLE_CONN_HANDLE_INVALID)
+            {
+                ret_code_t err_code;
+
+                m_conn_handle_playbulb_client = p_playbulb_c_evt->conn_handle;
+                NRF_LOG_INFO("Playbulb Service discovered on conn_handle 0x%x", m_conn_handle_playbulb_client);
+
+                err_code = playbulb_client_handles_assign(p_playbulb_c,
+                                                    m_conn_handle_playbulb_client,
+                                                    &p_playbulb_c_evt->params.peer_db);
+                APP_ERROR_CHECK(err_code);
+            }
+        } break; // PLAYBULB_CLIENT_EVT_DISCOVERY_COMPLETE
 
         default:
             // No implementation needed.
