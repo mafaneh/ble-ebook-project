@@ -64,7 +64,7 @@ static uint16_t m_conn_handle_remote_control_client = BLE_CONN_HANDLE_INVALID;  
 static uint16_t m_conn_handle_playbulb_client = BLE_CONN_HANDLE_INVALID;         /**< Connection handle for the Remote Control client application */
 
 //Definition for each of the clients
-static thingy_client_t m_thingy_client;
+static thingy_client_t         m_thingy_client;
 static remote_control_client_t m_remote_control_client;
 static playbulb_client_t       m_playbulb_client;
 
@@ -146,9 +146,8 @@ static void db_disc_handler(ble_db_discovery_evt_t * p_evt)
     // Call event handlers for each of the peripherals (Thingy:52, Remote Control, Playbulb Candle)
     thingy_on_db_disc_evt(&m_thingy_client, p_evt);
     remote_control_on_db_disc_evt (&m_remote_control_client, p_evt);
+    //playbulb_on_db_disc_evt (&m_playbulb_client, p_evt);
     ble_bas_on_db_disc_evt(&m_bas_client, p_evt);
-    //TODO: Add for each client
-
 }
 
 /**
@@ -206,11 +205,23 @@ static void bas_c_evt_handler(ble_bas_c_t * p_bas_c, ble_bas_c_evt_t * p_bas_c_e
 
         case BLE_BAS_C_EVT_BATT_NOTIFICATION:
             NRF_LOG_DEBUG("Battery Level received %d %%", p_bas_c_evt->params.battery_level);
-            send_garage_sensor_battery_level_to_client(p_bas_c_evt->params.battery_level);
+            if (p_bas_c_evt->conn_handle == m_conn_handle_thingy_client)
+            {
+                send_garage_sensor_battery_level_to_client(p_bas_c_evt->params.battery_level);
+            }
+            else if (p_bas_c_evt->conn_handle == m_conn_handle_remote_control_client)
+            {
+                send_remote_control_battery_level_to_client (p_bas_c_evt->params.battery_level);
+            }
+            else if (p_bas_c_evt->conn_handle == m_conn_handle_playbulb_client)
+            {
+                send_playbulb_battery_level_to_client (p_bas_c_evt->params.battery_level);
+            }
             break;
 
         case BLE_BAS_C_EVT_BATT_READ_RESP:
             NRF_LOG_INFO("Battery Level Read as %d %%", p_bas_c_evt->params.battery_level);
+            //TODO: Need to store the battery level value
             break;
 
         default:
@@ -372,13 +383,16 @@ static void playbulb_c_evt_handler(playbulb_client_t * p_playbulb_c, playbulb_cl
  */
 void central_init(void)
 {
-    ret_code_t       err_code;
-    thingy_client_init_t thingy_init_obj;
+    ret_code_t                   err_code;
+    thingy_client_init_t         thingy_init_obj;
     remote_control_client_init_t remote_control_init_obj;
-    ble_bas_c_init_t bas_c_init_obj;
+    playbulb_client_init_t       playbulb_init_obj;
+    ble_bas_c_init_t             bas_c_init_obj;
 
-    thingy_init_obj.evt_handler = thingy_c_evt_handler;
+    thingy_init_obj.evt_handler         = thingy_c_evt_handler;
     remote_control_init_obj.evt_handler = remote_control_c_evt_handler;
+    playbulb_init_obj.evt_handler       = playbulb_c_evt_handler;
+    bas_c_init_obj.evt_handler          = bas_c_evt_handler;
 
     // Initialize the different clients:
 
@@ -387,12 +401,14 @@ void central_init(void)
     APP_ERROR_CHECK(err_code);
 
     // Initialize the Remote Control Client
-    err_code = remote_control_client_init (&m_remote_control_client, &remote_control_init_obj);
+    err_code = remote_control_client_init(&m_remote_control_client, &remote_control_init_obj);
+    APP_ERROR_CHECK(err_code);
+
+    // Initialize the Playbulb Candle Client
+    err_code = playbulb_client_init(&m_playbulb_client, &playbulb_init_obj);
     APP_ERROR_CHECK(err_code);
 
     // Initialize the Battery Service client
-    bas_c_init_obj.evt_handler = bas_c_evt_handler;
-
     err_code = ble_bas_c_init(&m_bas_client, &bas_c_init_obj);
     APP_ERROR_CHECK(err_code);
 }
@@ -413,7 +429,7 @@ void on_ble_central_evt(ble_evt_t const * p_ble_evt)
     // Call the event handlers for each of the clients
     thingy_client_on_ble_evt(p_ble_evt, &m_thingy_client);
     remote_control_client_on_ble_evt(p_ble_evt, &m_remote_control_client);
-    //playbulb_client_on_ble_evt();
+    playbulb_client_on_ble_evt(p_ble_evt, &m_playbulb_client);
     //TODO: Add for each of the clients
 
     switch (p_ble_evt->header.evt_id)

@@ -217,10 +217,8 @@ uint32_t playbulb_client_init(playbulb_client_t * p_playbulb_client, playbulb_cl
     VERIFY_PARAM_NOT_NULL(p_playbulb_client);
     VERIFY_PARAM_NOT_NULL(p_playbulb_client_init);
 
-    ble_uuid_t bas_uuid;
-
-    bas_uuid.type  = BLE_UUID_TYPE_BLE;
-    bas_uuid.uuid  = BLE_UUID_PLAYBULB_SERVICE_UUID;
+    p_playbulb_client->service_uuid.type = BLE_UUID_TYPE_BLE;
+    p_playbulb_client->service_uuid.uuid = BLE_UUID_PLAYBULB_SERVICE_UUID;
 
     p_playbulb_client->evt_handler                             = p_playbulb_client_init->evt_handler;
     p_playbulb_client->conn_handle                             = BLE_CONN_HANDLE_INVALID;
