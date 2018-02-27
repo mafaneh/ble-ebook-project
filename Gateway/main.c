@@ -352,22 +352,6 @@ static void bsp_event_handler(bsp_event_t event)
             sleep_mode_enter();
             break; // BSP_EVENT_SLEEP
 
-//        case BSP_EVENT_DISCONNECT:
-//            err_code = sd_ble_gap_disconnect(m_conn_handle,
-//                                             BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
-//            if (err_code != NRF_ERROR_INVALID_STATE)
-//            {
-//                APP_ERROR_CHECK(err_code);
-//            }
-//            break; // BSP_EVENT_DISCONNECT
-//
-//        case BSP_EVENT_WHITELIST_OFF:
-//            if (m_conn_handle == BLE_CONN_HANDLE_INVALID)
-//            {
-//                restart_advertising_without_whitelist();
-//            }
-//            break; // BSP_EVENT_KEY_0
-
         default:
             break;
     }
