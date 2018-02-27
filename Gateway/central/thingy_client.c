@@ -139,8 +139,8 @@ static void on_hvx(thingy_client_t * p_thingy_client, const ble_evt_t * p_ble_ev
     // Check if the event is on the link for this instance
     if (p_thingy_client->conn_handle != p_ble_evt->evt.gattc_evt.conn_handle)
     {
-        NRF_LOG_DEBUG("Received HVX on link 0x%x, not associated to this instance, ignore",
-                      p_ble_evt->evt.gattc_evt.conn_handle);
+//        NRF_LOG_DEBUG("Received HVX on link 0x%x, not associated to this instance, ignore",
+//                      p_ble_evt->evt.gattc_evt.conn_handle);
         return;
     }
 
@@ -149,7 +149,7 @@ static void on_hvx(thingy_client_t * p_thingy_client, const ble_evt_t * p_ble_ev
     {
         thingy_client_evt_t thingy_client_evt;
 
-        NRF_LOG_INFO("Temperature notification received");
+        //NRF_LOG_INFO("Temperature notification received");
 
         thingy_client_evt.evt_type     = THINGY_CLIENT_EVT_TEMP_NOTIFICATION;
         thingy_client_evt.conn_handle  = p_thingy_client->conn_handle;
@@ -163,7 +163,7 @@ static void on_hvx(thingy_client_t * p_thingy_client, const ble_evt_t * p_ble_ev
     {
         thingy_client_evt_t thingy_client_evt;
 
-        NRF_LOG_INFO("Humidity notification received");
+        //NRF_LOG_INFO("Humidity notification received");
 
         thingy_client_evt.evt_type     = THINGY_CLIENT_EVT_HUMIDITY_NOTIFICATION;
         thingy_client_evt.conn_handle  = p_thingy_client->conn_handle;

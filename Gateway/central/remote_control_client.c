@@ -137,8 +137,8 @@ static void on_hvx(remote_control_client_t * p_remote_control_client, const ble_
     // Check if the event is on the link for this instance
     if (p_remote_control_client->conn_handle != p_ble_evt->evt.gattc_evt.conn_handle)
     {
-        NRF_LOG_DEBUG("Received HVX on link 0x%x, not associated to this instance, ignore",
-                      p_ble_evt->evt.gattc_evt.conn_handle);
+//        NRF_LOG_DEBUG("Received HVX on link 0x%x, not associated to this instance, ignore",
+//                      p_ble_evt->evt.gattc_evt.conn_handle);
         return;
     }
 
@@ -317,7 +317,6 @@ void remote_control_client_on_ble_evt(ble_evt_t const * p_ble_evt, void * p_cont
             break;
     }
 }
-
 
 /**@brief Function for creating a message for writing to the CCCD.
  */
