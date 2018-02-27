@@ -94,6 +94,8 @@
         <file file_name="../Gateway/central/thingy_client.h" />
         <file file_name="../Gateway/central/remote_control_client.c" />
         <file file_name="../Gateway/central/remote_control_client.h" />
+        <file file_name="../Gateway/central/playbulb_client.c" />
+        <file file_name="../Gateway/central/playbulb_client.h" />
       </folder>
       <folder Name="Peripheral">
         <file file_name="../Gateway/peripheral/peripheral.c" />
