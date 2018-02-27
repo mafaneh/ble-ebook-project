@@ -64,3 +64,7 @@ ret_code_t send_temperature_to_client(int8_t temp);
 ret_code_t send_humidity_to_client(uint8_t humidity);
 
 ret_code_t send_garage_sensor_battery_level_to_client(uint8_t battery_level);
+
+ret_code_t send_remote_control_battery_level_to_client(uint8_t battery_level);
+
+ret_code_t send_playbulb_battery_level_to_client(uint8_t battery_level);

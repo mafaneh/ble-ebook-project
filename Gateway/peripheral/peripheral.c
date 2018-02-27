@@ -358,3 +358,13 @@ ret_code_t send_garage_sensor_battery_level_to_client(uint8_t battery_level)
 {
     return garage_sensor_battery_level_send(&garage_service, battery_level);
 }
+
+ret_code_t send_remote_control_battery_level_to_client(uint8_t battery_level)
+{
+    return remote_control_battery_level_send(&remote_control_service, battery_level);
+}
+
+ret_code_t send_playbulb_battery_level_to_client(uint8_t battery_level)
+{
+    return playbulb_battery_level_send(&playbulb_service, battery_level);
+}

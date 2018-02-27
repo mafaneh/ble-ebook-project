@@ -183,3 +183,41 @@ void ble_remote_control_service_on_ble_evt(ble_remote_control_service_t * p_remo
             break;
     }
 }
+
+uint32_t remote_control_battery_level_send(ble_remote_control_service_t * p_remote_control_service, uint8_t battery_level)
+{
+    uint32_t err_code;
+
+    // Send value if connected and notifying
+    if (p_remote_control_service->conn_handle != BLE_CONN_HANDLE_INVALID)
+    {
+        uint8_t                batt_level;
+        uint16_t               len;
+        uint16_t               hvx_len;
+        ble_gatts_hvx_params_t hvx_params;
+
+        batt_level = battery_level;
+        len     = sizeof(uint8_t);
+        hvx_len = len;
+
+        memset(&hvx_params, 0, sizeof(hvx_params));
+
+        hvx_params.handle = p_remote_control_service->battery_level_char_handles.value_handle;
+        hvx_params.type   = BLE_GATT_HVX_NOTIFICATION;
+        hvx_params.offset = 0;
+        hvx_params.p_len  = &hvx_len;
+        hvx_params.p_data = &battery_level;
+
+        err_code = sd_ble_gatts_hvx(p_remote_control_service->conn_handle, &hvx_params);
+        if ((err_code == NRF_SUCCESS) && (hvx_len != len))
+        {
+            err_code = NRF_ERROR_DATA_SIZE;
+        }
+    }
+    else
+    {
+        err_code = NRF_ERROR_INVALID_STATE;
+    }
+
+    return err_code;
+}

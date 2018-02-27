@@ -93,5 +93,7 @@ uint32_t ble_remote_control_service_init(ble_remote_control_service_t * p_remote
  */
 void ble_remote_control_service_on_ble_evt(ble_remote_control_service_t * p_remote_control_service, ble_evt_t const * p_ble_evt);
 
+uint32_t remote_control_battery_level_send(ble_remote_control_service_t * p_remote_control_service, uint8_t battery_level);
+
 #endif /* REMOTE_CONTROL_SERVICE_H */
 

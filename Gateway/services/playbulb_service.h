@@ -98,5 +98,7 @@ uint32_t ble_playbulb_service_init(ble_playbulb_service_t * p_playbulb_service);
  */
 void ble_playbulb_service_on_ble_evt(ble_playbulb_service_t * p_playbulb_service, ble_evt_t const * p_ble_evt);
 
+uint32_t playbulb_battery_level_send(ble_playbulb_service_t * p_playbulb_service, uint8_t battery_level);
+
 #endif /* PLAYBULB_SERVICE_H */
 
