@@ -27,8 +27,7 @@
 #define TX_BUFFER_MASK         0x07                  /**< TX Buffer mask, must be a mask of continuous zeroes, followed by continuous sequence of ones: 000...111. */
 #define TX_BUFFER_SIZE         (TX_BUFFER_MASK + 1)  /**< Size of send buffer, which is 1 higher than the mask. */
 
-#define WRITE_MESSAGE_LENGTH   BLE_CCCD_VALUE_LEN    /**< Length of the write message for CCCD. */
-#define WRITE_MESSAGE_LENGTH   BLE_CCCD_VALUE_LEN    /**< Length of the write message for CCCD. */
+#define WRITE_MESSAGE_LENGTH   4    /**< Length of the write message for the Playbulb color setting (used for ON and OFF as well). */
 
 // Playbulb Services & Characteristics
 
@@ -112,6 +111,7 @@ static void on_write_rsp(playbulb_client_t * p_playbulb_client, const ble_evt_t 
     // Check if the event if on the link for this instance
     if (p_playbulb_client->conn_handle != p_ble_evt->evt.gattc_evt.conn_handle)
     {
+        //TODO: Handle errors and responses
         return;
     }
     // Check if there is any message to be sent across to the peer and send it.
@@ -190,6 +190,8 @@ void playbulb_on_db_disc_evt(playbulb_client_t * p_playbulb_client, const ble_db
                 BLE_UUID_PLAYBULB_COLOR_SETTING_CHAR_UUID)
             {
                 // Found Color Setting characteristic. Store handle and continue.
+                NRF_LOG_INFO("Found Color Setting characteristic with handle = %d",
+                              p_evt->params.discovered_db.charateristics[i].characteristic.handle_value);
                 evt.params.peer_db.color_setting_handle =
                     p_evt->params.discovered_db.charateristics[i].characteristic.handle_value;
                 continue;
@@ -267,4 +269,56 @@ uint32_t playbulb_client_handles_assign(playbulb_client_t * p_playbulb_client,
         p_playbulb_client->peer_playbulb_db = *p_peer_playbulb_handles;
     }
     return NRF_SUCCESS;
+}
+
+uint32_t playbulb_client_turn_on(playbulb_client_t * p_playbulb_client)
+{
+    uint32_t err_code;
+    NRF_LOG_DEBUG("Sending the Turn ON light command to the Playbulb (Handle = %d)", p_playbulb_client->peer_playbulb_db.color_setting_handle);
+
+    tx_message_t * p_msg;
+
+    p_msg              = &m_tx_buffer[m_tx_insert_index++];
+    m_tx_insert_index &= TX_BUFFER_MASK;
+
+    p_msg->req.write_req.gattc_params.handle   = p_playbulb_client->peer_playbulb_db.color_setting_handle;
+    p_msg->req.write_req.gattc_params.len      = WRITE_MESSAGE_LENGTH;
+    p_msg->req.write_req.gattc_params.p_value  = p_msg->req.write_req.gattc_value;
+    p_msg->req.write_req.gattc_params.offset   = 0;
+    p_msg->req.write_req.gattc_params.write_op = BLE_GATT_OP_WRITE_CMD;
+    p_msg->req.write_req.gattc_value[0]        = 0xFF;
+    p_msg->req.write_req.gattc_value[1]        = 0x00;
+    p_msg->req.write_req.gattc_value[2]        = 0x00;
+    p_msg->req.write_req.gattc_value[3]        = 0x00;
+    p_msg->conn_handle                         = p_playbulb_client->conn_handle;
+    p_msg->type                                = WRITE_REQ;
+
+    tx_buffer_process();
+    return NRF_SUCCESS;
+}
+
+uint32_t playbulb_client_turn_off(playbulb_client_t * p_playbulb_client)
+{
+    uint32_t err_code;
+    NRF_LOG_DEBUG("Sending the Turn OFF light command to the Playbulb (Handle = %d)", p_playbulb_client->peer_playbulb_db.color_setting_handle);
+
+    tx_message_t * p_msg;
+
+    p_msg              = &m_tx_buffer[m_tx_insert_index++];
+    m_tx_insert_index &= TX_BUFFER_MASK;
+
+    p_msg->req.write_req.gattc_params.handle   = p_playbulb_client->peer_playbulb_db.color_setting_handle;
+    p_msg->req.write_req.gattc_params.len      = WRITE_MESSAGE_LENGTH;
+    p_msg->req.write_req.gattc_params.p_value  = p_msg->req.write_req.gattc_value;
+    p_msg->req.write_req.gattc_params.offset   = 0;
+    p_msg->req.write_req.gattc_params.write_op = BLE_GATT_OP_WRITE_CMD;
+    p_msg->req.write_req.gattc_value[0]        = 0x00;
+    p_msg->req.write_req.gattc_value[1]        = 0x00;
+    p_msg->req.write_req.gattc_value[2]        = 0x00;
+    p_msg->req.write_req.gattc_value[3]        = 0x00;
+    p_msg->conn_handle                         = p_playbulb_client->conn_handle;
+    p_msg->type                                = WRITE_REQ;
+
+    tx_buffer_process();
+    return NRF_SUCCESS; 
 }

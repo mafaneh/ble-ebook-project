@@ -191,6 +191,10 @@ uint32_t playbulb_client_handles_assign(playbulb_client_t * p_playbulb_client,
                                   uint16_t conn_handle,
                                   const playbulb_db_t * p_peer_playbulb_handles);
 
+uint32_t playbulb_client_turn_on(playbulb_client_t * p_playbulb_client);
+
+uint32_t playbulb_client_turn_off(playbulb_client_t * p_playbulb_client);
+
 
 #ifdef __cplusplus
 }

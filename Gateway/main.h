@@ -73,14 +73,6 @@ extern "C" {
 
 #define DEAD_BEEF                       0xDEADBEEF                              /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
 
-
-//#define ADC_REF_VOLTAGE_IN_MILLIVOLTS           1200
-//#define ADC_PRE_SCALING_COMPENSATION            3
-//#define DIODE_FWD_VOLT_DROP_MILLIVOLTS          270
-//#define ADC_RESULT_IN_MILLI_VOLTS(ADC_VALUE)    ((((ADC_VALUE) * ADC_REF_VOLTAGE_IN_MILLIVOLTS) / 1023) * ADC_PRE_SCALING_COMPENSATION)
-//#define ADC_BUFFER_SIZE 6                                                            /**< Size of buffer for ADC samples.  */
-
-
 #ifdef __cplusplus
 }
 #endif

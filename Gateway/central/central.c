@@ -48,8 +48,13 @@
 #define SCAN_WINDOW                     0x0050                                      /**< Determines scan window in units of 0.625 millisecond. */
 #define SCAN_TIMEOUT                    0
 
-#define MIN_CONNECTION_INTERVAL         (uint16_t) MSEC_TO_UNITS(7.5, UNIT_1_25_MS) /**< Determines minimum connection interval in milliseconds. */
-#define MAX_CONNECTION_INTERVAL         (uint16_t) MSEC_TO_UNITS(100, UNIT_1_25_MS)  /**< Determines maximum connection interval in milliseconds. */
+//#define MIN_CONNECTION_INTERVAL         (uint16_t) MSEC_TO_UNITS(62.5, UNIT_1_25_MS) /**< Determines minimum connection interval in milliseconds. */
+//#define MAX_CONNECTION_INTERVAL         (uint16_t) MSEC_TO_UNITS(250, UNIT_1_25_MS)  /**< Determines maximum connection interval in milliseconds. */
+//#define SLAVE_LATENCY                   5                                           /**< Determines slave latency in terms of connection events. */
+//#define SUPERVISION_TIMEOUT             (uint16_t) MSEC_TO_UNITS(6000, UNIT_10_MS)  /**< Determines supervision time-out in units of 10 milliseconds. */
+
+#define MIN_CONNECTION_INTERVAL         (uint16_t) MSEC_TO_UNITS(125, UNIT_1_25_MS) /**< Determines minimum connection interval in milliseconds. */
+#define MAX_CONNECTION_INTERVAL         (uint16_t) MSEC_TO_UNITS(400, UNIT_1_25_MS)  /**< Determines maximum connection interval in milliseconds. */
 #define SLAVE_LATENCY                   0                                           /**< Determines slave latency in terms of connection events. */
 #define SUPERVISION_TIMEOUT             (uint16_t) MSEC_TO_UNITS(4000, UNIT_10_MS)  /**< Determines supervision time-out in units of 10 milliseconds. */
 
@@ -68,7 +73,9 @@ static thingy_client_t         m_thingy_client;
 static remote_control_client_t m_remote_control_client;
 static playbulb_client_t       m_playbulb_client;
 
-BLE_BAS_C_DEF(m_bas_client);                                                 /**< Battery Service client module instance. */
+BLE_BAS_C_DEF(m_bas_thingy_client);                                                 /**< Battery Service client module instance. */
+BLE_BAS_C_DEF(m_bas_remote_control_client);                                                 /**< Battery Service client module instance. */
+BLE_BAS_C_DEF(m_bas_playbulb_client);                                                 /**< Battery Service client module instance. */
 
 /**@brief names which the central applications will scan for, and which will be advertised by the peripherals.
  *  if these are set to empty strings, the UUIDs defined below will be used
@@ -145,9 +152,11 @@ static void db_disc_handler(ble_db_discovery_evt_t * p_evt)
 {
     // Call event handlers for each of the peripherals (Thingy:52, Remote Control, Playbulb Candle)
     thingy_on_db_disc_evt(&m_thingy_client, p_evt);
-    remote_control_on_db_disc_evt (&m_remote_control_client, p_evt);
-    //playbulb_on_db_disc_evt (&m_playbulb_client, p_evt);
-    ble_bas_on_db_disc_evt(&m_bas_client, p_evt);
+    remote_control_on_db_disc_evt(&m_remote_control_client, p_evt);
+    playbulb_on_db_disc_evt(&m_playbulb_client, p_evt);
+    ble_bas_on_db_disc_evt(&m_bas_thingy_client, p_evt);
+    ble_bas_on_db_disc_evt(&m_bas_remote_control_client, p_evt);
+    ble_bas_on_db_disc_evt(&m_bas_playbulb_client, p_evt);
 }
 
 /**
@@ -180,9 +189,16 @@ void scan_start(void)
  * @param[in] p_bas_c       Pointer to Battery Service Client structure.
  * @param[in] p_bas_c_evt   Pointer to event structure.
  */
-static void bas_c_evt_handler(ble_bas_c_t * p_bas_c, ble_bas_c_evt_t * p_bas_c_evt)
+static void bas_c_thingy_evt_handler(ble_bas_c_t * p_bas_c, ble_bas_c_evt_t * p_bas_c_evt)
 {
     ret_code_t err_code;
+
+    // We are interested in the Battery Service on the Thingy only
+    if ((p_bas_c_evt->conn_handle != m_conn_handle_thingy_client) ||
+        (m_conn_handle_thingy_client == NULL))
+    {
+        return;
+    }
 
     switch (p_bas_c_evt->evt_type)
     {
@@ -192,35 +208,124 @@ static void bas_c_evt_handler(ble_bas_c_t * p_bas_c, ble_bas_c_evt_t * p_bas_c_e
                                                 &p_bas_c_evt->params.bas_db);
             APP_ERROR_CHECK(err_code);
 
-            // Batttery service discovered. Enable notification of Battery Level.
-            NRF_LOG_DEBUG("Battery Service discovered. Reading battery level.");
+            // Battery service discovered. Enable notification of Battery Level.
+            NRF_LOG_DEBUG("Battery Service discovered on Thingy. Reading battery level.");
 
             err_code = ble_bas_c_bl_read(p_bas_c);
             APP_ERROR_CHECK(err_code);
 
-            NRF_LOG_DEBUG("Enabling Battery Level Notification. ");
+            NRF_LOG_DEBUG("Enabling Battery Level Notification on Thingy. ");
             err_code = ble_bas_c_bl_notif_enable(p_bas_c);
             APP_ERROR_CHECK(err_code);
             break;
 
         case BLE_BAS_C_EVT_BATT_NOTIFICATION:
-            NRF_LOG_DEBUG("Battery Level received %d %%", p_bas_c_evt->params.battery_level);
-            if (p_bas_c_evt->conn_handle == m_conn_handle_thingy_client)
-            {
-                send_garage_sensor_battery_level_to_client(p_bas_c_evt->params.battery_level);
-            }
-            else if (p_bas_c_evt->conn_handle == m_conn_handle_remote_control_client)
-            {
-                send_remote_control_battery_level_to_client (p_bas_c_evt->params.battery_level);
-            }
-            else if (p_bas_c_evt->conn_handle == m_conn_handle_playbulb_client)
-            {
-                send_playbulb_battery_level_to_client (p_bas_c_evt->params.battery_level);
-            }
+            NRF_LOG_DEBUG("Battery Level received from Thingy %d %%", p_bas_c_evt->params.battery_level);
+            send_garage_sensor_battery_level_to_client(p_bas_c_evt->params.battery_level);
             break;
 
         case BLE_BAS_C_EVT_BATT_READ_RESP:
-            NRF_LOG_INFO("Battery Level Read as %d %%", p_bas_c_evt->params.battery_level);
+            NRF_LOG_INFO("Battery Level of Thingy Read as %d %%", p_bas_c_evt->params.battery_level);
+            //TODO: Need to store the battery level value
+            break;
+
+        default:
+            break;
+    }
+}
+
+/**@brief Function for handling Battery Level Collector events.
+ *
+ * @param[in] p_bas_c       Pointer to Battery Service Client structure.
+ * @param[in] p_bas_c_evt   Pointer to event structure.
+ */
+static void bas_c_remote_control_evt_handler(ble_bas_c_t * p_bas_c, ble_bas_c_evt_t * p_bas_c_evt)
+{
+    ret_code_t err_code;
+
+    // We are interested in the Battery Service on the Remote Control only
+    if ((p_bas_c_evt->conn_handle != m_conn_handle_remote_control_client) ||
+        (m_conn_handle_remote_control_client == NULL))
+    {
+        return;
+    }
+
+    switch (p_bas_c_evt->evt_type)
+    {
+        case BLE_BAS_C_EVT_DISCOVERY_COMPLETE:
+            err_code = ble_bas_c_handles_assign(p_bas_c,
+                                                p_bas_c_evt->conn_handle,
+                                                &p_bas_c_evt->params.bas_db);
+            APP_ERROR_CHECK(err_code);
+
+            // Battery service discovered. Enable notification of Battery Level.
+            NRF_LOG_DEBUG("Battery Service discovered on Remote Control. Reading battery level.");
+
+            err_code = ble_bas_c_bl_read(p_bas_c);
+            APP_ERROR_CHECK(err_code);
+
+            NRF_LOG_DEBUG("Enabling Battery Level Notification on Remote Control. ");
+            err_code = ble_bas_c_bl_notif_enable(p_bas_c);
+            APP_ERROR_CHECK(err_code);
+            break;
+
+        case BLE_BAS_C_EVT_BATT_NOTIFICATION:
+            NRF_LOG_DEBUG("Battery Level received from Remote Control %d %%", p_bas_c_evt->params.battery_level);
+            send_garage_sensor_battery_level_to_client(p_bas_c_evt->params.battery_level);
+            break;
+
+        case BLE_BAS_C_EVT_BATT_READ_RESP:
+            NRF_LOG_INFO("Battery Level of Remote Control Read as %d %%", p_bas_c_evt->params.battery_level);
+            //TODO: Need to store the battery level value
+            break;
+
+        default:
+            break;
+    }
+}
+
+/**@brief Function for handling Battery Level Collector events from the Playbulb.
+ *
+ * @param[in] p_bas_c       Pointer to Battery Service Client structure.
+ * @param[in] p_bas_c_evt   Pointer to event structure.
+ */
+static void bas_c_playbulb_evt_handler(ble_bas_c_t * p_bas_c, ble_bas_c_evt_t * p_bas_c_evt)
+{
+    ret_code_t err_code;
+
+    // We are interested in the Battery Service on the Playbulb only
+    if ((p_bas_c_evt->conn_handle != m_conn_handle_playbulb_client) ||
+        (m_conn_handle_playbulb_client == NULL))
+    {
+        return;
+    }
+
+    switch (p_bas_c_evt->evt_type)
+    {
+        case BLE_BAS_C_EVT_DISCOVERY_COMPLETE:
+            err_code = ble_bas_c_handles_assign(p_bas_c,
+                                                p_bas_c_evt->conn_handle,
+                                                &p_bas_c_evt->params.bas_db);
+            APP_ERROR_CHECK(err_code);
+
+            // Battery service discovered. Enable notification of Battery Level.
+            NRF_LOG_DEBUG("Battery Service discovered on Playbulb. Reading battery level.");
+
+            err_code = ble_bas_c_bl_read(p_bas_c);
+            APP_ERROR_CHECK(err_code);
+
+            NRF_LOG_DEBUG("Enabling Battery Level Notification on Playbulb. ");
+            err_code = ble_bas_c_bl_notif_enable(p_bas_c);
+            APP_ERROR_CHECK(err_code);
+            break;
+
+        case BLE_BAS_C_EVT_BATT_NOTIFICATION:
+            NRF_LOG_DEBUG("Battery Level received from Playbulb %d %%", p_bas_c_evt->params.battery_level);
+            send_garage_sensor_battery_level_to_client(p_bas_c_evt->params.battery_level);
+            break;
+
+        case BLE_BAS_C_EVT_BATT_READ_RESP:
+            NRF_LOG_INFO("Battery Level of Playbulb Read as %d %%", p_bas_c_evt->params.battery_level);
             //TODO: Need to store the battery level value
             break;
 
@@ -280,7 +385,7 @@ static void thingy_c_evt_handler(thingy_client_t * p_thingy_c, thingy_client_evt
         {
             ret_code_t err_code;
 
-            NRF_LOG_INFO("Humidity percentage = %u%", p_thingy_c_evt->params.humidity.humidity);
+            NRF_LOG_INFO("Humidity percentage = %d %%", p_thingy_c_evt->params.humidity.humidity);
 
             // Send value to the Client device
             err_code = send_humidity_to_client(p_thingy_c_evt->params.humidity.humidity);
@@ -331,18 +436,32 @@ static void remote_control_c_evt_handler(remote_control_client_t * p_remote_cont
 
         case REMOTE_CONTROL_EVT_ON_BUTTON_PRESS_NOTIFICATION:
         {
-            NRF_LOG_INFO("ON Button = %s", p_remote_control_c_evt->params.on_button.button_pressed == 1? "Pressed":"Released");
+            ret_code_t err_code;
 
+            NRF_LOG_INFO("ON Button = %s", p_remote_control_c_evt->params.on_button.button_pressed == 1? "Pressed":"Released");
+            
            //TODO
            // Send command to turn on Playbulb candle when ON Button is pressed
+           if (p_remote_control_c_evt->params.on_button.button_pressed == 1 && (m_playbulb_client.conn_handle != BLE_CONN_HANDLE_INVALID))
+           {
+              err_code = playbulb_client_turn_on(&m_playbulb_client);
+              APP_ERROR_CHECK(err_code);
+           }
         } break; // REMOTE_CONTROL_EVT_ON_BUTTON_PRESS_NOTIFICATION
 
         case REMOTE_CONTROL_EVT_OFF_BUTTON_PRESS_NOTIFICATION:
         {
+            ret_code_t err_code;
+
             NRF_LOG_INFO("OFF Button = %s", p_remote_control_c_evt->params.off_button.button_pressed == 1? "Pressed":"Released");
 
             //TODO
            // Send command to turn OFF Playbulb candle when OFF Button is pressed
+           if (p_remote_control_c_evt->params.off_button.button_pressed == 1 && (m_playbulb_client.conn_handle != BLE_CONN_HANDLE_INVALID))
+           {
+              err_code = playbulb_client_turn_off(&m_playbulb_client);
+              APP_ERROR_CHECK(err_code);
+           }
         } break; // REMOTE_CONTROL_EVT_OFF_BUTTON_PRESS_NOTIFICATION
 
         default:
@@ -387,12 +506,16 @@ void central_init(void)
     thingy_client_init_t         thingy_init_obj;
     remote_control_client_init_t remote_control_init_obj;
     playbulb_client_init_t       playbulb_init_obj;
-    ble_bas_c_init_t             bas_c_init_obj;
+    ble_bas_c_init_t             bas_c_init_thingy_obj;
+    ble_bas_c_init_t             bas_c_init_remote_control_obj;
+    ble_bas_c_init_t             bas_c_init_playbulb_obj;
 
-    thingy_init_obj.evt_handler         = thingy_c_evt_handler;
-    remote_control_init_obj.evt_handler = remote_control_c_evt_handler;
-    playbulb_init_obj.evt_handler       = playbulb_c_evt_handler;
-    bas_c_init_obj.evt_handler          = bas_c_evt_handler;
+    thingy_init_obj.evt_handler                 = thingy_c_evt_handler;
+    remote_control_init_obj.evt_handler         = remote_control_c_evt_handler;
+    playbulb_init_obj.evt_handler               = playbulb_c_evt_handler;
+    bas_c_init_thingy_obj.evt_handler           = bas_c_thingy_evt_handler;
+    bas_c_init_remote_control_obj.evt_handler   = bas_c_remote_control_evt_handler;
+    bas_c_init_playbulb_obj.evt_handler         = bas_c_playbulb_evt_handler;
 
     // Initialize the different clients:
 
@@ -408,8 +531,12 @@ void central_init(void)
     err_code = playbulb_client_init(&m_playbulb_client, &playbulb_init_obj);
     APP_ERROR_CHECK(err_code);
 
-    // Initialize the Battery Service client
-    err_code = ble_bas_c_init(&m_bas_client, &bas_c_init_obj);
+    // Initialize the Battery Service clients
+    err_code = ble_bas_c_init(&m_bas_thingy_client, &bas_c_init_thingy_obj);
+    APP_ERROR_CHECK(err_code);
+    err_code = ble_bas_c_init(&m_bas_remote_control_client, &bas_c_init_remote_control_obj);
+    APP_ERROR_CHECK(err_code);
+    err_code = ble_bas_c_init(&m_bas_playbulb_client, &bas_c_init_playbulb_obj);
     APP_ERROR_CHECK(err_code);
 }
 
@@ -430,7 +557,6 @@ void on_ble_central_evt(ble_evt_t const * p_ble_evt)
     thingy_client_on_ble_evt(p_ble_evt, &m_thingy_client);
     remote_control_client_on_ble_evt(p_ble_evt, &m_remote_control_client);
     playbulb_client_on_ble_evt(p_ble_evt, &m_playbulb_client);
-    //TODO: Add for each of the clients
 
     switch (p_ble_evt->header.evt_id)
     {
@@ -482,21 +608,21 @@ void on_ble_central_evt(ble_evt_t const * p_ble_evt)
         {
             if (p_gap_evt->conn_handle == m_conn_handle_thingy_client)
             {
-                NRF_LOG_INFO("Thingy client disconnected (reason: %d)",
+                NRF_LOG_INFO("Thingy client disconnected (reason: 0x%x)",
                              p_gap_evt->params.disconnected.reason);
 
                 m_conn_handle_thingy_client = BLE_CONN_HANDLE_INVALID;
             }
             if (p_gap_evt->conn_handle == m_conn_handle_remote_control_client)
             {
-                NRF_LOG_INFO("Remote Control client disconnected (reason: %d)",
+                NRF_LOG_INFO("Remote Control client disconnected (reason: 0x%x)",
                              p_gap_evt->params.disconnected.reason);
 
                 m_conn_handle_remote_control_client = BLE_CONN_HANDLE_INVALID;
             }
             if (p_gap_evt->conn_handle == m_conn_handle_playbulb_client)
             {
-                NRF_LOG_INFO("Playbulb client disconnected (reason: %d)",
+                NRF_LOG_INFO("Playbulb client disconnected (reason: 0x%x)",
                              p_gap_evt->params.disconnected.reason);
 
                 m_conn_handle_playbulb_client = BLE_CONN_HANDLE_INVALID;
