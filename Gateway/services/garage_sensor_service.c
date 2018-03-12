@@ -17,17 +17,27 @@
 
 #include <string.h>
 
+// Needed for including sdk_config.h LOG defines
+#include "sdk_common.h"
+
+ #define NRF_LOG_MODULE_NAME Peripheral
+#if PERIPHERAL_CONFIG_LOG_ENABLED
+#define NRF_LOG_LEVEL PERIPHERAL_CONFIG_LOG_LEVEL
+#define NRF_LOG_INFO_COLOR PERIPHERAL_CONFIG_INFO_COLOR
+#define NRF_LOG_DEBUG_COLOR PERIPHERAL_CONFIG_DEBUG_COLOR
+#else //PERIPHERAL_CONFIG_LOG_ENABLED
+#define NRF_LOG_LEVEL 0
+#endif //PERIPHERAL_CONFIG_LOG_ENABLED
 #include "nrf_log.h"
-#include "nrf_log_ctrl.h"
-#include "nrf_log_default_backends.h"
 
+// Application specific includes
 #include "garage_sensor_service.h"
-
 
 static const uint8_t doorStatusCharName[] = "Garage Door Status";
 static const uint8_t temperatureCharName[] = "Garage Temperature";
 static const uint8_t humidityCharName[] = "Garage Humidity";
 
+extern uint8_t m_thingy_battery_level;
 
 /**@brief Function for handling the Connect event.
  *
@@ -341,7 +351,7 @@ static uint32_t battery_level_char_add(ble_garage_sensor_service_t * p_garage_se
     BLE_UUID_BLE_ASSIGN(ble_uuid, BLE_UUID_BATTERY_LEVEL_CHAR);
 
     // Attribute Metadata settings
-    attr_md.vloc       = BLE_GATTS_VLOC_STACK;
+    attr_md.vloc       = BLE_GATTS_VLOC_USER;
     attr_md.rd_auth    = 0;
     attr_md.wr_auth    = 0;
     attr_md.vlen       = 0;
@@ -352,7 +362,7 @@ static uint32_t battery_level_char_add(ble_garage_sensor_service_t * p_garage_se
     attr_char_value.init_len     = sizeof(uint8_t);
     attr_char_value.init_offs    = 0;
     attr_char_value.max_len      = sizeof(uint8_t);
-    attr_char_value.p_value      = NULL;
+    attr_char_value.p_value      = &m_thingy_battery_level;
 
     return sd_ble_gatts_characteristic_add(p_garage_sensor_service->service_handle, &char_md,
                                                &attr_char_value,

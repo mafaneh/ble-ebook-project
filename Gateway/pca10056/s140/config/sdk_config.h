@@ -3038,7 +3038,7 @@
 // <8=> White
 
 #ifndef NRF_LOG_COLOR_DEFAULT
-#define NRF_LOG_COLOR_DEFAULT 0
+#define NRF_LOG_COLOR_DEFAULT 3
 #endif
 
 // <o> NRF_LOG_ERROR_COLOR  - ANSI escape code prefix.
@@ -3054,7 +3054,7 @@
 // <8=> White
 
 #ifndef NRF_LOG_ERROR_COLOR
-#define NRF_LOG_ERROR_COLOR 0
+#define NRF_LOG_ERROR_COLOR 2
 #endif
 
 // <o> NRF_LOG_WARNING_COLOR  - ANSI escape code prefix.
@@ -3070,7 +3070,7 @@
 // <8=> White
 
 #ifndef NRF_LOG_WARNING_COLOR
-#define NRF_LOG_WARNING_COLOR 0
+#define NRF_LOG_WARNING_COLOR 4
 #endif
 
 // </e>
@@ -3179,6 +3179,111 @@
 
 //==========================================================
 // <h> nrf_log in nRF_Core
+
+//==========================================================
+// <e> PERIPHERAL_CONFIG_LOG_ENABLED - Enables logging in the module.
+//==========================================================
+#ifndef PERIPHERAL_CONFIG_LOG_ENABLED
+#define PERIPHERAL_CONFIG_LOG_ENABLED 1
+#endif
+// <o> PERIPHERAL_CONFIG_LOG_LEVEL  - Default Severity level
+
+// <0=> Off
+// <1=> Error
+// <2=> Warning
+// <3=> Info
+// <4=> Debug
+
+#ifndef PERIPHERAL_CONFIG_LOG_LEVEL
+#define PERIPHERAL_CONFIG_LOG_LEVEL 3
+#endif
+
+// <o> PERIPHERAL_CONFIG_INFO_COLOR  - ANSI escape code prefix.
+
+// <0=> Default
+// <1=> Black
+// <2=> Red
+// <3=> Green
+// <4=> Yellow
+// <5=> Blue
+// <6=> Magenta
+// <7=> Cyan
+// <8=> White
+
+#ifndef PERIPHERAL_CONFIG_INFO_COLOR
+#define PERIPHERAL_CONFIG_INFO_COLOR 0
+#endif
+
+// <o> PERIPHERAL_CONFIG_DEBUG_COLOR  - ANSI escape code prefix.
+
+// <0=> Default
+// <1=> Black
+// <2=> Red
+// <3=> Green
+// <4=> Yellow
+// <5=> Blue
+// <6=> Magenta
+// <7=> Cyan
+// <8=> White
+
+#ifndef PERIPHERAL_CONFIG_DEBUG_COLOR
+#define PERIPHERAL_CONFIG_DEBUG_COLOR 0
+#endif
+
+// </e>
+
+//==========================================================
+// <e> CENTRAL_CONFIG_LOG_ENABLED - Enables logging in the module.
+//==========================================================
+#ifndef CENTRAL_CONFIG_LOG_ENABLED
+#define CENTRAL_CONFIG_LOG_ENABLED 1
+#endif
+// <o> CENTRAL_CONFIG_LOG_LEVEL  - Default Severity level
+
+// <0=> Off
+// <1=> Error
+// <2=> Warning
+// <3=> Info
+// <4=> Debug
+
+#ifndef CENTRAL_CONFIG_LOG_LEVEL
+#define CENTRAL_CONFIG_LOG_LEVEL 4
+#endif
+
+// <o> CENTRAL_CONFIG_INFO_COLOR  - ANSI escape code prefix.
+
+// <0=> Default
+// <1=> Black
+// <2=> Red
+// <3=> Green
+// <4=> Yellow
+// <5=> Blue
+// <6=> Magenta
+// <7=> Cyan
+// <8=> White
+
+#ifndef CENTRAL_CONFIG_INFO_COLOR
+#define CENTRAL_CONFIG_INFO_COLOR 0
+#endif
+
+// <o> CENTRAL_CONFIG_DEBUG_COLOR  - ANSI escape code prefix.
+
+// <0=> Default
+// <1=> Black
+// <2=> Red
+// <3=> Green
+// <4=> Yellow
+// <5=> Blue
+// <6=> Magenta
+// <7=> Cyan
+// <8=> White
+
+#ifndef CENTRAL_CONFIG_DEBUG_COLOR
+#define CENTRAL_CONFIG_DEBUG_COLOR 0
+#endif
+
+// </e>
+
 
 //==========================================================
 // <e> NRF_MPU_CONFIG_LOG_ENABLED - Enables logging in the module.
@@ -5135,12 +5240,12 @@
 
 // <o> NRF_SDH_BLE_GAP_EVENT_LENGTH - The time set aside for this connection on every connection interval in 1.25 ms units.
 #ifndef NRF_SDH_BLE_GAP_EVENT_LENGTH
-#define NRF_SDH_BLE_GAP_EVENT_LENGTH 12
+#define NRF_SDH_BLE_GAP_EVENT_LENGTH 5
 #endif
 
 // <o> NRF_SDH_BLE_GATT_MAX_MTU_SIZE - Static maximum MTU size.
 #ifndef NRF_SDH_BLE_GATT_MAX_MTU_SIZE
-#define NRF_SDH_BLE_GATT_MAX_MTU_SIZE 247
+#define NRF_SDH_BLE_GATT_MAX_MTU_SIZE 27
 #endif
 
 // <o> NRF_SDH_BLE_GATTS_ATTR_TAB_SIZE - Attribute Table size in bytes. The size must be a multiple of 4.
@@ -5516,7 +5621,7 @@
 // <7=> NRF_CLOCK_LF_XTAL_ACCURACY_20_PPM
 
 #ifndef NRF_SDH_CLOCK_LF_XTAL_ACCURACY
-#define NRF_SDH_CLOCK_LF_XTAL_ACCURACY 7
+#define NRF_SDH_CLOCK_LF_XTAL_ACCURACY 1
 #endif
 
 // </h>

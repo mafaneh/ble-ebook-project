@@ -45,10 +45,6 @@ extern "C" {
 #include "app_util.h"
 #include "sdk_errors.h"
 
-#include "nrf_log.h"
-#include "nrf_log_ctrl.h"
-#include "nrf_log_default_backends.h"
-
 #define PERIPHERAL_ADVERTISING_LED      BSP_BOARD_LED_2
 #define PERIPHERAL_CONNECTED_LED        BSP_BOARD_LED_3
 #define CENTRAL_SCANNING_LED            BSP_BOARD_LED_0

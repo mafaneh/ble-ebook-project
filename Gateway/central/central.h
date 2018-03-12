@@ -15,11 +15,7 @@
  *
  */
 
- #include "ble.h"
-
- /**@brief Function for initializing the Connection Parameters module.
- */
-void conn_params_init(void);
+#include "ble.h"
 
 /**
  * @brief Database discovery initialization.

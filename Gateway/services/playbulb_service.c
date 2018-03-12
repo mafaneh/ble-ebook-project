@@ -17,22 +17,36 @@
 
 #include <string.h>
 
+// Needed for including sdk_config.h LOG defines
+#include "sdk_common.h"
 
+ #define NRF_LOG_MODULE_NAME Peripheral
+#if PERIPHERAL_CONFIG_LOG_ENABLED
+#define NRF_LOG_LEVEL PERIPHERAL_CONFIG_LOG_LEVEL
+#define NRF_LOG_INFO_COLOR PERIPHERAL_CONFIG_INFO_COLOR
+#define NRF_LOG_DEBUG_COLOR PERIPHERAL_CONFIG_DEBUG_COLOR
+#else //PERIPHERAL_CONFIG_LOG_ENABLED
+#define NRF_LOG_LEVEL 0
+#endif //PERIPHERAL_CONFIG_LOG_ENABLED
 #include "nrf_log.h"
-#include "nrf_log_ctrl.h"
-#include "nrf_log_default_backends.h"
 
+// nRF specific includes
 #include "ble_bas.h"
+
+// Application specific includes
 #include "playbulb_service.h"
 
 static const uint8_t lightStatusCharName[] = "Light Status";
+static uint8_t m_light_status = 0;
+
+extern uint8_t m_playbulb_battery_level;
 
 /**@brief Function for handling the Connect event.
  *
  * @param[in]   p_playbulb_service    Playbulb service structure.
  * @param[in]   p_ble_evt             Event received from the BLE stack.
  */
-static void on_connect(ble_playbulb_service_t * p_playbulb_service, ble_evt_t * p_ble_evt)
+static void on_connect(ble_playbulb_service_t * p_playbulb_service, ble_evt_t const * p_ble_evt)
 {
     p_playbulb_service->conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
 }
@@ -43,7 +57,7 @@ static void on_connect(ble_playbulb_service_t * p_playbulb_service, ble_evt_t * 
  * @param[in]   p_playbulb_service    Playbulb service structure.
  * @param[in]   p_ble_evt             Event received from the BLE stack.
  */
-static void on_disconnect(ble_playbulb_service_t * p_playbulb_service, ble_evt_t * p_ble_evt)
+static void on_disconnect(ble_playbulb_service_t * p_playbulb_service, ble_evt_t const * p_ble_evt)
 {
     UNUSED_PARAMETER(p_ble_evt);
     p_playbulb_service->conn_handle = BLE_CONN_HANDLE_INVALID;
@@ -54,7 +68,7 @@ static void on_disconnect(ble_playbulb_service_t * p_playbulb_service, ble_evt_t
  * @param[in]   p_playbulb_service  Playbulb service structure.
  * @param[in]   p_ble_evt           Event received from the BLE stack.
  */
-static void on_write(ble_playbulb_service_t * p_playbulb_service, ble_evt_t * p_ble_evt)
+static void on_write(ble_playbulb_service_t * p_playbulb_service, ble_evt_t const * p_ble_evt)
 {
     ble_gatts_evt_write_t const * p_evt_write = &p_ble_evt->evt.gatts_evt.params.write;
 
@@ -129,7 +143,7 @@ static uint32_t light_status_char_add(ble_playbulb_service_t * p_playbulb_servic
     ble_uuid.uuid = BLE_UUID_PLAYBULB_LIGHT_STATUS_UUID;
 
     // Attribute Metadata settings
-    attr_md.vloc       = BLE_GATTS_VLOC_STACK;
+    attr_md.vloc       = BLE_GATTS_VLOC_USER;
     attr_md.rd_auth    = 0;
     attr_md.wr_auth    = 0;
     attr_md.vlen       = 0;
@@ -140,7 +154,7 @@ static uint32_t light_status_char_add(ble_playbulb_service_t * p_playbulb_servic
     attr_char_value.init_len     = sizeof(uint8_t);
     attr_char_value.init_offs    = 0;
     attr_char_value.max_len      = sizeof(uint8_t);
-    attr_char_value.p_value      = NULL;
+    attr_char_value.p_value      = &m_light_status;
 
     return sd_ble_gatts_characteristic_add(p_playbulb_service->service_handle, &char_md,
                                            &attr_char_value,
@@ -184,7 +198,7 @@ static uint32_t battery_level_char_add(ble_playbulb_service_t * p_playbulb_servi
     BLE_UUID_BLE_ASSIGN(ble_uuid, BLE_UUID_BATTERY_LEVEL_CHAR);
 
     // Attribute Metadata settings
-    attr_md.vloc       = BLE_GATTS_VLOC_STACK;
+    attr_md.vloc       = BLE_GATTS_VLOC_USER;
     attr_md.rd_auth    = 0;
     attr_md.wr_auth    = 0;
     attr_md.vlen       = 0;
@@ -195,7 +209,7 @@ static uint32_t battery_level_char_add(ble_playbulb_service_t * p_playbulb_servi
     attr_char_value.init_len     = sizeof(uint8_t);
     attr_char_value.init_offs    = 0;
     attr_char_value.max_len      = sizeof(uint8_t);
-    attr_char_value.p_value      = NULL;
+    attr_char_value.p_value      = &m_playbulb_battery_level;
 
     return sd_ble_gatts_characteristic_add(p_playbulb_service->service_handle, &char_md,
                                            &attr_char_value,
@@ -297,6 +311,49 @@ uint32_t playbulb_battery_level_send(ble_playbulb_service_t * p_playbulb_service
         hvx_params.offset = 0;
         hvx_params.p_len  = &hvx_len;
         hvx_params.p_data = &battery_level;
+
+        err_code = sd_ble_gatts_hvx(p_playbulb_service->conn_handle, &hvx_params);
+        if ((err_code == NRF_SUCCESS) && (hvx_len != len))
+        {
+            err_code = NRF_ERROR_DATA_SIZE;
+        }
+    }
+    else
+    {
+        err_code = NRF_ERROR_INVALID_STATE;
+    }
+
+    return err_code;
+}
+
+void playbulb_service_set_local_light_status(uint8_t status)
+{
+    m_light_status = status;
+}
+
+uint32_t playbulb_service_light_status_send(ble_playbulb_service_t * p_playbulb_service, uint8_t status)
+{
+    uint32_t err_code;
+
+    // Send value if connected and notifying
+    if (p_playbulb_service->conn_handle != BLE_CONN_HANDLE_INVALID)
+    {
+        uint8_t                light_on;
+        uint16_t               len;
+        uint16_t               hvx_len;
+        ble_gatts_hvx_params_t hvx_params;
+
+        light_on = status;
+        len     = sizeof(uint8_t);
+        hvx_len = len;
+
+        memset(&hvx_params, 0, sizeof(hvx_params));
+
+        hvx_params.handle = p_playbulb_service->light_status_char_handles.value_handle;
+        hvx_params.type   = BLE_GATT_HVX_NOTIFICATION;
+        hvx_params.offset = 0;
+        hvx_params.p_len  = &hvx_len;
+        hvx_params.p_data = &light_on;
 
         err_code = sd_ble_gatts_hvx(p_playbulb_service->conn_handle, &hvx_params);
         if ((err_code == NRF_SUCCESS) && (hvx_len != len))

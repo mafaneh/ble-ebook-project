@@ -20,6 +20,10 @@
 #include "sdk_errors.h"
  #include "ble.h"
 
+ /**@brief Function for initializing the Connection Parameters module.
+ */
+void conn_params_init(void);
+
   /**@brief Function for the GAP initialization.
  *
  * @details This function sets up all the necessary GAP (Generic Access Profile) parameters of the
@@ -68,3 +72,5 @@ ret_code_t send_garage_sensor_battery_level_to_client(uint8_t battery_level);
 ret_code_t send_remote_control_battery_level_to_client(uint8_t battery_level);
 
 ret_code_t send_playbulb_battery_level_to_client(uint8_t battery_level);
+
+ret_code_t set_playbulb_light_status(uint8_t status);

@@ -42,9 +42,13 @@
  #include <stdint.h>
  #include <string.h>
 
+// nRF specific includes
 #include "sdk_errors.h"
 #include "nrf_log.h"
 #include "ble.h"
+
+// Application specific includes
+#include "tools.h"
 
 #define UUID16_SIZE                     2                                           /**< Size of a UUID, in bytes. */
 

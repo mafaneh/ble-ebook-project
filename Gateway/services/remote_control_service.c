@@ -16,17 +16,34 @@
  */
 
 #include <string.h>
+
+// Needed for including sdk_config.h LOG defines
+#include "sdk_common.h"
+
+ #define NRF_LOG_MODULE_NAME Peripheral
+#if PERIPHERAL_CONFIG_LOG_ENABLED
+#define NRF_LOG_LEVEL PERIPHERAL_CONFIG_LOG_LEVEL
+#define NRF_LOG_INFO_COLOR PERIPHERAL_CONFIG_INFO_COLOR
+#define NRF_LOG_DEBUG_COLOR PERIPHERAL_CONFIG_DEBUG_COLOR
+#else //PERIPHERAL_CONFIG_LOG_ENABLED
+#define NRF_LOG_LEVEL 0
+#endif //PERIPHERAL_CONFIG_LOG_ENABLED
 #include "nrf_log.h"
 
+// nRF specific includes
 #include "ble_bas.h"
+
+// Application specific includes
 #include "remote_control_service.h"
+
+extern uint8_t m_remote_control_battery_level;
 
 /**@brief Function for handling the Connect event.
  *
  * @param[in]   p_bas       Remote Control service structure.
  * @param[in]   p_ble_evt   Event received from the BLE stack.
  */
-static void on_connect(ble_remote_control_service_t * p_remote_control_service, ble_evt_t * p_ble_evt)
+static void on_connect(ble_remote_control_service_t * p_remote_control_service, ble_evt_t const * p_ble_evt)
 {
     p_remote_control_service->conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
 }
@@ -37,13 +54,13 @@ static void on_connect(ble_remote_control_service_t * p_remote_control_service, 
  * @param[in]   p_bas       Remote Control service structure.
  * @param[in]   p_ble_evt   Event received from the BLE stack.
  */
-static void on_disconnect(ble_remote_control_service_t * p_remote_control_service, ble_evt_t * p_ble_evt)
+static void on_disconnect(ble_remote_control_service_t * p_remote_control_service, ble_evt_t const * p_ble_evt)
 {
     UNUSED_PARAMETER(p_ble_evt);
     p_remote_control_service->conn_handle = BLE_CONN_HANDLE_INVALID;
 }
 
-static void on_write(ble_remote_control_service_t * p_remote_control_service, ble_evt_t * p_ble_evt)
+static void on_write(ble_remote_control_service_t * p_remote_control_service, ble_evt_t const * p_ble_evt)
 {
     ble_gatts_evt_write_t const * p_evt_write = &p_ble_evt->evt.gatts_evt.params.write;
 
@@ -104,7 +121,7 @@ static uint32_t battery_level_char_add(ble_remote_control_service_t * p_remote_c
     BLE_UUID_BLE_ASSIGN(ble_uuid, BLE_UUID_BATTERY_LEVEL_CHAR);
 
     // Attribute Metadata settings
-    attr_md.vloc       = BLE_GATTS_VLOC_STACK;
+    attr_md.vloc       = BLE_GATTS_VLOC_USER;
     attr_md.rd_auth    = 0;
     attr_md.wr_auth    = 0;
     attr_md.vlen       = 0;
@@ -115,7 +132,7 @@ static uint32_t battery_level_char_add(ble_remote_control_service_t * p_remote_c
     attr_char_value.init_len     = sizeof(uint8_t);
     attr_char_value.init_offs    = 0;
     attr_char_value.max_len      = sizeof(uint8_t);
-    attr_char_value.p_value      = NULL;
+    attr_char_value.p_value      = &m_remote_control_battery_level;
 
     return sd_ble_gatts_characteristic_add(p_remote_control_service->service_handle, &char_md,
                                            &attr_char_value,

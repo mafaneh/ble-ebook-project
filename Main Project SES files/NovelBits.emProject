@@ -26,7 +26,7 @@
       linker_printf_fmt_level="long"
       linker_printf_width_precision_supported="Yes"
       linker_section_placement_file="./Gateway/flash_placement.xml"
-      linker_section_placement_macros="FLASH_PH_START=0x0;FLASH_PH_SIZE=0x100000;RAM_PH_START=0x20000000;RAM_PH_SIZE=0x40000;FLASH_START=0x22000;FLASH_SIZE=0xde000;RAM_START=0x20006560;RAM_SIZE=0x39AA0"
+      linker_section_placement_macros="FLASH_PH_START=0x0;FLASH_PH_SIZE=0x100000;RAM_PH_START=0x20000000;RAM_PH_SIZE=0x40000;FLASH_START=0x22000;FLASH_SIZE=0xde000;RAM_START=0x20003228;RAM_SIZE=0x3CDD8"
       linker_section_placements_segments="FLASH RX 0x0 0x100000;RAM RWX 0x20000000 0x40000"
       macros="CMSIS_CONFIG_TOOL=../nRF5_SDK_14.2.0_17b948a/external_tools/cmsisconfig/CMSIS_Configuration_Wizard.jar"
       project_directory=""
@@ -284,11 +284,7 @@
     </folder>
     <folder Name="Button Service">
       <file file_name="../Remote Control/services/button_service.c" />
-      <file file_name="../Remote Control/services/button_service.c.bak" />
-      <file file_name="../Remote Control/services/button_service.c.bak.2" />
       <file file_name="../Remote Control/services/button_service.h" />
-      <file file_name="../Remote Control/services/button_service.h.bak" />
-      <file file_name="../Remote Control/services/button_service.h.bak.2" />
     </folder>
   </project>
   <configuration

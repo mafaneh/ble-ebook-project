@@ -15,14 +15,27 @@
  *
  */
 
+// Needed for including sdk_config.h LOG defines
 #include "sdk_common.h"
-#include "thingy_client.h"
+
+#define NRF_LOG_MODULE_NAME Central
+#if CENTRAL_CONFIG_LOG_ENABLED
+#define NRF_LOG_LEVEL CENTRAL_CONFIG_LOG_LEVEL
+#define NRF_LOG_INFO_COLOR CENTRAL_CONFIG_INFO_COLOR
+#define NRF_LOG_DEBUG_COLOR CENTRAL_CONFIG_DEBUG_COLOR
+#else //CENTRAL_CONFIG_LOG_ENABLED
+#define NRF_LOG_LEVEL 0
+#endif //CENTRAL_CONFIG_LOG_ENABLED
+#include "nrf_log.h"
+
+// nRF specific includes
 #include "ble_db_discovery.h"
 #include "ble_types.h"
 #include "ble_srv_common.h"
 #include "ble_gattc.h"
 
-#include "nrf_log.h"
+// Application specific includes
+#include "thingy_client.h"
 
 #define TX_BUFFER_MASK         0x07                  /**< TX Buffer mask, must be a mask of continuous zeroes, followed by continuous sequence of ones: 000...111. */
 #define TX_BUFFER_SIZE         (TX_BUFFER_MASK + 1)  /**< Size of send buffer, which is 1 higher than the mask. */

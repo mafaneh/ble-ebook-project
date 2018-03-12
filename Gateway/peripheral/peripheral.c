@@ -15,13 +15,23 @@
  *
  */
 
-//#include "../main.h"
+// Needed for including sdk_config.h LOG defines
+#include "sdk_common.h"
+
+ #define NRF_LOG_MODULE_NAME Peripheral
+#if PERIPHERAL_CONFIG_LOG_ENABLED
+#define NRF_LOG_LEVEL PERIPHERAL_CONFIG_LOG_LEVEL
+#define NRF_LOG_INFO_COLOR PERIPHERAL_CONFIG_INFO_COLOR
+#define NRF_LOG_DEBUG_COLOR PERIPHERAL_CONFIG_DEBUG_COLOR
+#else //PERIPHERAL_CONFIG_LOG_ENABLED
+#define NRF_LOG_LEVEL 0
+#endif //PERIPHERAL_CONFIG_LOG_ENABLED
+#include "nrf_log.h"
+NRF_LOG_MODULE_REGISTER();
+
+// nRF specific includes
 #include "bsp.h"
 #include "nrf_ble_gatt.h"
-#include "nrf_log.h"
-#include "nrf_log_ctrl.h"
-#include "nrf_log_default_backends.h"
-
 #include "ble.h"
 #include "ble_hci.h"
 #include "ble_srv_common.h"
@@ -31,7 +41,11 @@
 #include "nrf_sdh.h"
 #include "nrf_sdh_soc.h"
 #include "nrf_sdh_ble.h"
+#include "peer_manager.h"
 #include "peripheral.h"
+#include "app_timer.h"
+
+// Application specific includes
 #include "../services/garage_sensor_service.h"
 #include "../services/playbulb_service.h"
 #include "../services/remote_control_service.h"
@@ -49,34 +63,51 @@ static ble_remote_control_service_t remote_control_service;
 
 #define DEVICE_NAME                     "NovelBits GW"                       /**< Name of device. Will be included in the advertising data. */
 #define MANUFACTURER_NAME               "NordicSemiconductor"                   /**< Manufacturer. Will be passed to Device Information Service. */
-#define APP_ADV_INTERVAL                300                                     /**< The advertising interval (in units of 0.625 ms. This value corresponds to 187.5 ms). */
-#define APP_ADV_TIMEOUT_IN_SECONDS      180                                     /**< The advertising timeout in units of seconds. */
+#define APP_ADV_INTERVAL                480                                     /**< The advertising interval (in units of 0.625 ms). */
+#define APP_ADV_TIMEOUT_IN_SECONDS      0                                     /**< The advertising timeout in units of seconds. */
 
-#define MIN_CONNECTION_INTERVAL         (uint16_t) MSEC_TO_UNITS(15, UNIT_1_25_MS) /**< Determines minimum connection interval in milliseconds. */
-#define MAX_CONNECTION_INTERVAL         (uint16_t) MSEC_TO_UNITS(15, UNIT_1_25_MS)  /**< Determines maximum connection interval in milliseconds. */
-#define SLAVE_LATENCY                   0                                           /**< Determines slave latency in terms of connection events. */
+#define MIN_CONNECTION_INTERVAL         (uint16_t) MSEC_TO_UNITS(60, UNIT_1_25_MS) /**< Determines minimum connection interval in milliseconds. */
+#define MAX_CONNECTION_INTERVAL         (uint16_t) MSEC_TO_UNITS(120, UNIT_1_25_MS)  /**< Determines maximum connection interval in milliseconds. */
+#define SLAVE_LATENCY                   2                                           /**< Determines slave latency in terms of connection events. */
 #define SUPERVISION_TIMEOUT             (uint16_t) MSEC_TO_UNITS(4000, UNIT_10_MS)  /**< Determines supervision time-out in units of 10 milliseconds. */
+
+#define FIRST_CONN_PARAMS_UPDATE_DELAY  APP_TIMER_TICKS(5000)                       /**< Time from initiating event (connect or start of notification) to first time sd_ble_gap_conn_param_update is called (5 seconds). */
+#define NEXT_CONN_PARAMS_UPDATE_DELAY   APP_TIMER_TICKS(30000)                      /**< Time between each call to sd_ble_gap_conn_param_update after the first call (30 seconds). */
+#define MAX_CONN_PARAMS_UPDATE_COUNT    3                                           /**< Number of attempts before giving up the connection parameter negotiation. */
 
 NRF_BLE_GATT_DEF(m_gatt);                                                       /**< GATT module instance. */
 BLE_ADVERTISING_DEF(m_advertising);                                             /**< Advertising module instance. */
 
-// TODO
-/**@brief UUIDs which the central applications will scan for if the name above is set to an empty string,
- * and which will be advertised by the peripherals.
+/**@brief Function for handling a Connection Parameters error.
+ *
+ * @param[in] nrf_error  Error code containing information about what went wrong.
  */
-//static ble_uuid_t m_adv_uuids[] =
-//{
-//    {BLE_UUID_HEART_RATE_SERVICE,        BLE_UUID_TYPE_BLE},
-//    {BLE_UUID_RUNNING_SPEED_AND_CADENCE, BLE_UUID_TYPE_BLE}
-//};
-// YOUR_JOB: Use UUIDs for service(s) used in your application.
-//static ble_uuid_t m_adv_uuids[] =                                               /**< Universally unique service identifiers. */
-//{
-//    {BLE_UUID_DEVICE_INFORMATION_SERVICE, BLE_UUID_TYPE_BLE}
-//};
+static void conn_params_error_handler(uint32_t nrf_error)
+{
+    APP_ERROR_HANDLER(nrf_error);
+}
 
+/**@brief Function for initializing the Connection Parameters module.
+ */
+void conn_params_init(void)
+{
+    ret_code_t             err_code;
+    ble_conn_params_init_t cp_init;
 
+    memset(&cp_init, 0, sizeof(cp_init));
 
+    cp_init.p_conn_params                  = NULL;
+    cp_init.first_conn_params_update_delay = FIRST_CONN_PARAMS_UPDATE_DELAY;
+    cp_init.next_conn_params_update_delay  = NEXT_CONN_PARAMS_UPDATE_DELAY;
+    cp_init.max_conn_params_update_count   = MAX_CONN_PARAMS_UPDATE_COUNT;
+    cp_init.start_on_notify_cccd_handle    = BLE_GATT_HANDLE_INVALID;
+    cp_init.disconnect_on_fail             = true;
+    cp_init.evt_handler                    = NULL;
+    cp_init.error_handler                  = conn_params_error_handler;
+
+    err_code = ble_conn_params_init(&cp_init);
+    APP_ERROR_CHECK(err_code);
+}
 
  /**@brief Function for the GAP initialization.
  *
@@ -177,8 +208,6 @@ void advertising_init(void)
     init.advdata.name_type               = BLE_ADVDATA_FULL_NAME;
     init.advdata.include_appearance      = true;
     init.advdata.flags                   = BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE;
-    //init.advdata.uuids_complete.uuid_cnt = sizeof(m_adv_uuids) / sizeof(m_adv_uuids[0]);
-    //init.advdata.uuids_complete.p_uuids  = m_adv_uuids;
 
     init.config.ble_adv_fast_enabled  = true;
     init.config.ble_adv_fast_interval = APP_ADV_INTERVAL;
@@ -264,7 +293,7 @@ void on_ble_peripheral_evt(ble_evt_t const * p_ble_evt)
     switch (p_ble_evt->header.evt_id)
     {
         case BLE_GAP_EVT_CONNECTED:
-            NRF_LOG_INFO("Peripheral connected");
+            NRF_LOG_INFO("Peripheral connected on connection handle 0x%x", p_ble_evt->evt.gap_evt.conn_handle);
             bsp_board_led_off(PERIPHERAL_ADVERTISING_LED);
             bsp_board_led_on(PERIPHERAL_CONNECTED_LED);
             break;
@@ -367,4 +396,10 @@ ret_code_t send_remote_control_battery_level_to_client(uint8_t battery_level)
 ret_code_t send_playbulb_battery_level_to_client(uint8_t battery_level)
 {
     return playbulb_battery_level_send(&playbulb_service, battery_level);
+}
+
+ret_code_t set_playbulb_light_status(uint8_t status)
+{
+    playbulb_service_set_local_light_status(status);
+    return playbulb_service_light_status_send(&playbulb_service, status);
 }

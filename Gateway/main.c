@@ -43,6 +43,10 @@
 #include "central/central.h"
 #include "peripheral/peripheral.h"
 
+#include "nrf_log.h"
+#include "nrf_log_ctrl.h"
+#include "nrf_log_default_backends.h"
+
 #include "main.h"
 
 //static uint16_t m_conn_handle = BLE_CONN_HANDLE_INVALID;                        /**< Handle of the current connection. */
@@ -271,6 +275,7 @@ static void sleep_mode_enter(void)
  */
 static void ble_stack_init(void)
 {
+    //ble_opt_t conn_event_length_extension;
     ret_code_t err_code;
 
     err_code = nrf_sdh_enable_request();
@@ -285,6 +290,9 @@ static void ble_stack_init(void)
     // Enable BLE stack.
     err_code = nrf_sdh_ble_enable(&ram_start);
     APP_ERROR_CHECK(err_code);
+
+    //conn_event_length_extension.common_opt.conn_evt_ext.enable = 1;
+    //(void) sd_ble_opt_set(BLE_COMMON_OPT_CONN_EVT_EXT, &conn_event_length_extension);
 
     // Register a handler for BLE events.
     NRF_SDH_BLE_OBSERVER(m_ble_observer, APP_BLE_OBSERVER_PRIO, ble_evt_handler, NULL);
@@ -362,18 +370,16 @@ static void bsp_event_handler(bsp_event_t event)
  *
  * @param[out] p_erase_bonds  Will be true if the clear bonding button was pressed to wake the application up.
  */
-static void buttons_leds_init(bool * p_erase_bonds)
+static void buttons_leds_init()
 {
     ret_code_t err_code;
     bsp_event_t startup_event;
 
-    err_code = bsp_init(BSP_INIT_LED | BSP_INIT_BUTTONS, bsp_event_handler);
+    err_code = bsp_init(BSP_INIT_LED, bsp_event_handler);
     APP_ERROR_CHECK(err_code);
 
     err_code = bsp_btn_ble_init(NULL, &startup_event);
     APP_ERROR_CHECK(err_code);
-
-    *p_erase_bonds = (startup_event == BSP_EVENT_CLEAR_BONDING_DATA);
 }
 
 
@@ -401,12 +407,10 @@ static void power_manage(void)
  */
 int main(void)
 {
-    bool erase_bonds;
-
     // Initialize various services
     log_init();
     timers_init();
-    buttons_leds_init(&erase_bonds);
+    buttons_leds_init();
     ble_stack_init();
     gap_params_init();
     gatt_init();
@@ -421,15 +425,8 @@ int main(void)
     services_init();
     advertising_init();
 
-    if (erase_bonds == true)
-    {
-        // Scanning and advertising is done upon PM_EVT_PEERS_DELETE_SUCCEEDED event.
-        delete_bonds();
-    }
-    else
-    {
-        adv_scan_start();
-    }
+    // Start advertising and scanning
+    adv_scan_start();
 
     // Start execution.
     NRF_LOG_INFO("Novel Bits Gateway started.");

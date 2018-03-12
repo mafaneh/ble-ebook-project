@@ -100,5 +100,9 @@ void ble_playbulb_service_on_ble_evt(ble_playbulb_service_t * p_playbulb_service
 
 uint32_t playbulb_battery_level_send(ble_playbulb_service_t * p_playbulb_service, uint8_t battery_level);
 
+uint32_t playbulb_service_light_status_send(ble_playbulb_service_t * p_playbulb_service, uint8_t status);
+
+void playbulb_service_set_local_light_status(uint8_t status);
+
 #endif /* PLAYBULB_SERVICE_H */
 
