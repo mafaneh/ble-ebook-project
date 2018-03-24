@@ -17,6 +17,7 @@
 
 #include <string.h>
 
+#include "nrf_log.h"
 #include "button_service.h"
 
 static const uint8_t ButtonOnCharName[] = "Button ON press";
@@ -27,7 +28,7 @@ static const uint8_t ButtonOffCharName[] = "Button OFF press";
  * @param[in]   p_bas       Button service structure.
  * @param[in]   p_ble_evt   Event received from the BLE stack.
  */
-static void on_connect(ble_button_service_t * p_button_service, ble_evt_t * p_ble_evt)
+static void on_connect(ble_button_service_t * p_button_service, ble_evt_t const * p_ble_evt)
 {
     p_button_service->conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
 }
@@ -38,7 +39,7 @@ static void on_connect(ble_button_service_t * p_button_service, ble_evt_t * p_bl
  * @param[in]   p_bas       Button service structure.
  * @param[in]   p_ble_evt   Event received from the BLE stack.
  */
-static void on_disconnect(ble_button_service_t * p_button_service, ble_evt_t * p_ble_evt)
+static void on_disconnect(ble_button_service_t * p_button_service, ble_evt_t const * p_ble_evt)
 {
     UNUSED_PARAMETER(p_ble_evt);
     p_button_service->conn_handle = BLE_CONN_HANDLE_INVALID;
@@ -203,7 +204,7 @@ uint32_t ble_button_service_init(ble_button_service_t * p_button_service)
     return NRF_SUCCESS;
 }
 
-void ble_button_service_on_ble_evt(ble_button_service_t * p_button_service, ble_evt_t * p_ble_evt)
+void ble_button_service_on_ble_evt(ble_button_service_t * p_button_service, ble_evt_t const * p_ble_evt)
 {
     if (p_button_service == NULL || p_ble_evt == NULL)
     {
@@ -230,6 +231,7 @@ void button_characteristic_update(ble_button_service_t * p_button_service, uint8
 {
     if (p_button_service->conn_handle != BLE_CONN_HANDLE_INVALID)
     {
+        uint32_t err_code;
         uint16_t               len = sizeof (uint8_t);
         ble_gatts_hvx_params_t hvx_params;
         memset(&hvx_params, 0, sizeof(hvx_params));
@@ -247,6 +249,7 @@ void button_characteristic_update(ble_button_service_t * p_button_service, uint8
         hvx_params.p_len  = &len;
         hvx_params.p_data = (uint8_t*)button_action;
 
-        sd_ble_gatts_hvx(p_button_service->conn_handle, &hvx_params);
+        err_code = sd_ble_gatts_hvx(p_button_service->conn_handle, &hvx_params);
+        NRF_LOG_INFO("Error code is 0x%02x", err_code);
     }
 }

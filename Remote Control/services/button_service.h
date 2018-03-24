@@ -15,13 +15,6 @@
  *
  */
 
-/*
- * File:   button_service.h
- * Author: mafaneh
- *
- * Created on October 20, 2017, 11:01 AM
- */
-
 #ifndef BUTTON_SERVICE_H
 #define BUTTON_SERVICE_H
 
@@ -98,9 +91,8 @@ uint32_t ble_button_service_init(ble_button_service_t * p_button_service);
  * @param[in]   p_button_service  Button Service structure.
  * @param[in]   p_ble_evt         Event received from the BLE stack.
  */
-void ble_button_service_on_ble_evt(ble_button_service_t * p_button_service, ble_evt_t * p_ble_evt);
+void ble_button_service_on_ble_evt(ble_button_service_t * p_button_service, ble_evt_t const * p_ble_evt);
 
 void button_characteristic_update(ble_button_service_t * p_button_service, uint8_t pin_no, uint8_t *button_action);
 
 #endif /* BUTTON_SERVICE_H */
-
