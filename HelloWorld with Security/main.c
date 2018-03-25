@@ -175,7 +175,6 @@ static char * roles_str[] =
     "CENTRAL",
 };
 
-static bool button_notifications_enabled = false;
 static conn_peer_t        m_connected_peers[NRF_SDH_BLE_PERIPHERAL_LINK_COUNT];
 
 //Configure 2 buttons with pullup and detection on low state
@@ -302,20 +301,6 @@ static void gatt_init(void)
     APP_ERROR_CHECK(err_code);
 }
 
-void ble_simple_service_evt_handler(ble_simple_service_t * p_simple_service, ble_simple_evt_t * p_evt)
-{
-    switch (p_evt->evt_type)
-    {
-        case BLE_BUTTON_1_PRESS_EVT_NOTIFICATION_ENABLED:
-            button_notifications_enabled = true;
-            break;
-
-        case BLE_BUTTON_1_PRESS_EVT_NOTIFICATION_DISABLED:
-            button_notifications_enabled = false;
-            break;
-    }
-}
-
 /**@brief Function for initializing services that will be used by the application.
  */
 static void services_init(void)
@@ -323,7 +308,7 @@ static void services_init(void)
     uint32_t       err_code;
 
     // Initialize the Simple service
-    err_code = ble_simple_service_init(&m_simple_service, &ble_simple_service_evt_handler);
+    err_code = ble_simple_service_init(&m_simple_service, NULL);
     APP_ERROR_CHECK(err_code);
 }
 
@@ -339,10 +324,7 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_action)
             {
                 on_num_comp_button_press(true);
             }
-            if (button_notifications_enabled)
-            {
-                button_1_characteristic_update(&m_simple_service, &button_action);
-            }
+            button_1_characteristic_update(&m_simple_service, &button_action);
             break;
 
         case BUTTON_2:
