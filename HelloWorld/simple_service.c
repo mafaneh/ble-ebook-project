@@ -1,18 +1,18 @@
 /*
  * The MIT License (MIT)
  * Copyright (c) 2017 Novel Bits
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, 
+ * to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
- * 
+ *
  */
 
 #include <string.h>
@@ -23,16 +23,19 @@
 
 static const uint8_t Button1CharName[]   = "Button 1 press";
 static const uint8_t StoreValueCharName[] = "Store Value";
+static bool button_notifications_enabled = false;
 
 static void on_connect(ble_simple_service_t * p_simple_service, ble_evt_t const * p_ble_evt)
 {
     p_simple_service->conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
+    button_notifications_enabled = false;    
 }
 
 static void on_disconnect(ble_simple_service_t * p_simple_service, ble_evt_t const * p_ble_evt)
 {
     UNUSED_PARAMETER(p_ble_evt);
     p_simple_service->conn_handle = BLE_CONN_HANDLE_INVALID;
+    button_notifications_enabled = false;
 }
 
 static void on_write(ble_simple_service_t * p_simple_service, ble_evt_t const * p_ble_evt)
@@ -52,13 +55,15 @@ static void on_write(ble_simple_service_t * p_simple_service, ble_evt_t const * 
 
         if (ble_srv_is_notification_enabled(p_evt_write->data))
         {
-            NRF_LOG_INFO("Notification enabled for button 1 press");
+            NRF_LOG_INFO("Notifications ENABLED for button 1 press");
             evt.evt_type = BLE_BUTTON_1_PRESS_EVT_NOTIFICATION_ENABLED;
+            button_notifications_enabled = true;
         }
         else
         {
-            NRF_LOG_INFO("Notification enabled for button 1 press");
+            NRF_LOG_INFO("Notifications DISABLED for button 1 press");
             evt.evt_type = BLE_BUTTON_1_PRESS_EVT_NOTIFICATION_DISABLED;
+            button_notifications_enabled = false;
         }
 
         if (p_simple_service->evt_handler != NULL)
@@ -203,7 +208,7 @@ uint32_t ble_simple_service_init(ble_simple_service_t * p_simple_service, ble_si
     {
         return err_code;
     }
-    
+
     // Set up the UUID for the service (base + service-specific)
     ble_uuid.type = p_simple_service->uuid_type;
     ble_uuid.uuid = BLE_UUID_SIMPLE_SERVICE_UUID;
@@ -214,23 +219,23 @@ uint32_t ble_simple_service_init(ble_simple_service_t * p_simple_service, ble_si
     {
         return err_code;
     }
-    
+
     // Add the different characteristics in the service:
     //   Button 1 press characteristic:   E54B0002-67F5-479E-8711-B3B99198CE6C
-    //   Store Value characteristic:      E54B0003-67F5-479E-8711-B3B99198CE6C 
+    //   Store Value characteristic:      E54B0003-67F5-479E-8711-B3B99198CE6C
     err_code = button_1_press_char_add(p_simple_service);
     if (err_code != NRF_SUCCESS)
     {
         return err_code;
     }
-    
+
     err_code = store_value_char_add(p_simple_service);
     if (err_code != NRF_SUCCESS)
     {
         return err_code;
     }
-    
-    return NRF_SUCCESS;  
+
+    return NRF_SUCCESS;
 }
 
 void ble_simple_service_on_ble_evt(ble_simple_service_t * p_simple_service, ble_evt_t const * p_ble_evt)
@@ -265,34 +270,37 @@ void button_1_characteristic_update(ble_simple_service_t * p_simple_service, uin
 
     ble_gatts_value_t gatts_value;
 
-    // Initialize value struct.
-    memset(&gatts_value, 0, sizeof(gatts_value));
-
-    gatts_value.len     = sizeof(uint8_t);
-    gatts_value.offset  = 0;
-    gatts_value.p_value = button_action;
-    
-    // Update database.
-    err_code = sd_ble_gatts_value_set(p_simple_service->conn_handle,
-                                      p_simple_service->button_1_press_char_handles.value_handle,
-                                      &gatts_value);
-    APP_ERROR_CHECK(err_code);
-    
     if (p_simple_service->conn_handle != BLE_CONN_HANDLE_INVALID)
     {
-        NRF_LOG_INFO("Sending notification for button 1 press/release");
-        uint16_t               len = sizeof (uint8_t);
-        ble_gatts_hvx_params_t hvx_params;
-        memset(&hvx_params, 0, sizeof(hvx_params));
+        // Initialize value struct.
+        memset(&gatts_value, 0, sizeof(gatts_value));
 
-        hvx_params.handle = p_simple_service->button_1_press_char_handles.value_handle;
+        gatts_value.len     = sizeof(uint8_t);
+        gatts_value.offset  = 0;
+        gatts_value.p_value = button_action;
 
-        hvx_params.type   = BLE_GATT_HVX_NOTIFICATION;
-        hvx_params.offset = 0;
-        hvx_params.p_len  = &len;
-        hvx_params.p_data = (uint8_t*)button_action;
-
-        err_code = sd_ble_gatts_hvx(p_simple_service->conn_handle, &hvx_params);
+        // Update database.
+        err_code = sd_ble_gatts_value_set(p_simple_service->conn_handle,
+                                          p_simple_service->button_1_press_char_handles.value_handle,
+                                          &gatts_value);
         APP_ERROR_CHECK(err_code);
+
+        if (button_notifications_enabled)
+        {
+            NRF_LOG_INFO("Sending notification for button 1 press/release");
+            uint16_t               len = sizeof (uint8_t);
+            ble_gatts_hvx_params_t hvx_params;
+            memset(&hvx_params, 0, sizeof(hvx_params));
+
+            hvx_params.handle = p_simple_service->button_1_press_char_handles.value_handle;
+
+            hvx_params.type   = BLE_GATT_HVX_NOTIFICATION;
+            hvx_params.offset = 0;
+            hvx_params.p_len  = &len;
+            hvx_params.p_data = (uint8_t*)button_action;
+
+            err_code = sd_ble_gatts_hvx(p_simple_service->conn_handle, &hvx_params);
+            APP_ERROR_CHECK(err_code);
+        }
     }
 }
