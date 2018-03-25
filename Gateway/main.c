@@ -221,28 +221,10 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
  */
 static void timers_init(void)
 {
-    // Initialize timer module.
+    // Initialize timer module. NEEDED FOR LEDs and BUTTONS
     ret_code_t err_code = app_timer_init();
     APP_ERROR_CHECK(err_code);
-
-    // Create timers.
-//    err_code = app_timer_create(&m_battery_timer_id,
-//                                APP_TIMER_MODE_REPEATED,
-//                                battery_level_meas_timeout_handler);
-//    APP_ERROR_CHECK(err_code);
 }
-
-
-/**@brief Function for starting timers.
- */
-static void application_timers_start(void)
-{
-    /* YOUR_JOB: Start your timers. below is an example of how to start a timer.
-       ret_code_t err_code;
-       err_code = app_timer_start(m_app_timer_id, TIMER_INTERVAL, NULL);
-       APP_ERROR_CHECK(err_code); */
-}
-
 
 /**@brief Function for putting the chip into sleep mode.
  *
@@ -430,7 +412,6 @@ int main(void)
 
     // Start execution.
     NRF_LOG_INFO("Novel Bits Gateway started.");
-    application_timers_start();
 
     for (;;)
     {

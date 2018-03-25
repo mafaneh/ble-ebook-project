@@ -15,35 +15,6 @@
  *
  */
 
- //TODO
-/**@file
- *
- * @defgroup ble_hrs_c Thingy Client
- * @{
- * @ingroup  ble_sdk_srv
- * @brief    Garage Sensor Service Client module.
- *
- * @details  This module contains the APIs and types exposed by the Heart Rate Service Client
- *           module. These APIs and types can be used by the application to perform discovery of
- *           Heart Rate Service at the peer and interact with it.
- *
- * @warning  Currently this module only has support for Heart Rate Measurement characteristic. This
- *           means that it will be able to enable notification of the characteristic at the peer and
- *           be able to receive Heart Rate Measurement notifications from the peer. It does not
- *           support the Body Sensor Location and the Heart Rate Control Point characteristics.
- *           When a Heart Rate Measurement is received, this module will decode only the
- *           Heart Rate Measurement Value (both 8 bit and 16 bit) field from it and provide it to
- *           the application.
- *
- * @note    The application must register this module as BLE event observer using the
- *          NRF_SDH_BLE_OBSERVER macro. Example:
- *          @code
- *              ble_hrs_c_t instance;
- *              NRF_SDH_BLE_OBSERVER(anything, BLE_HRS_C_BLE_OBSERVER_PRIO,
- *                                   ble_hrs_c_on_ble_evt, &instance);
- *          @endcode
- */
-
 #ifndef REMOTE_CONTROL_C_H
 #define REMOTE_CONTROL_C_H
 
@@ -52,10 +23,6 @@
 #include "ble_db_discovery.h"
 #include "sdk_config.h"
 #include "nrf_sdh_ble.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 // <o> REMOTE_CONTROL_C_BLE_OBSERVER_PRIO
 // <i> Priority with which BLE events are dispatched to the Remote Control Client.
@@ -234,9 +201,5 @@ uint32_t remote_control_client_handles_assign(remote_control_client_t * p_remote
                                   uint16_t conn_handle,
                                   const remote_control_db_t * p_peer_remote_control_handles);
 
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif // REMOTE_CONTROL_C_H

@@ -37,6 +37,7 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
 #include "battery_voltage.h"
 #include "nrf_drv_saadc.h"
 #include "sdk_macros.h"
