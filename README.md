@@ -1,4 +1,5 @@
 # ble-ebook-project
+## Overview of folders and files
 The accompanying repository for the book: **"Bluetooth 5 &amp; Bluetooth Low Energy: A Developer's Guide"**
 
 In this repository, you will find a few different folders:
