@@ -23,6 +23,9 @@
 static const uint8_t ButtonOnCharName[] = "Button ON press";
 static const uint8_t ButtonOffCharName[] = "Button OFF press";
 
+static bool button_1_notifications_enabled = false;
+static bool button_2_notifications_enabled = false;
+
 /**@brief Function for handling the Connect event.
  *
  * @param[in]   p_bas       Button service structure.
@@ -31,6 +34,8 @@ static const uint8_t ButtonOffCharName[] = "Button OFF press";
 static void on_connect(ble_button_service_t * p_button_service, ble_evt_t const * p_ble_evt)
 {
     p_button_service->conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
+    button_1_notifications_enabled = false;
+    button_2_notifications_enabled = false;
 }
 
 
@@ -43,6 +48,50 @@ static void on_disconnect(ble_button_service_t * p_button_service, ble_evt_t con
 {
     UNUSED_PARAMETER(p_ble_evt);
     p_button_service->conn_handle = BLE_CONN_HANDLE_INVALID;
+    button_1_notifications_enabled = false;
+    button_2_notifications_enabled = false;
+}
+
+static void on_write(ble_button_service_t * p_button_service, ble_evt_t const * p_ble_evt)
+{
+    ble_gatts_evt_write_t const * p_evt_write = &p_ble_evt->evt.gatts_evt.params.write;
+
+    if (    (p_evt_write->handle == p_button_service->button_on_press_char_handles.cccd_handle)
+        &&  (p_evt_write->len == 2))
+    {
+        ble_button_evt_t evt;
+
+        if (ble_srv_is_notification_enabled(p_evt_write->data))
+        {
+            NRF_LOG_INFO("Notifications ENABLED for button 1 press");
+            evt.evt_type = BLE_BUTTON_ON_PRESS_EVT_NOTIFICATION_ENABLED;
+            button_1_notifications_enabled = true;
+        }
+        else
+        {
+            NRF_LOG_INFO("Notifications DISABLED for button 1 press");
+            evt.evt_type = BLE_BUTTON_ON_PRESS_EVT_NOTIFICATION_DISABLED;
+            button_1_notifications_enabled = false;
+        }
+    }
+    else if ((p_evt_write->handle == p_button_service->button_off_press_char_handles.cccd_handle)
+        &&  (p_evt_write->len == 2))
+    {
+        ble_button_evt_t evt;
+
+        if (ble_srv_is_notification_enabled(p_evt_write->data))
+        {
+            NRF_LOG_INFO("Notifications ENABLED for button 2 press");
+            evt.evt_type = BLE_BUTTON_OFF_PRESS_EVT_NOTIFICATION_ENABLED;
+            button_2_notifications_enabled = true;
+        }
+        else
+        {
+            NRF_LOG_INFO("Notifications DISABLED for button 2 press");
+            evt.evt_type = BLE_BUTTON_OFF_PRESS_EVT_NOTIFICATION_DISABLED;
+            button_2_notifications_enabled = false;
+        }
+    }
 }
 
 /**@brief Function for adding the Button ON press characteristic.
@@ -221,6 +270,10 @@ void ble_button_service_on_ble_evt(ble_button_service_t * p_button_service, ble_
             on_disconnect(p_button_service, p_ble_evt);
             break;
 
+        case BLE_GATTS_EVT_WRITE:
+            on_write(p_button_service, p_ble_evt);
+            break;
+
         default:
             // No implementation needed.
             break;
@@ -229,27 +282,63 @@ void ble_button_service_on_ble_evt(ble_button_service_t * p_button_service, ble_
 
 void button_characteristic_update(ble_button_service_t * p_button_service, uint8_t pin_no, uint8_t *button_action)
 {
+
+    uint32_t err_code = NRF_SUCCESS;
+
+    ble_gatts_value_t gatts_value;
+
     if (p_button_service->conn_handle != BLE_CONN_HANDLE_INVALID)
     {
-        uint32_t err_code;
-        uint16_t               len = sizeof (uint8_t);
-        ble_gatts_hvx_params_t hvx_params;
-        memset(&hvx_params, 0, sizeof(hvx_params));
+        uint16_t          value_handle;
 
-        if (pin_no == BUTTON_1)
-        {
-            hvx_params.handle = p_button_service->button_on_press_char_handles.value_handle;
-        }
-        else
-        {
-            hvx_params.handle = p_button_service->button_off_press_char_handles.value_handle;
-        }
-        hvx_params.type   = BLE_GATT_HVX_NOTIFICATION;
-        hvx_params.offset = 0;
-        hvx_params.p_len  = &len;
-        hvx_params.p_data = (uint8_t*)button_action;
+        // Initialize value struct.
+        memset(&gatts_value, 0, sizeof(gatts_value));
 
-        err_code = sd_ble_gatts_hvx(p_button_service->conn_handle, &hvx_params);
-        NRF_LOG_INFO("Error code is 0x%02x", err_code);
+        gatts_value.len     = sizeof(uint8_t);
+        gatts_value.offset  = 0;
+        gatts_value.p_value = button_action;
+
+        // Update database.
+        value_handle = pin_no == BUTTON_1 
+                                  ? p_button_service->button_on_press_char_handles.value_handle
+                                    : p_button_service->button_off_press_char_handles.value_handle;
+
+        err_code = sd_ble_gatts_value_set(p_button_service->conn_handle, value_handle, &gatts_value);
+        APP_ERROR_CHECK(err_code);
+
+        if (button_1_notifications_enabled)
+        {
+            NRF_LOG_INFO("Sending notification for button 1 press/release");
+            uint16_t               len = sizeof (uint8_t);
+            ble_gatts_hvx_params_t hvx_params;
+            memset(&hvx_params, 0, sizeof(hvx_params));
+
+            hvx_params.handle = value_handle;
+
+            hvx_params.type   = BLE_GATT_HVX_NOTIFICATION;
+            hvx_params.offset = 0;
+            hvx_params.p_len  = &len;
+            hvx_params.p_data = (uint8_t*)button_action;
+
+            err_code = sd_ble_gatts_hvx(p_button_service->conn_handle, &hvx_params);
+            APP_ERROR_CHECK(err_code);
+        }
+        else if (button_2_notifications_enabled)
+        {
+            NRF_LOG_INFO("Sending notification for button 2 press/release");
+            uint16_t               len = sizeof (uint8_t);
+            ble_gatts_hvx_params_t hvx_params;
+            memset(&hvx_params, 0, sizeof(hvx_params));
+
+            hvx_params.handle = value_handle;
+
+            hvx_params.type   = BLE_GATT_HVX_NOTIFICATION;
+            hvx_params.offset = 0;
+            hvx_params.p_len  = &len;
+            hvx_params.p_data = (uint8_t*)button_action;
+
+            err_code = sd_ble_gatts_hvx(p_button_service->conn_handle, &hvx_params);
+            APP_ERROR_CHECK(err_code);
+        }
     }
 }
