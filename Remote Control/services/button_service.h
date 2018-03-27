@@ -67,6 +67,7 @@ typedef struct ble_button_service_s
     uint16_t                         conn_handle;
     uint16_t                         service_handle;
     uint8_t                          uuid_type;
+//    ble_button_evt_handler_t  evt_handler;
     ble_gatts_char_handles_t         button_on_press_char_handles;
     ble_gatts_char_handles_t         button_off_press_char_handles;
 
