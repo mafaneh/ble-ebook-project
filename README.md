@@ -11,3 +11,8 @@ In this repository, you will find a few different folders:
 - **nRF5_SDK_14.2.0_17b948a**: nRF5 SDK snapshot (version 14.2.0).
 
 To get FREE sample chapters or purchase the book, visit this site: https://store.novelbits.io/
+
+## License
+The source code in this repository includes mixed/multiple Licenses:
+- Code written by Novel Bits is licensed under the MIT License.
+- Code taken from Nordic Semiconductor's example code and SDK is licensed with Nordic's License statement
