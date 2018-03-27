@@ -11,6 +11,7 @@ In this repository, you will find a few different folders:
 - **Remote Control**: Source code for the "Remote Control" device, which is part of the book's Main Project exercise.
 - **nRF5_SDK_14.2.0_17b948a**: nRF5 SDK snapshot (version 14.2.0).
 
+## "Bluetooth 5 and Bluetooth Low Energy: A Developer's Guide" book
 To get FREE sample chapters or purchase the book, visit this site: https://store.novelbits.io/
 
 ## License
