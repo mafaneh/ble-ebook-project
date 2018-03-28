@@ -14,7 +14,7 @@ In this repository, you will find a few different folders:
 ## "Bluetooth 5 and Bluetooth Low Energy: A Developer's Guide" book
 To get FREE sample chapters or purchase the book, visit this site: https://store.novelbits.io/
 
-## IMPORTANT NOTE: License
+## IMPORTANT NOTE: Licenses
 The source code in this repository includes mixed/multiple Licenses:
 - Code written by Novel Bits is licensed under the MIT License.
 - Code taken from Nordic Semiconductor's example code and SDK is licensed under Nordic's License statements.
