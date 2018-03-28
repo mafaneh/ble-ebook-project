@@ -1,6 +1,6 @@
 # ble-ebook-project
 ## Overview of folders and files
-This is the companion repository for the book: **"Bluetooth 5 &amp; Bluetooth Low Energy: A Developer's Guide"**
+This is the companion repository for the e-book: **"Bluetooth 5 &amp; Bluetooth Low Energy: A Developer's Guide"**
 
 In this repository, you will find a few different folders:
 - **Ellisys sniffer captures**: Capture files that the reader can view in the Ellisys Analyzer Software and analyze to get a better understanding of Bluetooth Low Energy and Bluetooth 5.
@@ -11,7 +11,7 @@ In this repository, you will find a few different folders:
 - **Remote Control**: Source code for the "Remote Control" device, which is part of the book's Main Project (Home Automation) exercise.
 - **nRF5_SDK_14.2.0_17b948a**: nRF5 SDK snapshot (version 14.2.0).
 
-## The "Bluetooth 5 and Bluetooth Low Energy: A Developer's Guide" book
+## The "Bluetooth 5 and Bluetooth Low Energy: A Developer's Guide" e-book
 **The FIRST and ONLY practical Bluetooth Low Energy developer guide!**
 
 Stop reading books that sound good on paper, but leave you wondering how to get started with development!
@@ -28,6 +28,7 @@ The book covers the following topics:
 - Debugging device communication and connections
 - Practical examples using the Nordic nRF52840 chipset
 - Complete source code for building the Main Project for the book
+- 12 Video tutorials including: using the nRF Sniffer, the Ellisys Bluetooth Tracker, the Nordic Power Profiler Kit, and others!
 
 To get FREE sample chapters or purchase the book, visit this site: https://store.novelbits.io/
 
