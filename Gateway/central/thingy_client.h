@@ -24,24 +24,6 @@
 #include "sdk_config.h"
 #include "nrf_sdh_ble.h"
 
-// <o> THINGY_C_BLE_OBSERVER_PRIO
-// <i> Priority with which BLE events are dispatched to the Thingy Client.
-
-#ifndef THINGY_C_BLE_OBSERVER_PRIO
-#define THINGY_C_BLE_OBSERVER_PRIO 2
-#endif
-
-/**@brief   Macro for defining a thingy_c instance.
- *
- * @param   _name   Name of the instance.
- * @hideinitializer
- */
-#define THINGY_C_DEF(_name)                                                                        \
-static thingy_clients_t _name;                                                                           \
-NRF_SDH_BLE_OBSERVER(_name ## _obs,                                                                 \
-                     THINGY_C_BLE_OBSERVER_PRIO,                                                   \
-                     thingy_client_on_ble_evt, &_name)
-
 
 /**@brief Thingy Client event type. */
 typedef enum

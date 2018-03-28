@@ -45,7 +45,7 @@ void advertising_init(void);
 
 /**@brief Function for starting advertising.
  */
-void advertising_start(bool erase_bonds);
+void advertising_start();
 
 /**@brief Function for restarting advertising without whitelist.
  */

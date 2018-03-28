@@ -54,16 +54,16 @@ NRF_LOG_MODULE_REGISTER();
 #define CENTRAL_SCANNING_LED            BSP_BOARD_LED_0
 #define CENTRAL_CONNECTED_LED           BSP_BOARD_LED_1
 
-#define SCAN_INTERVAL                   0x0018                                      /**< Determines scan interval in units of 0.625 millisecond. */
-#define SCAN_WINDOW                     0x0018                                      /**< Determines scan window in units of 0.625 millisecond. */
+#define SCAN_INTERVAL                   0x00A0                                      /**< Determines scan interval in units of 0.625 millisecond. */
+#define SCAN_WINDOW                     0x0050                                      /**< Determines scan window in units of 0.625 millisecond. */
 #define SCAN_TIMEOUT                    0
 
-#define MIN_CONNECTION_INTERVAL         (uint16_t) MSEC_TO_UNITS(30, UNIT_1_25_MS) /**< Determines minimum connection interval in milliseconds. */
-#define MAX_CONNECTION_INTERVAL         (uint16_t) MSEC_TO_UNITS(100, UNIT_1_25_MS)  /**< Determines maximum connection interval in milliseconds. */
-#define SLAVE_LATENCY                   0                                           /**< Determines slave latency in terms of connection events. */
+#define MIN_CONNECTION_INTERVAL         (uint16_t) MSEC_TO_UNITS(15, UNIT_1_25_MS) /**< Determines minimum connection interval in milliseconds. */
+#define MAX_CONNECTION_INTERVAL         (uint16_t) MSEC_TO_UNITS(15, UNIT_1_25_MS)  /**< Determines maximum connection interval in milliseconds. */
+#define SLAVE_LATENCY                   9                                           /**< Determines slave latency in terms of connection events. */
 #define SUPERVISION_TIMEOUT             (uint16_t) MSEC_TO_UNITS(4000, UNIT_10_MS)  /**< Determines supervision time-out in units of 10 milliseconds. */
 
-BLE_DB_DISCOVERY_ARRAY_DEF(m_db_discovery, 4);                      /**< Database discovery module instances. */
+BLE_DB_DISCOVERY_ARRAY_DEF(m_db_discovery, 6);                      /**< Database discovery module instances. */
 
 static uint16_t m_conn_handle_thingy_client  = BLE_CONN_HANDLE_INVALID;          /**< Connection handle for the Thingy client application */
 static uint16_t m_conn_handle_remote_control_client = BLE_CONN_HANDLE_INVALID;   /**< Connection handle for the Remote Control client application */
@@ -74,10 +74,9 @@ static thingy_client_t         m_thingy_client;
 static remote_control_client_t m_remote_control_client;
 static playbulb_client_t       m_playbulb_client;
 
-BLE_BAS_C_DEF(m_bas_client);
-//BLE_BAS_C_DEF(m_bas_thingy_client);                                                 /**< Battery Service client module instance. */
-//BLE_BAS_C_DEF(m_bas_remote_control_client);                                                 /**< Battery Service client module instance. */
-//BLE_BAS_C_DEF(m_bas_playbulb_client);                                                 /**< Battery Service client module instance. */
+BLE_BAS_C_DEF(m_bas_thingy_client);                                                 /**< Battery Service client module instance. */
+BLE_BAS_C_DEF(m_bas_remote_control_client);                                         /**< Battery Service client module instance. */
+BLE_BAS_C_DEF(m_bas_playbulb_client);                                               /**< Battery Service client module instance. */
 
 uint8_t m_thingy_battery_level;
 uint8_t m_playbulb_battery_level;
@@ -127,12 +126,11 @@ static void db_disc_handler(ble_db_discovery_evt_t * p_evt)
 {
     // Call event handlers for each of the peripherals (Thingy:52, Remote Control, Playbulb Candle)
     thingy_on_db_disc_evt(&m_thingy_client, p_evt);
-    //ble_bas_on_db_disc_evt(&m_bas_thingy_client, p_evt);
+    ble_bas_on_db_disc_evt(&m_bas_thingy_client, p_evt);
     playbulb_on_db_disc_evt(&m_playbulb_client, p_evt);
-    //ble_bas_on_db_disc_evt(&m_bas_playbulb_client, p_evt);
+    ble_bas_on_db_disc_evt(&m_bas_playbulb_client, p_evt);
     remote_control_on_db_disc_evt(&m_remote_control_client, p_evt);
-    //ble_bas_on_db_disc_evt(&m_bas_remote_control_client, p_evt);
-    ble_bas_on_db_disc_evt(&m_bas_client, p_evt);
+    ble_bas_on_db_disc_evt(&m_bas_remote_control_client, p_evt);
 }
 
 /**
@@ -199,12 +197,14 @@ static void bas_c_thingy_evt_handler(ble_bas_c_t * p_bas_c, ble_bas_c_evt_t * p_
 
         case BLE_BAS_C_EVT_BATT_NOTIFICATION:
             NRF_LOG_DEBUG("Battery Level received from Thingy %d %%", p_bas_c_evt->params.battery_level);
-            send_garage_sensor_battery_level_to_client(p_bas_c_evt->params.battery_level);
+            m_thingy_battery_level = p_bas_c_evt->params.battery_level;
+            send_garage_sensor_battery_level_to_client(m_thingy_battery_level);
             break;
 
         case BLE_BAS_C_EVT_BATT_READ_RESP:
             NRF_LOG_DEBUG("Battery Level of Thingy Read as %d %%", p_bas_c_evt->params.battery_level);
-            //TODO: Need to store the battery level value
+            m_thingy_battery_level = p_bas_c_evt->params.battery_level;
+            send_garage_sensor_battery_level_to_client(m_thingy_battery_level);
             break;
 
         default:
@@ -283,7 +283,7 @@ static void bas_c_evt_handler(ble_bas_c_t * p_bas_c, ble_bas_c_evt_t * p_bas_c_e
 
         case BLE_BAS_C_EVT_BATT_READ_RESP:
             NRF_LOG_DEBUG("Battery Level Read as %d %%", p_bas_c_evt->params.battery_level);
-                        if (p_bas_c_evt->conn_handle == m_conn_handle_thingy_client)
+            if (p_bas_c_evt->conn_handle == m_conn_handle_thingy_client)
             {
                 m_thingy_battery_level = p_bas_c_evt->params.battery_level;
                 send_garage_sensor_battery_level_to_client(m_thingy_battery_level);
@@ -344,13 +344,14 @@ static void bas_c_remote_control_evt_handler(ble_bas_c_t * p_bas_c, ble_bas_c_ev
 
         case BLE_BAS_C_EVT_BATT_NOTIFICATION:
             NRF_LOG_DEBUG("Battery Level received from Remote Control %d %%", p_bas_c_evt->params.battery_level);
-            send_remote_control_battery_level_to_client(p_bas_c_evt->params.battery_level);
-            //TODO: store the battery level locally and send it to the Client
+            m_remote_control_battery_level = p_bas_c_evt->params.battery_level;
+            send_remote_control_battery_level_to_client(m_remote_control_battery_level);
             break;
 
         case BLE_BAS_C_EVT_BATT_READ_RESP:
             NRF_LOG_INFO("Battery Level of Remote Control Read as %d %%", p_bas_c_evt->params.battery_level);
-            //TODO: store the battery level locally and send it to the Client
+            m_remote_control_battery_level = p_bas_c_evt->params.battery_level;
+            send_remote_control_battery_level_to_client(m_remote_control_battery_level);
             break;
 
         default:
@@ -397,13 +398,14 @@ static void bas_c_playbulb_evt_handler(ble_bas_c_t * p_bas_c, ble_bas_c_evt_t * 
 
         case BLE_BAS_C_EVT_BATT_NOTIFICATION:
             NRF_LOG_DEBUG("Battery Level received from Playbulb %d %%", p_bas_c_evt->params.battery_level);
-            send_playbulb_battery_level_to_client(p_bas_c_evt->params.battery_level);
-            //TODO: store the battery level locally and send it to the Client
+            m_playbulb_battery_level = p_bas_c_evt->params.battery_level;
+            send_playbulb_battery_level_to_client(m_playbulb_battery_level);
             break;
 
         case BLE_BAS_C_EVT_BATT_READ_RESP:
             NRF_LOG_INFO("Battery Level of Playbulb Read as %d %%", p_bas_c_evt->params.battery_level);
-            //TODO: store the battery level locally and send it to the Client
+            m_playbulb_battery_level = p_bas_c_evt->params.battery_level;
+            send_playbulb_battery_level_to_client(m_playbulb_battery_level);
             break;
 
         default:
@@ -549,7 +551,7 @@ static void remote_control_c_evt_handler(remote_control_client_t * p_remote_cont
     }
 }
 
-/**@brief Handles events coming from the Thingy central module.
+/**@brief Handles events coming from the Playbulb Client module.
  */
 static void playbulb_c_evt_handler(playbulb_client_t * p_playbulb_c, playbulb_client_evt_t * p_playbulb_c_evt)
 {
@@ -562,7 +564,7 @@ static void playbulb_c_evt_handler(playbulb_client_t * p_playbulb_c, playbulb_cl
                 ret_code_t err_code;
 
                 m_conn_handle_playbulb_client = p_playbulb_c_evt->conn_handle;
-                NRF_LOG_INFO("Playbulb Service discovered on conn_handle 0x%x", m_conn_handle_playbulb_client);
+                NRF_LOG_INFO("Playbulb Light Service discovered on conn_handle 0x%x", m_conn_handle_playbulb_client);
 
                 err_code = playbulb_client_handles_assign(p_playbulb_c,
                                                     m_conn_handle_playbulb_client,
@@ -585,7 +587,6 @@ void central_init(void)
     thingy_client_init_t         thingy_init_obj;
     remote_control_client_init_t remote_control_init_obj;
     playbulb_client_init_t       playbulb_init_obj;
-    ble_bas_c_init_t             bas_c_init_obj;
     ble_bas_c_init_t             bas_c_init_thingy_obj;
     ble_bas_c_init_t             bas_c_init_remote_control_obj;
     ble_bas_c_init_t             bas_c_init_playbulb_obj;
@@ -593,7 +594,6 @@ void central_init(void)
     thingy_init_obj.evt_handler                 = thingy_c_evt_handler;
     remote_control_init_obj.evt_handler         = remote_control_c_evt_handler;
     playbulb_init_obj.evt_handler               = playbulb_c_evt_handler;
-    bas_c_init_obj.evt_handler                  = bas_c_evt_handler;
     bas_c_init_thingy_obj.evt_handler           = bas_c_thingy_evt_handler;
     bas_c_init_remote_control_obj.evt_handler   = bas_c_remote_control_evt_handler;
     bas_c_init_playbulb_obj.evt_handler         = bas_c_playbulb_evt_handler;
@@ -613,14 +613,12 @@ void central_init(void)
     APP_ERROR_CHECK(err_code);
 
     // Initialize the Battery Service clients
-    err_code = ble_bas_c_init(&m_bas_client, &bas_c_init_obj);
+    err_code = ble_bas_c_init(&m_bas_thingy_client, &bas_c_init_thingy_obj);
     APP_ERROR_CHECK(err_code);
-//    err_code = ble_bas_c_init(&m_bas_thingy_client, &bas_c_init_thingy_obj);
-//    APP_ERROR_CHECK(err_code);
-//    err_code = ble_bas_c_init(&m_bas_remote_control_client, &bas_c_init_remote_control_obj);
-//    APP_ERROR_CHECK(err_code);
-//    err_code = ble_bas_c_init(&m_bas_playbulb_client, &bas_c_init_playbulb_obj);
-//    APP_ERROR_CHECK(err_code);
+    err_code = ble_bas_c_init(&m_bas_remote_control_client, &bas_c_init_remote_control_obj);
+    APP_ERROR_CHECK(err_code);
+    err_code = ble_bas_c_init(&m_bas_playbulb_client, &bas_c_init_playbulb_obj);
+    APP_ERROR_CHECK(err_code);
 }
 
 /**@brief   Function for handling BLE events from central applications.

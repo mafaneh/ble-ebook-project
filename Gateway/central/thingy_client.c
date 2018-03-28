@@ -122,12 +122,12 @@ static void tx_buffer_process(void)
 
 /**@brief     Function for handling write response events.
  *
- * @param[in] p_thingy_client Pointer to the Heart Rate Client structure.
+ * @param[in] p_thingy_client Pointer to the Thingy Client structure.
  * @param[in] p_ble_evt       Pointer to the BLE event received.
  */
 static void on_write_rsp(thingy_client_t * p_thingy_client, const ble_evt_t * p_ble_evt)
 {
-    // Check if the event if on the link for this instance
+    // Check if the event on the link for this instance
     if (p_thingy_client->conn_handle != p_ble_evt->evt.gattc_evt.conn_handle)
     {
         return;
@@ -139,10 +139,9 @@ static void on_write_rsp(thingy_client_t * p_thingy_client, const ble_evt_t * p_
 
 /**@brief     Function for handling Handle Value Notification received from the SoftDevice.
  *
- * @details   This function will uses the Handle Value Notification received from the SoftDevice
- *            and checks if it is a notification of the heart rate measurement from the peer. If
- *            it is, this function will decode the heart rate measurement and send it to the
- *            application.
+ * @details   This function will use the Handle Value Notification received from the SoftDevice
+ *            and checks if it is a notification of the Humidity level or Temperature reading from the peer. If
+ *            it is, this function will decode value and send it to the application.
  *
  * @param[in] p_thingy_client Pointer to the Thingy Client structure.
  * @param[in] p_ble_evt   Pointer to the BLE event received.
@@ -152,8 +151,6 @@ static void on_hvx(thingy_client_t * p_thingy_client, const ble_evt_t * p_ble_ev
     // Check if the event is on the link for this instance
     if (p_thingy_client->conn_handle != p_ble_evt->evt.gattc_evt.conn_handle)
     {
-//        NRF_LOG_DEBUG("Received HVX on link 0x%x, not associated to this instance, ignore",
-//                      p_ble_evt->evt.gattc_evt.conn_handle);
         return;
     }
 
@@ -161,8 +158,6 @@ static void on_hvx(thingy_client_t * p_thingy_client, const ble_evt_t * p_ble_ev
     if (p_ble_evt->evt.gattc_evt.params.hvx.handle == p_thingy_client->peer_thingy_db.temp_handle)
     {
         thingy_client_evt_t thingy_client_evt;
-
-        //NRF_LOG_INFO("Temperature notification received");
 
         thingy_client_evt.evt_type     = THINGY_CLIENT_EVT_TEMP_NOTIFICATION;
         thingy_client_evt.conn_handle  = p_thingy_client->conn_handle;
@@ -175,8 +170,6 @@ static void on_hvx(thingy_client_t * p_thingy_client, const ble_evt_t * p_ble_ev
     else if (p_ble_evt->evt.gattc_evt.params.hvx.handle == p_thingy_client->peer_thingy_db.humidity_handle)
     {
         thingy_client_evt_t thingy_client_evt;
-
-        //NRF_LOG_INFO("Humidity notification received");
 
         thingy_client_evt.evt_type     = THINGY_CLIENT_EVT_HUMIDITY_NOTIFICATION;
         thingy_client_evt.conn_handle  = p_thingy_client->conn_handle;
@@ -224,7 +217,6 @@ void thingy_on_db_disc_evt(thingy_client_t * p_thingy_client, const ble_db_disco
         p_evt->params.discovered_db.srv_uuid.uuid == BLE_UUID_ENVIRONMENT_SERVICE_UUID &&
         p_evt->params.discovered_db.srv_uuid.type == p_thingy_client->service_uuid.type)
     {
-        // Find the CCCD Handle of the Temperature Measurement characteristic.
         uint32_t i;
 
         thingy_client_evt_t evt;
@@ -379,7 +371,7 @@ uint32_t thingy_client_humidity_notify_enable(thingy_client_t * p_thingy_client)
 {
     VERIFY_PARAM_NOT_NULL(p_thingy_client);
 
-    NRF_LOG_INFO("Enabling notifications for Humidity readings from Thingy");
+    NRF_LOG_INFO("Enabling notifications for Humidity level from Thingy");
 
     return cccd_configure(p_thingy_client->conn_handle,
                           p_thingy_client->peer_thingy_db.humidity_cccd_handle,

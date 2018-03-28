@@ -299,8 +299,8 @@ uint32_t playbulb_client_turn_on(playbulb_client_t * p_playbulb_client)
     p_msg->req.write_req.gattc_params.p_value  = p_msg->req.write_req.gattc_value;
     p_msg->req.write_req.gattc_params.offset   = 0;
     p_msg->req.write_req.gattc_params.write_op = BLE_GATT_OP_WRITE_CMD;
-    p_msg->req.write_req.gattc_value[0]        = 0xFF;
-    p_msg->req.write_req.gattc_value[1]        = 0x00;
+    p_msg->req.write_req.gattc_value[0]        = 0x00;
+    p_msg->req.write_req.gattc_value[1]        = 0xFF;
     p_msg->req.write_req.gattc_value[2]        = 0x00;
     p_msg->req.write_req.gattc_value[3]        = 0x00;
     p_msg->conn_handle                         = p_playbulb_client->conn_handle;

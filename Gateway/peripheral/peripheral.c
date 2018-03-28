@@ -63,12 +63,12 @@ static ble_remote_control_service_t remote_control_service;
 
 #define DEVICE_NAME                     "NovelBits GW"                       /**< Name of device. Will be included in the advertising data. */
 #define MANUFACTURER_NAME               "NordicSemiconductor"                   /**< Manufacturer. Will be passed to Device Information Service. */
-#define APP_ADV_INTERVAL                480                                     /**< The advertising interval (in units of 0.625 ms). */
+#define APP_ADV_INTERVAL                32                                     /**< The advertising interval (in units of 0.625 ms). */
 #define APP_ADV_TIMEOUT_IN_SECONDS      0                                     /**< The advertising timeout in units of seconds. */
 
-#define MIN_CONNECTION_INTERVAL         (uint16_t) MSEC_TO_UNITS(60, UNIT_1_25_MS) /**< Determines minimum connection interval in milliseconds. */
-#define MAX_CONNECTION_INTERVAL         (uint16_t) MSEC_TO_UNITS(120, UNIT_1_25_MS)  /**< Determines maximum connection interval in milliseconds. */
-#define SLAVE_LATENCY                   2                                           /**< Determines slave latency in terms of connection events. */
+#define MIN_CONNECTION_INTERVAL         (uint16_t) MSEC_TO_UNITS(15, UNIT_1_25_MS) /**< Determines minimum connection interval in milliseconds. */
+#define MAX_CONNECTION_INTERVAL         (uint16_t) MSEC_TO_UNITS(15, UNIT_1_25_MS)  /**< Determines maximum connection interval in milliseconds. */
+#define SLAVE_LATENCY                   0                                           /**< Determines slave latency in terms of connection events. */
 #define SUPERVISION_TIMEOUT             (uint16_t) MSEC_TO_UNITS(4000, UNIT_10_MS)  /**< Determines supervision time-out in units of 10 milliseconds. */
 
 #define FIRST_CONN_PARAMS_UPDATE_DELAY  APP_TIMER_TICKS(5000)                       /**< Time from initiating event (connect or start of notification) to first time sd_ble_gap_conn_param_update is called (5 seconds). */
@@ -101,7 +101,7 @@ void conn_params_init(void)
     cp_init.next_conn_params_update_delay  = NEXT_CONN_PARAMS_UPDATE_DELAY;
     cp_init.max_conn_params_update_count   = MAX_CONN_PARAMS_UPDATE_COUNT;
     cp_init.start_on_notify_cccd_handle    = BLE_GATT_HANDLE_INVALID;
-    cp_init.disconnect_on_fail             = true;
+    cp_init.disconnect_on_fail             = false;
     cp_init.evt_handler                    = NULL;
     cp_init.error_handler                  = conn_params_error_handler;
 
@@ -237,19 +237,11 @@ static void delete_bonds(void)
 
 /**@brief Function for starting advertising.
  */
-void advertising_start(bool erase_bonds)
+void advertising_start()
 {
-    if (erase_bonds == true)
-    {
-        delete_bonds();
-        // Advertising is started by PM_EVT_PEERS_DELETED_SUCEEDED event
-    }
-    else
-    {
-        ret_code_t err_code = ble_advertising_start(&m_advertising, BLE_ADV_MODE_FAST);
+    ret_code_t err_code = ble_advertising_start(&m_advertising, BLE_ADV_MODE_FAST);
 
-        APP_ERROR_CHECK(err_code);
-    }
+    APP_ERROR_CHECK(err_code);
 }
 
 /**@brief Function for restarting advertising without whitelist.
@@ -366,6 +358,12 @@ void on_ble_peripheral_evt(ble_evt_t const * p_ble_evt)
                 }
             }
         } break; // BLE_GATTS_EVT_RW_AUTHORIZE_REQUEST
+
+        case BLE_GATTS_EVT_SYS_ATTR_MISSING:
+            // No system attributes have been stored.
+            err_code = sd_ble_gatts_sys_attr_set(p_ble_evt->evt.gap_evt.conn_handle, NULL, 0, 0);
+            APP_ERROR_CHECK(err_code);
+            break;
 
         default:
             // No implementation needed.
