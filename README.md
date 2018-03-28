@@ -17,4 +17,4 @@ To get FREE sample chapters or purchase the book, visit this site: https://store
 ## IMPORTANT NOTE: License
 The source code in this repository includes mixed/multiple Licenses:
 - Code written by Novel Bits is licensed under the MIT License.
-- Code taken from Nordic Semiconductor's example code and SDK is licensed with Nordic's License statement
+- Code taken from Nordic Semiconductor's example code and SDK is licensed under Nordic's License statements.
