@@ -249,7 +249,6 @@ void button_characteristic_update(ble_button_service_t * p_button_service, uint8
         hvx_params.p_len  = &len;
         hvx_params.p_data = (uint8_t*)button_action;
 
-        err_code = sd_ble_gatts_hvx(p_button_service->conn_handle, &hvx_params);
-        NRF_LOG_INFO("Error code is 0x%02x", err_code);
+        sd_ble_gatts_hvx(p_button_service->conn_handle, &hvx_params);
     }
 }
