@@ -11,7 +11,24 @@ In this repository, you will find a few different folders:
 - **Remote Control**: Source code for the "Remote Control" device, which is part of the book's Main Project (Home Automation) exercise.
 - **nRF5_SDK_14.2.0_17b948a**: nRF5 SDK snapshot (version 14.2.0).
 
-## "Bluetooth 5 and Bluetooth Low Energy: A Developer's Guide" book
+## The "Bluetooth 5 and Bluetooth Low Energy: A Developer's Guide" book
+**The FIRST and ONLY practical Bluetooth Low Energy developer guide!**
+
+Stop reading books that sound good on paper, but leave you wondering how to get started with development!
+
+This ebook will guide you through building a complete Home Automation project while learning the basics and advanced aspects of Bluetooth 5 and Bluetooth Low Energy development. You will also get access to the full source code used to build the project.
+
+The book covers the following topics:
+
+- Basics of Bluetooth Low Energy and Bluetooth 5
+- Utilizing Bluetooth 5 to achieve 2x speed, 4x range, and 8x advertising capacity
+- Designing your GATT, GAP and optimizing the different system parameters
+- Tutorials for using the essential tools for developing for Bluetooth Low Energy
+- Achieving optimum power consumption and battery life
+- Debugging device communication and connections
+- Practical examples using the Nordic nRF52840 chipset
+- Complete source code for building the Main Project for the book
+
 To get FREE sample chapters or purchase the book, visit this site: https://store.novelbits.io/
 
 ## IMPORTANT NOTE: Licenses
