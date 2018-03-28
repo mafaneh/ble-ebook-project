@@ -28,7 +28,7 @@ The book covers the following topics:
 - Debugging device communication and connections
 - Practical examples using the Nordic nRF52840 chipset
 - Complete source code for building the Main Project for the book
-- 12 Video tutorials including: using the nRF Sniffer, the Ellisys Bluetooth Tracker, the Nordic Power Profiler Kit, and others!
+- **12 Video tutorials including: using the nRF Sniffer, the Ellisys Bluetooth Tracker, the Nordic Power Profiler Kit, and others!**
 
 To get FREE sample chapters or purchase the book, visit this site: https://store.novelbits.io/
 
