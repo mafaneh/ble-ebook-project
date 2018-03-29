@@ -14,9 +14,9 @@ In this repository, you will find a few different folders:
 ## The "Bluetooth 5 and Bluetooth Low Energy: A Developer's Guide" e-book
 **The FIRST and ONLY practical Bluetooth Low Energy developer guide!**
 
-Stop reading books that sound good on paper, but leave you wondering how to get started with development!
+_Stop reading books that sound good on paper, but leave you wondering how to get started with development!_
 
-This ebook will guide you through building a complete Home Automation project while learning the basics and advanced aspects of Bluetooth 5 and Bluetooth Low Energy development. You will also get access to the full source code used to build the project.
+This **230+ page** e-book will guide you through building a complete Home Automation project while learning the basics and advanced aspects of Bluetooth 5 and Bluetooth Low Energy development. You also get access to the full source code used to build the project as well as **12 Video Tutorials**.
 
 The book covers the following topics:
 
@@ -28,7 +28,7 @@ The book covers the following topics:
 - Debugging device communication and connections
 - Practical examples using the Nordic nRF52840 chipset
 - Complete source code for building the Main Project for the book
-- **12 Video tutorials including: using the nRF Sniffer, the Ellisys Bluetooth Tracker, the Nordic Power Profiler Kit, and others!**
+- **12 Video tutorials including: using the nRF Sniffer, the Ellisys Bluetooth Tracker, the Nordic Power Profiler Kit, and others.**
 
 To get FREE sample chapters or purchase the book, visit this site: https://store.novelbits.io/
 
