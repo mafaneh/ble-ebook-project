@@ -9,6 +9,7 @@ In this repository, you will find a few different folders:
 - **HelloWorld**: A simple BLE "Hello World" example.
 - **Main Project SES files**: Main Project Segger Embedded Studio (SES) Solution and Project files.
 - **Remote Control**: Source code for the "Remote Control" device, which is part of the book's Main Project (Home Automation) exercise.
+- **Video Tutorials PDFs**: PDFs for the Video Tutorials.
 - **nRF5_SDK_14.2.0_17b948a**: nRF5 SDK snapshot (version 14.2.0).
 
 ## The "Bluetooth 5 and Bluetooth Low Energy: A Developer's Guide" e-book
