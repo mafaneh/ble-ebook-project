@@ -100,8 +100,8 @@ int8_t find_adv_name(ble_gap_evt_adv_report_t const * p_adv_report, char const *
     data_t     dev_name;
 
     // Initialize advertisement report for parsing
-    adv_data.p_data   = (uint8_t *)p_adv_report->data;
-    adv_data.data_len = p_adv_report->dlen;
+    adv_data.p_data   = (uint8_t *)p_adv_report->data.p_data;
+    adv_data.data_len = p_adv_report->data.len;
 
     //search for advertising names
     err_code = adv_report_parse(BLE_GAP_AD_TYPE_COMPLETE_LOCAL_NAME, &adv_data, &dev_name);
@@ -136,8 +136,8 @@ bool find_adv_uuid(ble_gap_evt_adv_report_t const * p_adv_report, uint16_t uuid_
     data_t     type_data;
 
     // Initialize advertisement report for parsing.
-    adv_data.p_data   = (uint8_t *)p_adv_report->data;
-    adv_data.data_len = p_adv_report->dlen;
+    adv_data.p_data   = (uint8_t *)p_adv_report->data.p_data;
+    adv_data.data_len = p_adv_report->data.len;
 
     err_code = adv_report_parse(BLE_GAP_AD_TYPE_16BIT_SERVICE_UUID_MORE_AVAILABLE,
                                 &adv_data,

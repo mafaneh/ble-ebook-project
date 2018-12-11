@@ -43,6 +43,9 @@
 
 #include <nrfx.h>
 
+#define UARTE_PRESENT
+#define NRFX_UARTE_ENABLED 1
+
 #if defined(UARTE_PRESENT) && NRFX_CHECK(NRFX_UARTE_ENABLED)
     #define NRF_DRV_UART_WITH_UARTE
 #endif

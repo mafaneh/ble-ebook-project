@@ -27,7 +27,7 @@
 #define NRF_LOG_INFO_COLOR CENTRAL_CONFIG_INFO_COLOR
 #define NRF_LOG_DEBUG_COLOR CENTRAL_CONFIG_DEBUG_COLOR
 #else //CENTRAL_CONFIG_LOG_ENABLED
-#define NRF_LOG_LEVEL 0
+#define NRF_LOG_LEVEL 3
 #endif //CENTRAL_CONFIG_LOG_ENABLED
 #include "nrf_log.h"
 NRF_LOG_MODULE_REGISTER();
@@ -95,13 +95,17 @@ static ble_gap_scan_params_t const m_scan_params =
     .interval = SCAN_INTERVAL,
     .window   = SCAN_WINDOW,
     .timeout  = SCAN_TIMEOUT,
-    #if (NRF_SD_BLE_API_VERSION <= 2)
-        .selective   = 0,
-        .p_whitelist = NULL,
-    #endif
-    #if (NRF_SD_BLE_API_VERSION >= 3)
-        .use_whitelist = 0,
-    #endif
+    .scan_phys     = BLE_GAP_PHY_1MBPS,
+    .filter_policy = BLE_GAP_SCAN_FP_ACCEPT_ALL
+};
+
+static uint8_t               m_scan_buffer_data[BLE_GAP_SCAN_BUFFER_MIN]; /**< buffer where advertising reports will be stored by the SoftDevice. */
+
+/**@brief Pointer to the buffer where advertising reports will be stored by the SoftDevice. */
+static ble_data_t m_scan_buffer =
+{
+    m_scan_buffer_data,
+    BLE_GAP_SCAN_BUFFER_MIN
 };
 
 /**@brief Connection parameters requested for connection. */
@@ -150,7 +154,7 @@ void scan_start(void)
 
     (void) sd_ble_gap_scan_stop();
 
-    err_code = sd_ble_gap_scan_start(&m_scan_params);
+    err_code = sd_ble_gap_scan_start(&m_scan_params, &m_scan_buffer);
     // It is okay to ignore this error since we are stopping the scan anyway.
     if (err_code != NRF_ERROR_INVALID_STATE)
     {
@@ -675,7 +679,7 @@ void on_ble_central_evt(ble_evt_t const * p_ble_evt)
 
             // Update LEDs status, and check if we should be looking for more peripherals to connect to.
             bsp_board_led_on(CENTRAL_CONNECTED_LED);
-            if (ble_conn_state_n_centrals() == NRF_SDH_BLE_CENTRAL_LINK_COUNT)
+            if (ble_conn_state_central_conn_count() == NRF_SDH_BLE_CENTRAL_LINK_COUNT)
             {
                 bsp_board_led_off(CENTRAL_SCANNING_LED);
             }
@@ -724,7 +728,7 @@ void on_ble_central_evt(ble_evt_t const * p_ble_evt)
                 bsp_board_led_on(CENTRAL_SCANNING_LED);
             }
 
-            if (ble_conn_state_n_centrals() == 0)
+            if (ble_conn_state_central_conn_count() == 0)
             {
                 bsp_board_led_off(CENTRAL_CONNECTED_LED);
             }

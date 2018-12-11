@@ -24,7 +24,7 @@
 #define NRF_LOG_INFO_COLOR PERIPHERAL_CONFIG_INFO_COLOR
 #define NRF_LOG_DEBUG_COLOR PERIPHERAL_CONFIG_DEBUG_COLOR
 #else //PERIPHERAL_CONFIG_LOG_ENABLED
-#define NRF_LOG_LEVEL 0
+#define NRF_LOG_LEVEL 3
 #endif //PERIPHERAL_CONFIG_LOG_ENABLED
 #include "nrf_log.h"
 NRF_LOG_MODULE_REGISTER();
@@ -264,8 +264,7 @@ void restart_advertising_without_whitelist(void)
  */
 bool ble_evt_is_advertising_timeout(ble_evt_t const * p_ble_evt)
 {
-  return (   (p_ble_evt->header.evt_id == BLE_GAP_EVT_TIMEOUT)
-          && (p_ble_evt->evt.gap_evt.params.timeout.src == BLE_GAP_TIMEOUT_SRC_ADVERTISING));
+    return (p_ble_evt->header.evt_id == BLE_GAP_EVT_ADV_SET_TERMINATED);
 }
 
 
@@ -295,7 +294,6 @@ void on_ble_peripheral_evt(ble_evt_t const * p_ble_evt)
             bsp_board_led_off(PERIPHERAL_CONNECTED_LED);
             break;
 
-#ifndef S140
         case BLE_GAP_EVT_PHY_UPDATE_REQUEST:
         {
             NRF_LOG_DEBUG("PHY update request.");
@@ -307,7 +305,6 @@ void on_ble_peripheral_evt(ble_evt_t const * p_ble_evt)
             err_code = sd_ble_gap_phy_update(p_ble_evt->evt.gap_evt.conn_handle, &phys);
             APP_ERROR_CHECK(err_code);
         } break;
-#endif
 
         case BLE_GATTC_EVT_TIMEOUT:
             // Disconnect on GATT Client timeout event.
