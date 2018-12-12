@@ -453,7 +453,7 @@ static void buttons_leds_init()
     ret_code_t err_code;
     bsp_event_t startup_event;
 
-    err_code = bsp_init(BSP_INIT_LED, NULL);
+    err_code = bsp_init(BSP_INIT_LEDS, NULL);
     APP_ERROR_CHECK(err_code);
 
     //init app_button module, 50ms detection delay (button debouncing)
@@ -478,7 +478,7 @@ static void battery_level_update(void)
     battery_level = battery_level_in_percent(vbatt);          //Transform the millivolts value into battery level percent.
     printf("ADC result in percent: %d\r\n", battery_level);
 
-    err_code = ble_bas_battery_level_update(&m_bas, battery_level);
+    err_code = ble_bas_battery_level_update(&m_bas, battery_level, m_conn_handle);
     if ((err_code != NRF_SUCCESS) &&
         (err_code != NRF_ERROR_INVALID_STATE) &&
         (err_code != NRF_ERROR_RESOURCES) &&
