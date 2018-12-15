@@ -46,29 +46,7 @@
 #ifdef USE_APP_CONFIG
 #include "app_config.h"
 #endif
-// <h> nRF_BLE
 
-//==========================================================
-// <q> BLE_ADVERTISING_ENABLED  - ble_advertising - Advertising module
-
-
-#ifndef BLE_ADVERTISING_ENABLED
-#define BLE_ADVERTISING_ENABLED 1
-#endif
-
-// <q> BLE_DTM_ENABLED  - ble_dtm - Module for testing RF/PHY using DTM commands
-
-
-#ifndef BLE_DTM_ENABLED
-#define BLE_DTM_ENABLED 0
-#endif
-
-// <q> BLE_RACP_ENABLED  - ble_racp - Record Access Control Point library
-
-
-#ifndef BLE_RACP_ENABLED
-#define BLE_RACP_ENABLED 0
-#endif
 
 // <e> NRF_BLE_QWR_ENABLED - nrf_ble_qwr - Queued writes support module (prepare/execute write)
 //==========================================================
@@ -4146,7 +4124,7 @@
 // <e> NRFX_UARTE_ENABLED - nrfx_uarte - UARTE peripheral driver
 //==========================================================
 #ifndef NRFX_UARTE_ENABLED
-#define NRFX_UARTE_ENABLED 1
+#define NRFX_UARTE_ENABLED 0
 #endif
 // <o> NRFX_UARTE0_ENABLED - Enable UARTE0 instance
 #ifndef NRFX_UARTE0_ENABLED
@@ -4272,7 +4250,7 @@
 // <e> NRFX_UART_ENABLED - nrfx_uart - UART peripheral driver
 //==========================================================
 #ifndef NRFX_UART_ENABLED
-#define NRFX_UART_ENABLED 1
+#define NRFX_UART_ENABLED 0
 #endif
 // <o> NRFX_UART0_ENABLED - Enable UART0 instance
 #ifndef NRFX_UART0_ENABLED
@@ -7106,10 +7084,6 @@
 // </h>
 //==========================================================
 
-// </h>
-//==========================================================
-
-
 // <h> nrf_log - Logger
 //==========================================================
 // <e> NRF_LOG_BACKEND_RTT_ENABLED - nrf_log_backend_rtt - Log RTT backend
@@ -9300,7 +9274,7 @@
 // <4=> Debug
 
 #ifndef NRF_SDH_BLE_LOG_LEVEL
-#define NRF_SDH_BLE_LOG_LEVEL 4
+#define NRF_SDH_BLE_LOG_LEVEL 3
 #endif
 
 // <o> NRF_SDH_BLE_INFO_COLOR  - ANSI escape code prefix.

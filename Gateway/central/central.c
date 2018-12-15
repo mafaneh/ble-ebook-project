@@ -158,6 +158,7 @@ void scan_start(void)
     // It is okay to ignore this error since we are stopping the scan anyway.
     if (err_code != NRF_ERROR_INVALID_STATE)
     {
+        NRF_LOG_INFO("Scanning started\n");
         APP_ERROR_CHECK(err_code);
     }
 }
@@ -603,6 +604,7 @@ void central_init(void)
     bas_c_init_playbulb_obj.evt_handler         = bas_c_playbulb_evt_handler;
 
     // Initialize the different clients:
+    NRF_LOG_INFO("Starting Central role\n");
 
     // Initialize the Thingy Client
     err_code = thingy_client_init(&m_thingy_client, &thingy_init_obj);
@@ -757,6 +759,11 @@ void on_ble_central_evt(ble_evt_t const * p_ble_evt)
                     NRF_LOG_INFO("Connection Request SUCCEEDED");
                 }
             }
+            else
+            {
+                err_code = sd_ble_gap_scan_start(NULL, &m_scan_buffer);
+                APP_ERROR_CHECK(err_code);
+            }
         } break; // BLE_GAP_ADV_REPORT
 
         case BLE_GAP_EVT_TIMEOUT:
@@ -776,7 +783,6 @@ void on_ble_central_evt(ble_evt_t const * p_ble_evt)
             APP_ERROR_CHECK(err_code);
         } break;
 
-#ifndef S140
         case BLE_GAP_EVT_PHY_UPDATE_REQUEST:
         {
             NRF_LOG_DEBUG("PHY update request.");
@@ -788,7 +794,6 @@ void on_ble_central_evt(ble_evt_t const * p_ble_evt)
             err_code = sd_ble_gap_phy_update(p_ble_evt->evt.gap_evt.conn_handle, &phys);
             APP_ERROR_CHECK(err_code);
         } break;
-#endif
 
         case BLE_GATTC_EVT_TIMEOUT:
             // Disconnect on GATT Client timeout event.
