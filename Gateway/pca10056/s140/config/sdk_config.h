@@ -4124,7 +4124,7 @@
 // <e> NRFX_UARTE_ENABLED - nrfx_uarte - UARTE peripheral driver
 //==========================================================
 #ifndef NRFX_UARTE_ENABLED
-#define NRFX_UARTE_ENABLED 0
+#define NRFX_UARTE_ENABLED 1
 #endif
 // <o> NRFX_UARTE0_ENABLED - Enable UARTE0 instance
 #ifndef NRFX_UARTE0_ENABLED
@@ -4250,7 +4250,7 @@
 // <e> NRFX_UART_ENABLED - nrfx_uart - UART peripheral driver
 //==========================================================
 #ifndef NRFX_UART_ENABLED
-#define NRFX_UART_ENABLED 0
+#define NRFX_UART_ENABLED 1
 #endif
 // <o> NRFX_UART0_ENABLED - Enable UART0 instance
 #ifndef NRFX_UART0_ENABLED
@@ -7119,6 +7119,52 @@
 
 // </e>
 
+
+// <e> NRF_LOG_BACKEND_UART_ENABLED - nrf_log_backend_uart - Log UART backend
+//==========================================================
+#ifndef NRF_LOG_BACKEND_UART_ENABLED
+#define NRF_LOG_BACKEND_UART_ENABLED 0
+#endif
+// <o> NRF_LOG_BACKEND_UART_TX_PIN - UART TX pin
+#ifndef NRF_LOG_BACKEND_UART_TX_PIN
+#define NRF_LOG_BACKEND_UART_TX_PIN 6
+#endif
+
+// <o> NRF_LOG_BACKEND_UART_BAUDRATE  - Default Baudrate
+
+// <323584=> 1200 baud
+// <643072=> 2400 baud
+// <1290240=> 4800 baud
+// <2576384=> 9600 baud
+// <3862528=> 14400 baud
+// <5152768=> 19200 baud
+// <7716864=> 28800 baud
+// <10289152=> 38400 baud
+// <15400960=> 57600 baud
+// <20615168=> 76800 baud
+// <30801920=> 115200 baud
+// <61865984=> 230400 baud
+// <67108864=> 250000 baud
+// <121634816=> 460800 baud
+// <251658240=> 921600 baud
+// <268435456=> 1000000 baud
+
+#ifndef NRF_LOG_BACKEND_UART_BAUDRATE
+#define NRF_LOG_BACKEND_UART_BAUDRATE 30801920
+#endif
+
+// <o> NRF_LOG_BACKEND_UART_TEMP_BUFFER_SIZE - Size of buffer for partially processed strings.
+// <i> Size of the buffer is a trade-off between RAM usage and processing.
+// <i> if buffer is smaller then strings will often be fragmented.
+// <i> It is recommended to use size which will fit typical log and only the
+// <i> longer one will be fragmented.
+
+#ifndef NRF_LOG_BACKEND_UART_TEMP_BUFFER_SIZE
+#define NRF_LOG_BACKEND_UART_TEMP_BUFFER_SIZE 64
+#endif
+
+// </e>
+
 // <q> NRF_LOG_STR_FORMATTER_TIMESTAMP_FORMAT_ENABLED  - nrf_log_str_formatter - Log string formatter
 
 
@@ -7256,6 +7302,36 @@
 #ifndef NRF_LOG_FILTERS_ENABLED
 #define NRF_LOG_FILTERS_ENABLED 0
 #endif
+
+// <o> NRF_LOG_STR_PUSH_BUFFER_SIZE  - Size of the buffer dedicated for strings stored using @ref NRF_LOG_PUSH.
+
+// <16=> 16
+// <32=> 32
+// <64=> 64
+// <128=> 128
+// <256=> 256
+// <512=> 512
+// <1024=> 1024
+
+#ifndef NRF_LOG_STR_PUSH_BUFFER_SIZE
+#define NRF_LOG_STR_PUSH_BUFFER_SIZE 128
+#endif
+
+// <o> NRF_LOG_STR_PUSH_BUFFER_SIZE  - Size of the buffer dedicated for strings stored using @ref NRF_LOG_PUSH.
+
+// <16=> 16
+// <32=> 32
+// <64=> 64
+// <128=> 128
+// <256=> 256
+// <512=> 512
+// <1024=> 1024
+
+#ifndef NRF_LOG_STR_PUSH_BUFFER_SIZE
+#define NRF_LOG_STR_PUSH_BUFFER_SIZE 128
+#endif
+
+
 
 // <q> NRF_LOG_CLI_CMDS  - Enable CLI commands for the module.
 
@@ -11606,35 +11682,35 @@
 #define NRF_SDH_BLE_SERVICE_CHANGED 0
 #endif
 
-// </h> 
+// </h>
 //==========================================================
 
-// <h> nRF_BLE 
+// <h> nRF_BLE
 
 //==========================================================
 // <q> BLE_ADVERTISING_ENABLED  - ble_advertising - Advertising module
- 
+
 
 #ifndef BLE_ADVERTISING_ENABLED
 #define BLE_ADVERTISING_ENABLED 1
 #endif
 
 // <q> BLE_DB_DISCOVERY_ENABLED  - ble_db_discovery - Database discovery module
- 
+
 
 #ifndef BLE_DB_DISCOVERY_ENABLED
 #define BLE_DB_DISCOVERY_ENABLED 1
 #endif
 
 // <q> BLE_DTM_ENABLED  - ble_dtm - Module for testing RF/PHY using DTM commands
- 
+
 
 #ifndef BLE_DTM_ENABLED
 #define BLE_DTM_ENABLED 0
 #endif
 
 // <q> BLE_RACP_ENABLED  - ble_racp - Record Access Control Point library
- 
+
 
 #ifndef BLE_RACP_ENABLED
 #define BLE_RACP_ENABLED 0
@@ -11645,14 +11721,14 @@
 #ifndef NRF_BLE_CONN_PARAMS_ENABLED
 #define NRF_BLE_CONN_PARAMS_ENABLED 1
 #endif
-// <o> NRF_BLE_CONN_PARAMS_MAX_SLAVE_LATENCY_DEVIATION - The largest acceptable deviation in slave latency. 
+// <o> NRF_BLE_CONN_PARAMS_MAX_SLAVE_LATENCY_DEVIATION - The largest acceptable deviation in slave latency.
 // <i> The largest deviation (+ or -) from the requested slave latency that will not be renegotiated.
 
 #ifndef NRF_BLE_CONN_PARAMS_MAX_SLAVE_LATENCY_DEVIATION
 #define NRF_BLE_CONN_PARAMS_MAX_SLAVE_LATENCY_DEVIATION 499
 #endif
 
-// <o> NRF_BLE_CONN_PARAMS_MAX_SUPERVISION_TIMEOUT_DEVIATION - The largest acceptable deviation (in 10 ms units) in supervision timeout. 
+// <o> NRF_BLE_CONN_PARAMS_MAX_SUPERVISION_TIMEOUT_DEVIATION - The largest acceptable deviation (in 10 ms units) in supervision timeout.
 // <i> The largest deviation (+ or -, in 10 ms units) from the requested supervision timeout that will not be renegotiated.
 
 #ifndef NRF_BLE_CONN_PARAMS_MAX_SUPERVISION_TIMEOUT_DEVIATION
@@ -11662,7 +11738,7 @@
 // </e>
 
 // <q> NRF_BLE_GATT_ENABLED  - nrf_ble_gatt - GATT module
- 
+
 
 #ifndef NRF_BLE_GATT_ENABLED
 #define NRF_BLE_GATT_ENABLED 1
