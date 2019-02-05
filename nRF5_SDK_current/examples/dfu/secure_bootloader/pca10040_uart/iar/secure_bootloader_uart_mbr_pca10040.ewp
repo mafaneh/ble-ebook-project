@@ -176,8 +176,6 @@
         </option>
         <option>
           <name>CCDefines</name>
-          <state>APP_TIMER_V2</state>
-          <state>APP_TIMER_V2_RTC1_ENABLED</state>
           <state>BOARD_PCA10040</state>
           <state>CONFIG_GPIO_AS_PINRESET</state>
           <state>FLOAT_ABI_HARD</state>
@@ -319,12 +317,10 @@
         </option>
         <option>
           <name>CCIncludePath2</name>
-          <state>$PROJ_DIR$\..\..\config\secure_bootloader_uart_mbr_pca10040</state>
           <state>$PROJ_DIR$\..\..\config</state>
           <state>$PROJ_DIR$\..\..\..\..\..\components\boards</state>
           <state>$PROJ_DIR$\..\..\..\..\..\components\drivers_nrf\nrf_soc_nosd</state>
           <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\atomic</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\atomic_fifo</state>
           <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\balloc</state>
           <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\bootloader</state>
           <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\bootloader\dfu</state>
@@ -340,21 +336,19 @@
           <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\crypto\backend\nrf_sw</state>
           <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\crypto\backend\oberon</state>
           <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\delay</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\experimental_log</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\experimental_log\src</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\experimental_memobj</state>
           <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\experimental_section_vars</state>
           <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\fstorage</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\log</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\log\src</state>
           <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\mem_manager</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\memobj</state>
           <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\queue</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\ringbuf</state>
           <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\scheduler</state>
           <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\sha256</state>
           <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\slip</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\sortlist</state>
           <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\stack_info</state>
           <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\strerror</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\timer</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\timer\experimental</state>
           <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\util</state>
           <state>$PROJ_DIR$\..\..\..\..\..\components\softdevice\mbr\nrf52832\headers</state>
           <state>$PROJ_DIR$\..\..\..\..\..\components\toolchain\cmsis\include</state>
@@ -362,6 +356,8 @@
           <state>$PROJ_DIR$\..\..\..\..\..\external\fprintf</state>
           <state>$PROJ_DIR$\..\..\..\..\..\external\micro-ecc\micro-ecc</state>
           <state>$PROJ_DIR$\..\..\..\..\..\external\nano-pb</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\external\nrf_oberon</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\external\nrf_oberon\include</state>
           <state>$PROJ_DIR$\..\..\..\..\..\integration\nrfx</state>
           <state>$PROJ_DIR$\..\..\..\..\..\integration\nrfx\legacy</state>
           <state>$PROJ_DIR$\..\..\..\..\..\modules\nrfx</state>
@@ -526,8 +522,6 @@
         </option>
         <option>
       <name>ADefines</name>
-          <state>APP_TIMER_V2</state>
-          <state>APP_TIMER_V2_RTC1_ENABLED</state>
           <state>BOARD_PCA10040</state>
           <state>CONFIG_GPIO_AS_PINRESET</state>
           <state>FLOAT_ABI_HARD</state>
@@ -636,12 +630,10 @@
         </option>
         <option>
           <name>AUserIncludes</name>
-          <state>$PROJ_DIR$\..\..\config\secure_bootloader_uart_mbr_pca10040</state>
           <state>$PROJ_DIR$\..\..\config</state>
           <state>$PROJ_DIR$\..\..\..\..\..\components\boards</state>
           <state>$PROJ_DIR$\..\..\..\..\..\components\drivers_nrf\nrf_soc_nosd</state>
           <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\atomic</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\atomic_fifo</state>
           <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\balloc</state>
           <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\bootloader</state>
           <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\bootloader\dfu</state>
@@ -657,21 +649,19 @@
           <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\crypto\backend\nrf_sw</state>
           <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\crypto\backend\oberon</state>
           <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\delay</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\experimental_log</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\experimental_log\src</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\experimental_memobj</state>
           <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\experimental_section_vars</state>
           <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\fstorage</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\log</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\log\src</state>
           <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\mem_manager</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\memobj</state>
           <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\queue</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\ringbuf</state>
           <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\scheduler</state>
           <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\sha256</state>
           <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\slip</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\sortlist</state>
           <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\stack_info</state>
           <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\strerror</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\timer</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\timer\experimental</state>
           <state>$PROJ_DIR$\..\..\..\..\..\components\libraries\util</state>
           <state>$PROJ_DIR$\..\..\..\..\..\components\softdevice\mbr\nrf52832\headers</state>
           <state>$PROJ_DIR$\..\..\..\..\..\components\toolchain\cmsis\include</state>
@@ -679,6 +669,8 @@
           <state>$PROJ_DIR$\..\..\..\..\..\external\fprintf</state>
           <state>$PROJ_DIR$\..\..\..\..\..\external\micro-ecc\micro-ecc</state>
           <state>$PROJ_DIR$\..\..\..\..\..\external\nano-pb</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\external\nrf_oberon</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\external\nrf_oberon\include</state>
           <state>$PROJ_DIR$\..\..\..\..\..\integration\nrfx</state>
           <state>$PROJ_DIR$\..\..\..\..\..\integration\nrfx\legacy</state>
           <state>$PROJ_DIR$\..\..\..\..\..\modules\nrfx</state>
@@ -1070,8 +1062,8 @@
     </settings>
   </configuration>  <group>
   <name>nRF_Log</name>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\experimental_log\src\nrf_log_frontend.c</name>    </file>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\experimental_log\src\nrf_log_str_formatter.c</name>    </file>  </group>  <group>
+    <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\log\src\nrf_log_frontend.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\log\src\nrf_log_str_formatter.c</name>    </file>  </group>  <group>
   <name>Board Definition</name>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\components\boards\boards.c</name>    </file>  </group>  <group>
   <name>nRF_Crypto backend uECC</name>    <file>
@@ -1084,22 +1076,19 @@
   <name>nRF_Libraries</name>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\util\app_error_weak.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\scheduler\app_scheduler.c</name>    </file>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\timer\experimental\app_timer2.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\util\app_util_platform.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\crc32\crc32.c</name>    </file>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\timer\experimental\drv_rtc.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\mem_manager\mem_manager.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\util\nrf_assert.c</name>    </file>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\atomic_fifo\nrf_atfifo.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\atomic\nrf_atomic.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\balloc\nrf_balloc.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\external\fprintf\nrf_fprintf.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\external\fprintf\nrf_fprintf_format.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\fstorage\nrf_fstorage.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\fstorage\nrf_fstorage_nvmc.c</name>    </file>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\experimental_memobj\nrf_memobj.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\memobj\nrf_memobj.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\queue\nrf_queue.c</name>    </file>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\sortlist\nrf_sortlist.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\ringbuf\nrf_ringbuf.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\strerror\nrf_strerror.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\sha256\sha256.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\slip\slip.c</name>    </file>  </group>  <group>
@@ -1111,6 +1100,8 @@
     <name>$PROJ_DIR$\..\..\..\..\..\modules\nrfx\drivers\src\prs\nrfx_prs.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\modules\nrfx\drivers\src\nrfx_uart.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\modules\nrfx\drivers\src\nrfx_uarte.c</name>    </file>  </group>  <group>
+  <name>nRF_Oberon_Crypto</name>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\external\nrf_oberon\lib\nrf52\liboberon_short_wchar_2.0.5.a</name>    </file>  </group>  <group>
   <name>nRF_Crypto</name>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\crypto\nrf_crypto_ecc.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\crypto\nrf_crypto_ecdsa.c</name>    </file>    <file>
@@ -1125,6 +1116,14 @@
     <name>$PROJ_DIR$\..\..\..\..\..\external\micro-ecc\nrf52hf_iar\armgcc\micro_ecc_lib_nrf52.a</name>    </file>  </group>  <group>
   <name>nRF_Crypto backend nRF sw</name>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\crypto\backend\nrf_sw\nrf_sw_backend_hash.c</name>    </file>  </group>  <group>
+  <name>nRF_Bootloader</name>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\bootloader\nrf_bootloader.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\bootloader\nrf_bootloader_app_start.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\bootloader\nrf_bootloader_app_start_final.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\bootloader\nrf_bootloader_dfu_timers.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\bootloader\nrf_bootloader_fw_activation.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\bootloader\nrf_bootloader_info.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\bootloader\nrf_bootloader_wdt.c</name>    </file>  </group>  <group>
   <name>None</name>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\modules\nrfx\mdk\iar_startup_nrf52.s</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\modules\nrfx\mdk\system_nrf52.c</name>    </file>  </group>  <group>
@@ -1143,13 +1142,13 @@
     <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\bootloader\dfu\nrf_dfu_ver_validation.c</name>    </file>  </group>  <group>
   <name>nRF_Serial_DFU</name>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\bootloader\serial_dfu\nrf_dfu_serial.c</name>    </file>  </group>  <group>
-  <name>nRF_Bootloader</name>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\bootloader\nrf_bootloader.c</name>    </file>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\bootloader\nrf_bootloader_app_start.c</name>    </file>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\bootloader\nrf_bootloader_app_start_final.c</name>    </file>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\bootloader\nrf_bootloader_dfu_timers.c</name>    </file>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\bootloader\nrf_bootloader_fw_activation.c</name>    </file>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\bootloader\nrf_bootloader_info.c</name>    </file>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\bootloader\nrf_bootloader_wdt.c</name>    </file>  </group></project>
+  <name>nRF_Crypto backend Oberon</name>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\crypto\backend\oberon\oberon_backend_chacha_poly_aead.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\crypto\backend\oberon\oberon_backend_ecc.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\crypto\backend\oberon\oberon_backend_ecdh.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\crypto\backend\oberon\oberon_backend_ecdsa.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\crypto\backend\oberon\oberon_backend_eddsa.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\crypto\backend\oberon\oberon_backend_hash.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\components\libraries\crypto\backend\oberon\oberon_backend_hmac.c</name>    </file>  </group></project>
 
 

@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2015 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #ifndef PEER_DATABASE_H__
 #define PEER_DATABASE_H__
@@ -61,6 +61,15 @@ extern "C" {
 
 #define PDB_WRITE_BUF_SIZE (sizeof(pm_peer_data_bonding_t)) //!< The size (in bytes) of each block in the internal buffer accessible via @ref pdb_write_buf_get.
 
+/**@brief Macro for creating a peer ID value from a connection handle.
+ *
+ * Use this macro with pdb_write_buf_get() or pdb_write_buf_store(). It allows to create a write buffer
+ * even if you do not yet know the proper peer ID the data will be stored for.
+ *
+ * @return @p conn_handle + @ref PM_PEER_ID_N_AVAILABLE_IDS.
+ */
+#define PDB_TEMP_PEER_ID(conn_handle) (PM_PEER_ID_N_AVAILABLE_IDS + conn_handle)
+
 
 /**@brief Function for initializing the module.
  *
@@ -68,15 +77,6 @@ extern "C" {
  * @retval NRF_ERROR_INTERNAL   An unexpected error happened.
  */
 ret_code_t pdb_init(void);
-
-
-/**@brief Function for allocating persistent bond storage for a peer.
- *
- * @return  The ID of the newly allocated storage.
- * @retval  PM_PEER_ID_INVALID  If no peer ID is available.
- */
-pm_peer_id_t pdb_peer_allocate(void);
-
 
 /**@brief Function for freeing a peer's persistent bond storage.
  *
@@ -88,7 +88,6 @@ pm_peer_id_t pdb_peer_allocate(void);
  * @retval NRF_ERROR_INVALID_PARAM  Peer ID was invalid.
  */
 ret_code_t pdb_peer_free(pm_peer_id_t peer_id);
-
 
 /**@brief Function for retrieving a pointer to peer data in flash (read-only).
  *
@@ -108,7 +107,6 @@ ret_code_t pdb_peer_data_ptr_get(pm_peer_id_t                 peer_id,
                                  pm_peer_data_id_t            data_id,
                                  pm_peer_data_flash_t * const p_peer_data);
 
-
 /**@brief Function for retrieving pointers to a write buffer for peer data.
  *
  * @details This function will provide pointers to a buffer of the data. The data buffer will not be
@@ -125,14 +123,17 @@ ret_code_t pdb_peer_data_ptr_get(pm_peer_id_t                 peer_id,
  *       will be copied. If n_bufs was increased since last time, this function might return @ref
  *       NRF_ERROR_BUSY. In that case, the buffer is automatically released.
  *
- * @param[in]  peer_id      ID of peer to get a write buffer for.
- * @param[in]  data_id      Which piece of data to get.
- * @param[in]  n_bufs       The number of contiguous buffers needed.
+ * @param[in]  peer_id      ID of the peer to get a write buffer for. If @p peer_id is larger than
+ *                          @ref PM_PEER_ID_N_AVAILABLE_IDS, it is interpreted as pertaining to
+ *                          the connection with connection handle peer_id - PM_PEER_ID_N_AVAILABLE_IDS.
+ *                          See @ref PDB_TEMP_PEER_ID.
+ * @param[in]  data_id      The piece of data to get.
+ * @param[in]  n_bufs       Number of contiguous buffers needed.
  * @param[out] p_peer_data  Pointers to mutable peer data.
  *
  * @retval NRF_SUCCESS              Data retrieved successfully.
- * @retval NRF_ERROR_INVALID_PARAM  Data ID or Peer ID was invalid or unallocated, or n_bufs was 0
- *                                  or more than the total available buffers.
+ * @retval NRF_ERROR_INVALID_PARAM  @p data_id was invalid, or @p n_bufs was 0 or more than the total
+ *                                  available buffers.
  * @retval NRF_ERROR_FORBIDDEN      n_bufs was higher or lower than the existing buffer. If needed,
  *                                  release the existing buffer with @ref pdb_write_buf_release, and
  *                                  call this function again.
@@ -145,155 +146,39 @@ ret_code_t pdb_write_buf_get(pm_peer_id_t      peer_id,
                              uint32_t          n_bufs,
                              pm_peer_data_t  * p_peer_data);
 
-
 /**@brief Function for freeing a write buffer allocated with @ref pdb_write_buf_get.
  *
  * @note This function will not write peer data to persistent memory. Data in released buffer will
  *       be lost.
- *
- * @note This function will undo any previous call to @ref pdb_write_buf_store_prepare for this
- *       piece of data.
  *
  * @param[in]  peer_id  ID of peer to release buffer for.
  * @param[in]  data_id  Which piece of data to release buffer for.
  *
  * @retval NRF_SUCCESS              Successfully released buffer.
  * @retval NRF_ERROR_NOT_FOUND      No buffer was allocated for this peer ID/data ID pair.
- * @retval NRF_ERROR_INTERNAL       Unexpected internal error.
  */
 ret_code_t pdb_write_buf_release(pm_peer_id_t peer_id, pm_peer_data_id_t data_id);
-
-
-/**@brief Function for reserving space in persistent storage for data in a buffer.
- *
- * @note This function only works for data which has a write buffer allocated. If the write buffer
- *       is released, this prepare is undone.
- *
- * @note If space has already been reserved for this data, nothing is done.
- *
- * @param[in]  peer_id  The peer whose data to reserve space for.
- * @param[in]  data_id  The type of data to reserve space for.
- *
- * @retval NRF_SUCCESS              Successfully reserved space in persistent storage.
- * @retval NRF_ERROR_STORAGE_FULL   Not enough room in persistent storage.
- * @retval NRF_ERROR_NOT_FOUND      No buffer has been allocated for this peer ID/data ID pair.
- * @retval NRF_ERROR_INVALID_PARAM  Data ID or Peer ID was invalid or unallocated.
- */
-ret_code_t pdb_write_buf_store_prepare(pm_peer_id_t peer_id, pm_peer_data_id_t data_id);
-
 
 /**@brief Function for writing data into persistent storage. Writing happens asynchronously.
  *
  * @note This will unlock the data after it has been written.
  *
  * @param[in]  peer_id      The ID used to address the write buffer.
- * @param[in]  data_id      Which piece of data to store.
- * @param[in]  new_peer_id  The ID to put in flash. This will usually be the same as peer_id.
+ * @param[in]  data_id      The piece of data to store.
+ * @param[in]  new_peer_id  The ID to put in flash. This is usually the same as peer_id, but
+ *                          must be valid, i.e. allocated (and smaller than @ref PM_PEER_ID_N_AVAILABLE_IDS).
  *
  * @retval NRF_SUCCESS              Data storing was successfully started.
  * @retval NRF_ERROR_STORAGE_FULL   No space available in persistent storage. Please clear some
  *                                  space, the operation will be reattempted after the next compress
- *                                  procedure. This error will not happen if
- *                                  @ref pdb_write_buf_store_prepare is called beforehand.
- * @retval NRF_ERROR_INVALID_PARAM  Data ID was invalid.
+ *                                  procedure.
+ * @retval NRF_ERROR_INVALID_PARAM  @p data_id or @p new_peer_id was invalid.
  * @retval NRF_ERROR_NOT_FOUND      No buffer has been allocated for this peer ID/data ID pair.
  * @retval NRF_ERROR_INTERNAL       Unexpected internal error.
  */
 ret_code_t pdb_write_buf_store(pm_peer_id_t      peer_id,
                                pm_peer_data_id_t data_id,
                                pm_peer_id_t      new_peer_id);
-
-
-/**@brief Function for clearing data from persistent storage.
- *
- * @param[in]  peer_id  ID of peer to clear data for.
- * @param[in]  data_id  Which piece of data to clear.
- *
- * @retval NRF_SUCCESS              The clear was initiated successfully.
- * @retval NRF_ERROR_INVALID_PARAM  Data ID or peer ID was invalid.
- * @retval NRF_ERROR_NOT_FOUND      Nothing to clear for this peer ID/data ID combination.
- * @retval NRF_ERROR_BUSY           Underlying modules are busy and can't take any more requests at
- *                                  this moment.
- * @retval NRF_ERROR_INTERNAL       Internal error.
- */
-ret_code_t pdb_clear(pm_peer_id_t peer_id, pm_peer_data_id_t data_id);
-
-
-/**@brief Function for querying the number of valid peer IDs available. I.E the number of peers
- *        in persistent storage.
- *
- * @return  The number of valid peer IDs.
- */
-uint32_t pdb_n_peers(void);
-
-
-/**@brief Function for getting the next peer ID in the sequence of all used peer IDs. Can be
- *        used to loop through all used peer IDs.
- *
- * @note @ref PM_PEER_ID_INVALID is considered to be before the first and after the last ordinary
- *       peer ID.
- *
- * @param[in]  prev_peer_id  The previous peer ID.
- *
- * @return  The next peer ID.
- * @return  The first ordinary peer ID  if prev_peer_id was @ref PM_PEER_ID_INVALID.
- * @retval  PM_PEER_ID_INVALID          if prev_peer_id was the last ordinary peer ID.
- */
-pm_peer_id_t pdb_next_peer_id_get(pm_peer_id_t prev_peer_id);
-
-
-/**@brief Function for getting the next peer ID in the sequence of all peer IDs pending deletion.
- *        Can be used to loop through all used peer IDs.
- *
- * @note @ref PM_PEER_ID_INVALID is considered to be before the first and after the last ordinary
- *       peer ID.
- *
- * @param[in]  prev_peer_id  The previous peer ID.
- *
- * @return  The next peer ID pending deletion.
- * @return  The first ordinary peer ID  if prev_peer_id was @ref PM_PEER_ID_INVALID.
- * @retval  PM_PEER_ID_INVALID          if prev_peer_id was the last ordinary peer ID.
- */
-pm_peer_id_t pdb_next_deleted_peer_id_get(pm_peer_id_t prev_peer_id);
-
-
-/**@brief Function for copy peer data from flash into a provided buffer.
- *
- * @param[in]    peer_id      The peer the data belongs to.
- * @param[in]    data_id      The data to read.
- * @param[inout] p_peer_data  The buffer where to copy data into. The field @c length_words in this
- *                            parameter must represent the buffer length in words.
- *
- * @note Actually, it represents the buffer length in bytes upon entering the function,
- * and upon exit it represents the length of the data in words.. not good. Fix this.
- *
- * @retval NRF_SUCCESS              If the operation was successful.
- * @retval NRF_ERROR_INVALID_PARAM  If @p peer_id or @p data_id are invalid.
- * @retval NRF_ERROR_NOT_FOUND      If the data was not found in flash.
- * @retval NRF_ERROR_NO_MEM         If the provided buffer is too small.
- */
-ret_code_t pdb_peer_data_load(pm_peer_id_t              peer_id,
-                              pm_peer_data_id_t         data_id,
-                              pm_peer_data_t    * const p_peer_data);
-
-
-/**@brief Function for writing data directly to persistent storage from external memory.
- *
- * @param[in]  peer_id        ID of peer to write data for.
- * @param[in]  p_peer_data    Data to store.
- * @param[out] p_store_token  A token identifying this particular store operation. The token can be
- *                            used to identify events pertaining to this operation.
- *
- * @retval NRF_SUCCESS               Data successfully written.
- * @retval NRF_ERROR_INVALID_PARAM   Data ID or Peer ID was invalid or unallocated.
- * @retval NRF_ERROR_NULL            p_peer_data contained a NULL pointer.
- * @retval NRF_ERROR_STORAGE_FULL    No space available in persistent storage.
- * @retval NRF_ERROR_INVALID_LENGTH  Data length above the maximum allowed.
- * @retval NRF_ERROR_BUSY            Unable to perform operation at this time.
- */
-ret_code_t pdb_raw_store(pm_peer_id_t           peer_id,
-                         pm_peer_data_const_t * p_peer_data,
-                         pm_store_token_t     * p_store_token);
 
 /** @}
  * @endcond

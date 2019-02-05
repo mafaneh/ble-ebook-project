@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2017 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #ifndef APP_USBD_HID_MOUSE_INTERNAL_H__
 #define APP_USBD_HID_MOUSE_INTERNAL_H__
@@ -109,19 +109,31 @@ typedef struct {
 }
 
 /**
+ * @brief Default interval value
+ *
+ */
+#define APP_USBD_HID_MOUSE_DEFAULT_INTERVAL 0x01
+
+#define APP_USBD_HID_MOUSE_INTERVAL(ep)   \
+(APP_USBD_EXTRACT_INTERVAL_FLAG(ep) ? APP_USBD_EXTRACT_INTERVAL_VALUE(ep) : APP_USBD_HID_MOUSE_DEFAULT_INTERVAL)
+
+
+/**
  * @brief Configure internal part of HID mouse instance.
  *
  * @param report_buff_in    Input report buffers array.
  * @param report_buff_out   Output report buffer.
  * @param user_ev_handler   User event handler.
  * @param bcnt              Mouse button count.
- * @param subclass_boot     Subclass boot. (@ref app_usbd_hid_subclass_t)
+ * @param subclass_boot     Subclass boot (@ref app_usbd_hid_subclass_t).
+ * @param endpoint_list     List of endpoints and intervals
  */
 #define APP_USBD_HID_MOUSE_INST_CONFIG(report_buff_in,                      \
                                        report_buff_out,                     \
                                        user_ev_handler,                     \
                                        bcnt,                                \
-                                       subclass_boot)                       \
+                                       subclass_boot,                       \
+                                       endpoint_list)                       \
     .inst = {                                                               \
         .hid_inst = APP_USBD_HID_INST_CONFIG(mouse_descs,                   \
                                              subclass_boot,                 \
@@ -129,7 +141,8 @@ typedef struct {
                                              report_buff_in,                \
                                              report_buff_out,               \
                                              user_ev_handler,               \
-                                             &app_usbd_hid_mouse_methods),  \
+                                             &app_usbd_hid_mouse_methods,   \
+                                             endpoint_list),                \
         .button_count = bcnt,                                               \
     }
 
@@ -148,23 +161,26 @@ extern const app_usbd_class_methods_t app_usbd_hid_mouse_class_methods;
  *
  * @ref  APP_USBD_HID_MOUSE_GLOBAL_DEF
  */
-#define APP_USBD_HID_MOUSE_GLOBAL_DEF_INTERNAL(instance_name,               \
-                                               interface_number,            \
-                                               endpoint,                    \
-                                               bcnt,                        \
-                                               user_ev_handler,             \
-                                               subclass_boot)               \
-    static app_usbd_hid_report_buffer_t  CONCAT_2(instance_name, _in)[1];   \
-    APP_USBD_CLASS_INST_GLOBAL_DEF(                                         \
-        instance_name,                                                      \
-        app_usbd_hid_mouse,                                                 \
-        &app_usbd_hid_mouse_class_methods,                                  \
-        APP_USBD_HID_MOUSE_CONFIG(interface_number, endpoint),              \
-        (APP_USBD_HID_MOUSE_INST_CONFIG(CONCAT_2(instance_name, _in),       \
-                                        NULL,                               \
-                                        user_ev_handler,                    \
-                                        bcnt,                               \
-                                        subclass_boot))                     \
+/*lint -esym( 40, APP_USBD_HID_MOUSE_INTERVAL) */
+#define APP_USBD_HID_MOUSE_GLOBAL_DEF_INTERNAL(instance_name,                                        \
+                                               interface_number,                                     \
+                                               endpoint,                                             \
+                                               bcnt,                                                 \
+                                               user_ev_handler,                                      \
+                                               subclass_boot)                                        \
+    static app_usbd_hid_report_buffer_t  CONCAT_2(instance_name, _in)[1];                            \
+    static uint8_t CONCAT_2(instance_name, _ep) = {MACRO_MAP(APP_USBD_HID_MOUSE_INTERVAL,endpoint)}; \
+    APP_USBD_CLASS_INST_GLOBAL_DEF(                                                                  \
+        instance_name,                                                                               \
+        app_usbd_hid_mouse,                                                                          \
+        &app_usbd_hid_mouse_class_methods,                                                           \
+        APP_USBD_HID_MOUSE_CONFIG(interface_number, endpoint),                                       \
+        (APP_USBD_HID_MOUSE_INST_CONFIG(CONCAT_2(instance_name, _in),                                \
+                                        NULL,                                                        \
+                                        user_ev_handler,                                             \
+                                        bcnt,                                                        \
+                                        subclass_boot,                                               \
+                                        &CONCAT_2(instance_name, _ep)))                              \
     )
 
 

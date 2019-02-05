@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2012 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 /** @file
  *
@@ -82,6 +82,7 @@
 #include "nrf_ble_gatt.h"
 #include "nrf_ble_qwr.h"
 #include "nrf_pwr_mgmt.h"
+#include "peer_manager_handler.h"
 
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
@@ -138,6 +139,9 @@
 #define OUTPUT_REPORT_BIT_MASK_CAPS_LOCK    0x02                                       /**< CAPS LOCK bit in Output Report (based on 'LED Page (0x08)' of the Universal Serial Bus HID Usage Tables). */
 #define INPUT_REP_REF_ID                    0                                          /**< Id of reference to Keyboard Input Report. */
 #define OUTPUT_REP_REF_ID                   0                                          /**< Id of reference to Keyboard Output Report. */
+#define FEATURE_REP_REF_ID                  0                                          /**< ID of reference to Keyboard Feature Report. */
+#define FEATURE_REPORT_MAX_LEN              2                                          /**< Maximum length of Feature Report. */
+#define FEATURE_REPORT_INDEX                0                                          /**< Index of Feature Report. */
 
 #define MAX_BUFFER_ENTRIES                  5                                          /**< Number of elements that can be enqueued */
 
@@ -216,7 +220,8 @@ APP_TIMER_DEF(m_battery_timer_id);                                  /**< Battery
 BLE_HIDS_DEF(m_hids,                                                /**< Structure used to identify the HID service. */
              NRF_SDH_BLE_TOTAL_LINK_COUNT,
              INPUT_REPORT_KEYS_MAX_LEN,
-             OUTPUT_REPORT_MAX_LEN);
+             OUTPUT_REPORT_MAX_LEN,
+             FEATURE_REPORT_MAX_LEN);
 BLE_BAS_DEF(m_bas);                                                 /**< Structure used to identify the battery service. */
 NRF_BLE_GATT_DEF(m_gatt);                                           /**< GATT module instance. */
 NRF_BLE_QWR_DEF(m_qwr);                                             /**< Context for the Queued Write module.*/
@@ -228,9 +233,7 @@ static sensorsim_cfg_t   m_battery_sim_cfg;                         /**< Battery
 static sensorsim_state_t m_battery_sim_state;                       /**< Battery Level sensor simulator state. */
 static bool              m_caps_on = false;                         /**< Variable to indicate if Caps Lock is turned on. */
 static pm_peer_id_t      m_peer_id;                                 /**< Device reference handle to the current bonded central. */
-static uint32_t          m_whitelist_peer_cnt;                      /**< Number of peers currently in the whitelist. */
 static buffer_list_t     buffer_list;                               /**< List to enqueue not just data to be sent, but also related information like the handle, connection handle etc */
-static pm_peer_id_t      m_whitelist_peers[BLE_GAP_WHITELIST_ADDR_MAX_COUNT];   /**< List of peers currently in the whitelist. */
 
 static ble_uuid_t m_adv_uuids[] = {{BLE_UUID_HUMAN_INTERFACE_DEVICE_SERVICE, BLE_UUID_TYPE_BLE}};
 
@@ -285,28 +288,41 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
 }
 
 
-/**@brief Fetch the list of peer manager peer IDs.
+/**@brief Function for setting filtered whitelist.
  *
- * @param[inout] p_peers   The buffer where to store the list of peer IDs.
- * @param[inout] p_size    In: The size of the @p p_peers buffer.
- *                         Out: The number of peers copied in the buffer.
+ * @param[in] skip  Filter passed to @ref pm_peer_id_list.
  */
-static void peer_list_get(pm_peer_id_t * p_peers, uint32_t * p_size)
+static void whitelist_set(pm_peer_id_list_skip_t skip)
 {
-    pm_peer_id_t peer_id;
-    uint32_t     peers_to_copy;
+    pm_peer_id_t peer_ids[BLE_GAP_WHITELIST_ADDR_MAX_COUNT];
+    uint32_t     peer_id_count = BLE_GAP_WHITELIST_ADDR_MAX_COUNT;
 
-    peers_to_copy = (*p_size < BLE_GAP_WHITELIST_ADDR_MAX_COUNT) ?
-                     *p_size : BLE_GAP_WHITELIST_ADDR_MAX_COUNT;
+    ret_code_t err_code = pm_peer_id_list(peer_ids, &peer_id_count, PM_PEER_ID_INVALID, skip);
+    APP_ERROR_CHECK(err_code);
 
-    peer_id = pm_next_peer_id_get(PM_PEER_ID_INVALID);
-    *p_size = 0;
+    NRF_LOG_INFO("\tm_whitelist_peer_cnt %d, MAX_PEERS_WLIST %d",
+                   peer_id_count + 1,
+                   BLE_GAP_WHITELIST_ADDR_MAX_COUNT);
 
-    while ((peer_id != PM_PEER_ID_INVALID) && (peers_to_copy--))
-    {
-        p_peers[(*p_size)++] = peer_id;
-        peer_id = pm_next_peer_id_get(peer_id);
-    }
+    err_code = pm_whitelist_set(peer_ids, peer_id_count);
+    APP_ERROR_CHECK(err_code);
+}
+
+
+/**@brief Function for setting filtered device identities.
+ *
+ * @param[in] skip  Filter passed to @ref pm_peer_id_list.
+ */
+static void identities_set(pm_peer_id_list_skip_t skip)
+{
+    pm_peer_id_t peer_ids[BLE_GAP_DEVICE_IDENTITIES_MAX_COUNT];
+    uint32_t     peer_id_count = BLE_GAP_DEVICE_IDENTITIES_MAX_COUNT;
+
+    ret_code_t err_code = pm_peer_id_list(peer_ids, &peer_id_count, PM_PEER_ID_INVALID, skip);
+    APP_ERROR_CHECK(err_code);
+
+    err_code = pm_device_identities_list_set(peer_ids, peer_id_count);
+    APP_ERROR_CHECK(err_code);
 }
 
 
@@ -334,25 +350,9 @@ static void advertising_start(bool erase_bonds)
     }
     else
     {
-        ret_code_t ret;
+        whitelist_set(PM_PEER_ID_LIST_SKIP_NO_ID_ADDR);
 
-        memset(m_whitelist_peers, PM_PEER_ID_INVALID, sizeof(m_whitelist_peers));
-        m_whitelist_peer_cnt = (sizeof(m_whitelist_peers) / sizeof(pm_peer_id_t));
-
-        peer_list_get(m_whitelist_peers, &m_whitelist_peer_cnt);
-
-        ret = pm_whitelist_set(m_whitelist_peers, m_whitelist_peer_cnt);
-        APP_ERROR_CHECK(ret);
-
-        // Setup the device identies list.
-        // Some SoftDevices do not support this feature.
-        ret = pm_device_identities_list_set(m_whitelist_peers, m_whitelist_peer_cnt);
-        if (ret != NRF_ERROR_NOT_SUPPORTED)
-        {
-            APP_ERROR_CHECK(ret);
-        }
-
-        ret = ble_advertising_start(&m_advertising, BLE_ADV_MODE_FAST);
+        ret_code_t ret = ble_advertising_start(&m_advertising, BLE_ADV_MODE_FAST);
         APP_ERROR_CHECK(ret);
     }
 }
@@ -364,121 +364,26 @@ static void advertising_start(bool erase_bonds)
  */
 static void pm_evt_handler(pm_evt_t const * p_evt)
 {
-    ret_code_t err_code;
+    pm_handler_on_pm_evt(p_evt);
+    pm_handler_flash_clean(p_evt);
 
     switch (p_evt->evt_id)
     {
-        case PM_EVT_BONDED_PEER_CONNECTED:
-        {
-            NRF_LOG_INFO("Connected to a previously bonded device.");
-        } break;
-
-        case PM_EVT_CONN_SEC_SUCCEEDED:
-        {
-            NRF_LOG_INFO("Connection secured: role: %d, conn_handle: 0x%x, procedure: %d.",
-                         ble_conn_state_role(p_evt->conn_handle),
-                         p_evt->conn_handle,
-                         p_evt->params.conn_sec_succeeded.procedure);
-
-            m_peer_id = p_evt->peer_id;
-        } break;
-
-        case PM_EVT_CONN_SEC_FAILED:
-        {
-            /* Often, when securing fails, it shouldn't be restarted, for security reasons.
-             * Other times, it can be restarted directly.
-             * Sometimes it can be restarted, but only after changing some Security Parameters.
-             * Sometimes, it cannot be restarted until the link is disconnected and reconnected.
-             * Sometimes it is impossible, to secure the link, or the peer device does not support it.
-             * How to handle this error is highly application dependent. */
-        } break;
-
-        case PM_EVT_CONN_SEC_CONFIG_REQ:
-        {
-            // Reject pairing request from an already bonded peer.
-            pm_conn_sec_config_t conn_sec_config = {.allow_repairing = false};
-            pm_conn_sec_config_reply(p_evt->conn_handle, &conn_sec_config);
-        } break;
-
-        case PM_EVT_STORAGE_FULL:
-        {
-            // Run garbage collection on the flash.
-            err_code = fds_gc();
-            if (err_code == FDS_ERR_NO_SPACE_IN_QUEUES)
-            {
-                // Retry.
-            }
-            else
-            {
-                APP_ERROR_CHECK(err_code);
-            }
-        } break;
-
         case PM_EVT_PEERS_DELETE_SUCCEEDED:
-        {
             advertising_start(false);
-        } break;
+            break;
 
         case PM_EVT_PEER_DATA_UPDATE_SUCCEEDED:
-        {
             if (     p_evt->params.peer_data_update_succeeded.flash_changed
                  && (p_evt->params.peer_data_update_succeeded.data_id == PM_PEER_DATA_ID_BONDING))
             {
                 NRF_LOG_INFO("New Bond, add the peer to the whitelist if possible");
-                NRF_LOG_INFO("\tm_whitelist_peer_cnt %d, MAX_PEERS_WLIST %d",
-                               m_whitelist_peer_cnt + 1,
-                               BLE_GAP_WHITELIST_ADDR_MAX_COUNT);
                 // Note: You should check on what kind of white list policy your application should use.
 
-                if (m_whitelist_peer_cnt < BLE_GAP_WHITELIST_ADDR_MAX_COUNT)
-                {
-                    // Bonded to a new peer, add it to the whitelist.
-                    m_whitelist_peers[m_whitelist_peer_cnt++] = m_peer_id;
-
-                    // The whitelist has been modified, update it in the Peer Manager.
-                    err_code = pm_device_identities_list_set(m_whitelist_peers, m_whitelist_peer_cnt);
-                    if (err_code != NRF_ERROR_NOT_SUPPORTED)
-                    {
-                        APP_ERROR_CHECK(err_code);
-                    }
-
-                    err_code = pm_whitelist_set(m_whitelist_peers, m_whitelist_peer_cnt);
-                    APP_ERROR_CHECK(err_code);
-                }
+                whitelist_set(PM_PEER_ID_LIST_SKIP_NO_ID_ADDR);
             }
-        } break;
+            break;
 
-        case PM_EVT_PEER_DATA_UPDATE_FAILED:
-        {
-            // Assert.
-            APP_ERROR_CHECK(p_evt->params.peer_data_update_failed.error);
-        } break;
-
-        case PM_EVT_PEER_DELETE_FAILED:
-        {
-            // Assert.
-            APP_ERROR_CHECK(p_evt->params.peer_delete_failed.error);
-        } break;
-
-        case PM_EVT_PEERS_DELETE_FAILED:
-        {
-            // Assert.
-            APP_ERROR_CHECK(p_evt->params.peers_delete_failed_evt.error);
-        } break;
-
-        case PM_EVT_ERROR_UNEXPECTED:
-        {
-            // Assert.
-            APP_ERROR_CHECK(p_evt->params.error_unexpected.error);
-        } break;
-
-        case PM_EVT_CONN_SEC_START:
-        case PM_EVT_PEER_DELETE_SUCCEEDED:
-        case PM_EVT_LOCAL_DB_CACHE_APPLIED:
-        case PM_EVT_LOCAL_DB_CACHE_APPLY_FAILED:
-            // This can happen when the local DB has changed.
-        case PM_EVT_SERVICE_CHANGED_IND_SENT:
-        case PM_EVT_SERVICE_CHANGED_IND_CONFIRMED:
         default:
             break;
     }
@@ -651,8 +556,7 @@ static void dis_init(void)
     ble_srv_ascii_to_utf8(&dis_init_obj.manufact_name_str, MANUFACTURER_NAME);
     dis_init_obj.p_pnp_id = &pnp_id;
 
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&dis_init_obj.dis_attr_md.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&dis_init_obj.dis_attr_md.write_perm);
+    dis_init_obj.dis_char_rd_sec = SEC_JUST_WORKS;
 
     err_code = ble_dis_init(&dis_init_obj);
     APP_ERROR_CHECK(err_code);
@@ -673,11 +577,9 @@ static void bas_init(void)
     bas_init_obj.p_report_ref         = NULL;
     bas_init_obj.initial_batt_level   = 100;
 
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&bas_init_obj.battery_level_char_attr_md.cccd_write_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&bas_init_obj.battery_level_char_attr_md.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&bas_init_obj.battery_level_char_attr_md.write_perm);
-
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&bas_init_obj.battery_level_report_read_perm);
+    bas_init_obj.bl_rd_sec        = SEC_JUST_WORKS;
+    bas_init_obj.bl_cccd_wr_sec   = SEC_JUST_WORKS;
+    bas_init_obj.bl_report_rd_sec = SEC_JUST_WORKS;
 
     err_code = ble_bas_init(&m_bas, &bas_init_obj);
     APP_ERROR_CHECK(err_code);
@@ -688,15 +590,17 @@ static void bas_init(void)
  */
 static void hids_init(void)
 {
-    ret_code_t                 err_code;
-    ble_hids_init_t            hids_init_obj;
-    ble_hids_inp_rep_init_t  * p_input_report;
-    ble_hids_outp_rep_init_t * p_output_report;
-    uint8_t                    hid_info_flags;
+    ret_code_t                    err_code;
+    ble_hids_init_t               hids_init_obj;
+    ble_hids_inp_rep_init_t     * p_input_report;
+    ble_hids_outp_rep_init_t    * p_output_report;
+    ble_hids_feature_rep_init_t * p_feature_report;
+    uint8_t                       hid_info_flags;
 
-    static ble_hids_inp_rep_init_t  input_report_array[1];
-    static ble_hids_outp_rep_init_t output_report_array[1];
-    static uint8_t                  report_map_data[] =
+    static ble_hids_inp_rep_init_t     input_report_array[1];
+    static ble_hids_outp_rep_init_t    output_report_array[1];
+    static ble_hids_feature_rep_init_t feature_report_array[1];
+    static uint8_t                     report_map_data[] =
     {
         0x05, 0x01,       // Usage Page (Generic Desktop)
         0x09, 0x06,       // Usage (Keyboard)
@@ -736,8 +640,8 @@ static void hids_init(void)
         0x09, 0x05,       // Usage (Vendor Defined)
         0x15, 0x00,       // Logical Minimum (0)
         0x26, 0xFF, 0x00, // Logical Maximum (255)
-        0x75, 0x08,       // Report Count (2)
-        0x95, 0x02,       // Report Size (8 bit)
+        0x75, 0x08,       // Report Size (8 bit)
+        0x95, 0x02,       // Report Count (2)
         0xB1, 0x02,       // Feature (Data, Variable, Absolute)
 
         0xC0              // End Collection (Application)
@@ -745,6 +649,7 @@ static void hids_init(void)
 
     memset((void *)input_report_array, 0, sizeof(ble_hids_inp_rep_init_t));
     memset((void *)output_report_array, 0, sizeof(ble_hids_outp_rep_init_t));
+    memset((void *)feature_report_array, 0, sizeof(ble_hids_feature_rep_init_t));
 
     // Initialize HID Service
     p_input_report                      = &input_report_array[INPUT_REPORT_KEYS_INDEX];
@@ -752,17 +657,25 @@ static void hids_init(void)
     p_input_report->rep_ref.report_id   = INPUT_REP_REF_ID;
     p_input_report->rep_ref.report_type = BLE_HIDS_REP_TYPE_INPUT;
 
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&p_input_report->security_mode.cccd_write_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&p_input_report->security_mode.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&p_input_report->security_mode.write_perm);
+    p_input_report->sec.cccd_wr = SEC_JUST_WORKS;
+    p_input_report->sec.wr      = SEC_JUST_WORKS;
+    p_input_report->sec.rd      = SEC_JUST_WORKS;
 
     p_output_report                      = &output_report_array[OUTPUT_REPORT_INDEX];
     p_output_report->max_len             = OUTPUT_REPORT_MAX_LEN;
     p_output_report->rep_ref.report_id   = OUTPUT_REP_REF_ID;
     p_output_report->rep_ref.report_type = BLE_HIDS_REP_TYPE_OUTPUT;
 
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&p_output_report->security_mode.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&p_output_report->security_mode.write_perm);
+    p_output_report->sec.wr = SEC_JUST_WORKS;
+    p_output_report->sec.rd = SEC_JUST_WORKS;
+
+    p_feature_report                      = &feature_report_array[FEATURE_REPORT_INDEX];
+    p_feature_report->max_len             = FEATURE_REPORT_MAX_LEN;
+    p_feature_report->rep_ref.report_id   = FEATURE_REP_REF_ID;
+    p_feature_report->rep_ref.report_type = BLE_HIDS_REP_TYPE_FEATURE;
+
+    p_feature_report->sec.rd              = SEC_JUST_WORKS;
+    p_feature_report->sec.wr              = SEC_JUST_WORKS;
 
     hid_info_flags = HID_INFO_FLAG_REMOTE_WAKE_MSK | HID_INFO_FLAG_NORMALLY_CONNECTABLE_MSK;
 
@@ -776,8 +689,8 @@ static void hids_init(void)
     hids_init_obj.p_inp_rep_array                = input_report_array;
     hids_init_obj.outp_rep_count                 = 1;
     hids_init_obj.p_outp_rep_array               = output_report_array;
-    hids_init_obj.feature_rep_count              = 0;
-    hids_init_obj.p_feature_rep_array            = NULL;
+    hids_init_obj.feature_rep_count              = 1;
+    hids_init_obj.p_feature_rep_array            = feature_report_array;
     hids_init_obj.rep_map.data_len               = sizeof(report_map_data);
     hids_init_obj.rep_map.p_data                 = report_map_data;
     hids_init_obj.hid_information.bcd_hid        = BASE_USB_HID_SPEC_VERSION;
@@ -786,22 +699,18 @@ static void hids_init(void)
     hids_init_obj.included_services_count        = 0;
     hids_init_obj.p_included_services_array      = NULL;
 
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&hids_init_obj.rep_map.security_mode.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&hids_init_obj.rep_map.security_mode.write_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&hids_init_obj.hid_information.security_mode.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&hids_init_obj.hid_information.security_mode.write_perm);
+    hids_init_obj.rep_map.rd_sec         = SEC_JUST_WORKS;
+    hids_init_obj.hid_information.rd_sec = SEC_JUST_WORKS;
 
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(
-        &hids_init_obj.security_mode_boot_kb_inp_rep.cccd_write_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&hids_init_obj.security_mode_boot_kb_inp_rep.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&hids_init_obj.security_mode_boot_kb_inp_rep.write_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&hids_init_obj.security_mode_boot_kb_outp_rep.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&hids_init_obj.security_mode_boot_kb_outp_rep.write_perm);
+    hids_init_obj.boot_kb_inp_rep_sec.cccd_wr = SEC_JUST_WORKS;
+    hids_init_obj.boot_kb_inp_rep_sec.rd      = SEC_JUST_WORKS;
 
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&hids_init_obj.security_mode_protocol.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&hids_init_obj.security_mode_protocol.write_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&hids_init_obj.security_mode_ctrl_point.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&hids_init_obj.security_mode_ctrl_point.write_perm);
+    hids_init_obj.boot_kb_outp_rep_sec.rd = SEC_JUST_WORKS;
+    hids_init_obj.boot_kb_outp_rep_sec.wr = SEC_JUST_WORKS;
+
+    hids_init_obj.protocol_mode_rd_sec = SEC_JUST_WORKS;
+    hids_init_obj.protocol_mode_wr_sec = SEC_JUST_WORKS;
+    hids_init_obj.ctrl_point_wr_sec    = SEC_JUST_WORKS;
 
     err_code = ble_hids_init(&m_hids, &hids_init_obj);
     APP_ERROR_CHECK(err_code);
@@ -1319,6 +1228,9 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
             NRF_LOG_DEBUG("pm_whitelist_get returns %d addr in whitelist and %d irk whitelist",
                           addr_cnt, irk_cnt);
 
+            // Set the correct identities list (no excluding peers with no Central Address Resolution).
+            identities_set(PM_PEER_ID_LIST_SKIP_NO_IRK);
+
             // Apply the whitelist.
             err_code = ble_advertising_whitelist_reply(&m_advertising,
                                                        whitelist_addrs,
@@ -1339,6 +1251,9 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
                 if (err_code != NRF_ERROR_NOT_FOUND)
                 {
                     APP_ERROR_CHECK(err_code);
+
+                    // Manipulate identities to exclude peers with no Central Address Resolution.
+                    identities_set(PM_PEER_ID_LIST_SKIP_ALL);
 
                     ble_gap_addr_t * p_peer_addr = &(peer_bonding_data.peer_ble_id.id_addr_info);
                     err_code = ble_advertising_peer_addr_reply(&m_advertising, p_peer_addr);

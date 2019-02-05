@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2012 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 /** @file
  *
@@ -116,12 +116,13 @@ typedef void (* ble_bas_evt_handler_t) (ble_bas_t * p_bas, ble_bas_evt_t * p_evt
  *        initialization of the service.*/
 typedef struct
 {
-    ble_bas_evt_handler_t        evt_handler;                    /**< Event handler to be called for handling events in the Battery Service. */
-    bool                         support_notification;           /**< TRUE if notification of Battery Level measurement is supported. */
-    ble_srv_report_ref_t       * p_report_ref;                   /**< If not NULL, a Report Reference descriptor with the specified value will be added to the Battery Level characteristic */
-    uint8_t                      initial_batt_level;             /**< Initial battery level */
-    ble_srv_cccd_security_mode_t battery_level_char_attr_md;     /**< Initial security level for battery characteristics attribute */
-    ble_gap_conn_sec_mode_t      battery_level_report_read_perm; /**< Initial security level for battery report read attribute */
+    ble_bas_evt_handler_t  evt_handler;                    /**< Event handler to be called for handling events in the Battery Service. */
+    bool                   support_notification;           /**< TRUE if notification of Battery Level measurement is supported. */
+    ble_srv_report_ref_t * p_report_ref;                   /**< If not NULL, a Report Reference descriptor with the specified value will be added to the Battery Level characteristic */
+    uint8_t                initial_batt_level;             /**< Initial battery level */
+    security_req_t         bl_rd_sec;                      /**< Security requirement for reading the BL characteristic value. */
+    security_req_t         bl_cccd_wr_sec;                 /**< Security requirement for writing the BL characteristic CCCD. */
+    security_req_t         bl_report_rd_sec;               /**< Security requirement for reading the BL characteristic descriptor. */
 } ble_bas_init_t;
 
 /**@brief Battery Service structure. This contains various status information for the service. */
@@ -170,10 +171,6 @@ void ble_bas_on_ble_evt(ble_evt_t const * p_ble_evt, void * p_context);
  *          enabled notifications. \ref BLE_CONN_HANDLE_ALL can be used as a connection handle
  *          to send notifications to all connected devices.
  *
- * @note For the requirements in the BAS specification to be fulfilled,
- *       this function must be called upon reconnection if the battery level has changed
- *       while the service has been disconnected from a bonded client.
- *
  * @param[in]   p_bas          Battery Service structure.
  * @param[in]   battery_level  New battery measurement value (in percent of full capacity).
  * @param[in]   conn_handle    Connection handle.
@@ -183,6 +180,27 @@ void ble_bas_on_ble_evt(ble_evt_t const * p_ble_evt, void * p_context);
 ret_code_t ble_bas_battery_level_update(ble_bas_t * p_bas,
                                         uint8_t     battery_level,
                                         uint16_t    conn_handle);
+
+
+/**@brief Function for sending the last battery level when bonded client reconnects.
+ *
+ * @details The application calls this function, in the case of a reconnection of
+ *          a bonded client if the value of the battery has changed since
+ *          its disconnection.
+ *
+ * @note For the requirements in the BAS specification to be fulfilled,
+ *       this function must be called upon reconnection if the battery level has changed
+ *       while the service has been disconnected from a bonded client.
+ *
+ * @param[in]   p_bas          Battery Service structure.
+ * @param[in]   conn_handle    Connection handle.
+ *
+ * @return      NRF_SUCCESS on success,
+ *              NRF_ERROR_INVALID_STATE when notification is not supported,
+ *              otherwise an error code returned by @ref sd_ble_gatts_hvx.
+ */
+ret_code_t ble_bas_battery_lvl_on_reconnection_update(ble_bas_t * p_bas,
+                                                      uint16_t    conn_handle);
 
 
 #ifdef __cplusplus

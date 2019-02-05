@@ -1,30 +1,30 @@
 /**
- * Copyright (c) 2018 - 2018, Nordic Semiconductor ASA
- * 
+ * Copyright (c) 2018, Nordic Semiconductor ASA
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 
 #include <stdio.h>
@@ -96,7 +96,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_aes_data, test_vector_aes_t test_vector_ae
     .expected_err_code  = NRF_SUCCESS,
     .expected_result    = EXPECTED_TO_PASS,
     .direction          = NRF_CRYPTO_DECRYPT,
-    .p_test_vector_name = "CBC 128 Encrypt message_len=0",
+    .p_test_vector_name = "CBC 128 Decrypt message_len=0",
     .p_plaintext        = "",
     .p_ciphertext       = "",
     .p_key              = "89df4c819f49dbcbcb124304023cf38c",
@@ -620,7 +620,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_aes_data, test_vector_aes_t test_vector_ae
     .expected_err_code  = NRF_SUCCESS,
     .expected_result    = EXPECTED_TO_PASS,
     .direction          = NRF_CRYPTO_DECRYPT,
-    .p_test_vector_name = "CBC 192 Encrypt message_len=0",
+    .p_test_vector_name = "CBC 192 Decrypt message_len=0",
     .p_plaintext        = "",
     .p_ciphertext       = "",
     .p_key              = "73befbe26caa000bb57574a7d33ad60019b40c7a3ac6562d",
@@ -1147,7 +1147,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_aes_data, test_vector_aes_t test_vector_ae
     .expected_err_code  = NRF_SUCCESS,
     .expected_result    = EXPECTED_TO_PASS,
     .direction          = NRF_CRYPTO_DECRYPT,
-    .p_test_vector_name = "CBC 256 Encrypt message_len=0",
+    .p_test_vector_name = "CBC 256 Decrypt message_len=0",
     .p_plaintext        = "",
     .p_ciphertext       = "",
     .p_key              = "c9defba265de96a179a1128c2b5ef0edf6365c3064df88e2d46b2bfae20b599d",
@@ -1446,6 +1446,20 @@ NRF_SECTION_ITEM_REGISTER(test_vector_aes_data, test_vector_aes_t test_vector_ae
     .p_ciphertext       = "0254b23463bcabec5a395eb74c8fb0eb137a07bc6f5e9f61ec0b057de305714f8fa294221c91a159c315939b81e300ee902192ec5f15254428d8772f79324ec43298ca21c00b370273ee5e5ed90e43efa1e05a5d171209fe34f9f29237dba2a6726650fd3b1321747d1208863c6c3c6b3e2d879ab5f25782f08ba8f2abbe63e0bedb4a227e81afb36bb6645508356d34",
     .p_key              = "d2412db0845d84e5732b8bbd642957473b81fb99ca8bff70e7920d16c1dbec89",
     .p_iv               = "51c619fcf0b23f0c7925f400a6cacb6d"
+};
+
+// AES CBC - NIST CAVS 11.1 Multiblock Message Tests 256 Encrypt - Count 9
+NRF_SECTION_ITEM_REGISTER(test_vector_aes_data, test_vector_aes_t test_vector_aes_cbc_256_encrypt_160) =
+{
+    .p_aes_info         = &g_nrf_crypto_aes_cbc_256_info,
+    .expected_err_code  = NRF_SUCCESS,
+    .expected_result    = EXPECTED_TO_PASS,
+    .direction          = NRF_CRYPTO_ENCRYPT,
+    .p_test_vector_name = "CBC 256 Encrypt message_len=160",
+    .p_plaintext        = "0c63d413d3864570e70bb6618bf8a4b9585586688c32bba0a5ecc1362fada74ada32c52acfd1aa7444ba567b4e7daaecf7cc1cb29182af164ae5232b002868695635599807a9a7f07a1f137e97b1e1c9dabc89b6a5e4afa9db5855edaa575056a8f4f8242216242bb0c256310d9d329826ac353d715fa39f80cec144d6424558f9f70b98c920096e0f2c855d594885a00625880e9dfb734163cecef72cf030b8",
+    .p_ciphertext       = "fc5873e50de8faf4c6b84ba707b0854e9db9ab2e9f7d707fbba338c6843a18fc6facebaf663d26296fb329b4d26f18494c79e09e779647f9bafa87489630d79f4301610c2300c19dbf3148b7cac8c4f4944102754f332e92b6f7c5e75bc6179eb877a078d4719009021744c14f13fd2a55a2b9c44d18000685a845a4f632c7c56a77306efa66a24d05d088dcd7c13fe24fc447275965db9e4d37fbc9304448cd",
+    .p_key              = "48be597e632c16772324c8d3fa1d9c5a9ecd010f14ec5d110d3bfec376c5532b",
+    .p_iv               = "d6d581b8cf04ebd3b6eaa1b53f047ee1"
 };
 
 // AES CBC - NIST CAVS 11.1 Multiblock Message Tests 256 Decrypt - Count 0

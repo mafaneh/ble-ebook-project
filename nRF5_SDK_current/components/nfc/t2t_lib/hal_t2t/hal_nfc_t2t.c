@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2015 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 
 #include "sdk_config.h"
@@ -139,9 +139,6 @@ NRF_LOG_MODULE_REGISTER();
 #define NFC_FIELD_ON_MASK            NFCT_FIELDPRESENT_LOCKDETECT_Msk           /**< Mask for checking FIELDPRESENT register for state: FIELD ON. */
 #define NFC_FIELD_OFF_MASK           NFCT_FIELDPRESENT_FIELDPRESENT_Msk         /**< Mask for checking FIELDPRESENT register for state: FIELD OFF. */
 
-#define NRF_NFCT_DEFAULTSTATESLEEP     (*(uint32_t volatile *)(0x40005420))     /**< The default state of NFCT. */
-#define NRF_NFCT_DEFAULTSTATESLEEP_MSK 0x1UL                                    /**< Mask for checking the default state of NFCT. */
-
 #ifdef HAL_NFC_NRF52840_ENGINEERING_ABC_WORKAROUND
     #define NRF_NFCT_ACTIVATE_CONDS_THR    2                                        /**< Number of required conditions to activate NFCT. */
     #define NRF_NFCT_ACTIVATE_DELAY        1000                                     /**< Minimal delay in us between NFC field detection and activation of NFCT. */
@@ -183,8 +180,6 @@ static volatile uint32_t            m_nfc_fieldpresent_mask               = NFC_
 #endif // HAL_NFC_ENGINEERING_BC_FTPAN_WORKAROUND
 
 #ifdef HAL_NFC_ENGINEERING_BC_FTPAN_WORKAROUND
-
-#define NRF_NFCT_POWER  (*(uint32_t volatile *)(0x40005FFC))
 
 #define NFC_HAL_FIELDPRESENT_MASK      (NFCT_FIELDPRESENT_LOCKDETECT_Msk | \
                                        NFCT_FIELDPRESENT_FIELDPRESENT_Msk)
@@ -500,9 +495,9 @@ static inline void nrf_nfct_field_lost_hfclk_handle(void)
     /* Begin:   Bugfix for FTPAN-116 (IC-12886) */
     // reset the NFC for release HFCLK
     __DMB();
-    NRF_NFCT_POWER = 0;
+    (*(uint32_t volatile *)(0x40005FFC)) = 0UL;
     __DMB();
-    NRF_NFCT_POWER = 1;
+    (*(uint32_t volatile *)(0x40005FFC)) = 1UL;
     /* END:   Bugfix for FTPAN-116 (IC-12886) */
 
 }
@@ -546,9 +541,6 @@ static inline void nrf_nfct_field_event_handler(volatile nfct_field_sense_state_
         case NFC_FIELD_STATE_ON:
             if (!m_field_on)
             {
-                HAL_NFC_DEBUG_PIN_SET(HAL_NFC_HCLOCK_ON_DEBUG_PIN);  //DEBUG!
-                nrf_drv_clock_hfclk_request(&m_clock_handler_item);
-
 #ifdef HAL_NFC_NRF52840_ENGINEERING_ABC_WORKAROUND
                 /* Begin: Bugfix for FTPAN-190 */
                 if (!is_first_sample)
@@ -562,6 +554,8 @@ static inline void nrf_nfct_field_event_handler(volatile nfct_field_sense_state_
                 /* END: Bugfix for FTPAN-190 */
 #endif // HAL_NFC_NRF52840_ENGINEERING_ABC_WORKAROUND
 
+                HAL_NFC_DEBUG_PIN_SET(HAL_NFC_HCLOCK_ON_DEBUG_PIN);  //DEBUG!
+                nrf_drv_clock_hfclk_request(&m_clock_handler_item);
                 HAL_NFC_DEBUG_PIN_CLEAR(HAL_NFC_HCLOCK_ON_DEBUG_PIN);  //DEBUG!
             }
             m_field_on = true;
@@ -624,6 +618,13 @@ static void hal_nfc_nfcid1_default_bytes(void)
     m_nfcid1_data[7] = (uint8_t) LSB_32(nfc_tag_header2 >> 0);
     m_nfcid1_data[8] = (uint8_t) LSB_32(nfc_tag_header2 >> 8);
     m_nfcid1_data[9] = (uint8_t) LSB_32(nfc_tag_header2 >> 16);
+
+    /* Begin: Bugfix for FTPAN-181. */
+    if (m_nfcid1_data[3] == 0x88)
+    {
+        m_nfcid1_data[3] |= 0x11;
+    }
+    /* End: Bugfix for FTPAN-181 */
 }
 
 
@@ -632,7 +633,11 @@ static void hal_nfc_nfcid1_default_bytes(void)
  */
 static inline void nrf_nfct_default_state_reset(void)
 {
-    if (NRF_NFCT_DEFAULTSTATESLEEP & NRF_NFCT_DEFAULTSTATESLEEP_MSK) // Default state is SLEEP_A
+#if defined(NRF52832_XXAA) || defined(NRF52832_XXAB)
+    if (((*(uint32_t volatile *)(0x40005420)) & 0x1UL) == (1UL))
+#else
+    if (NRF_NFCT->SLEEPSTATE & NFCT_SLEEPSTATE_SLEEPSTATE_Msk) // Default state is SLEEP_A
+#endif //defined(NRF52832_XXAA) || defined(NRF52832_XXAB)
     {
         NRF_NFCT->TASKS_GOSLEEP = 1;
     }

@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2017 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 
  /**@file
@@ -115,8 +115,7 @@ typedef enum
     NRF_BLE_OTS_C_OACP_RES_OPER_FAILED    = 0x0A  //!< Operation Failed.
 } ble_ots_c_oacp_res_code_t;
 
-/**@brief Type of the Object Transfer Service client event.
- */
+/**@brief Type of the Object Transfer Service client event. */
 typedef enum
 {
     NRF_BLE_OTS_C_EVT_DISCOVERY_FAILED,   //!< Event indicating that the Object Transfer Service has not been found on the peer.
@@ -124,12 +123,14 @@ typedef enum
     NRF_BLE_OTS_C_EVT_DISCONN_COMPLETE,   //!< Event indicating that the Object Transfer Service client module has finished processing the BLE_GAP_EVT_DISCONNECTED event. The event can be used by the application to do clean up related to the Object Transfer Service client.
     NRF_BLE_OTS_C_EVT_FEATURE_READ_RESP,  //!< Event indicating that the feature characteristic was read, The available features of the peer will be provided in the event.
     NRF_BLE_OTS_C_EVT_OACP_RESP,          //!< Event indicating that a response was received (result of a write to the OACP).
-    NRF_BLE_OTS_C_EVT_OBJ_READ,           //!< Event indicating that the Object Transfer Service client finished reading object from the peer
+    NRF_BLE_OTS_C_EVT_OBJ_READ,           //!< Event indicating that the Object Transfer Service client finished reading object from the peer.
+    NRF_BLE_OTS_C_EVT_OBJ_WRITE,          //!< Event indicating that the Object Transfer Service client finished writing an object to the peer.
     NRF_BLE_OTS_C_EVT_CHANNEL_RELEASED,   //!< Event indicating that the L2CAP Connection Oriented Channel has been disconnected
-    NRF_BLE_OTS_C_EVT_SIZE_READ_RESP      //!< Event indicating that the object size characteristic was read.
+    NRF_BLE_OTS_C_EVT_SIZE_READ_RESP,     //!< Event indicating that the object size characteristic was read.
+    NRF_BLE_OTS_C_EVT_PROP_READ_RESP      //!< Event indicating that the object properties characteristic was read.
 } nrf_ble_ots_c_evt_type_t;
 
-/** @brief Structure to hold the features of a server */
+/** @brief Structure to hold the features of a server. */
 typedef struct
 {
     uint8_t oacp_create   : 1;
@@ -148,7 +149,26 @@ typedef struct
     uint8_t olcp_clear    : 1;
 } nrf_ble_ots_c_feature_t;
 
-/**@brief Structure used for holding the Apple Notification Center Service found during the
+
+/**@brief Properties of an Object Transfer Service object. */
+typedef union
+{
+    struct
+    {
+        bool is_delete_permitted   :1; /**< Object can be deleted. */
+        bool is_execute_permitted  :1; /**< Object can be executed. */
+        bool is_read_permitted     :1; /**< Object can be read. */
+        bool is_write_permitted    :1; /**< Object can be written. */
+        bool is_append_permitted   :1; /**< Object can be appended. */
+        bool is_truncate_permitted :1; /**< When writing using truncate mode, and the written length is shorter than the object, the object size is decreased. */
+        bool is_patch_permitted    :1; /**< When patching, a part of the object is replaced. */
+        bool is_marked             :1; /**< Boolean to keep track of if the object is marked or not. */
+    } decoded;
+    uint32_t raw;
+} nrf_ble_ots_c_obj_properties_t;
+
+
+/**@brief Structure used for holding the Object Transfer Service found during the
           discovery process.
  */
 typedef struct
@@ -163,13 +183,14 @@ typedef struct
     ble_gattc_desc_t    object_action_cp_cccd; //!< Object Action Control Point Descriptor. Enables or disables Object Transfer notifications.
 } nrf_ble_ots_c_service_t;
 
-
+/** @brief Structure to hold responses received when writing to the Object Action Control Point on the server. */
 typedef struct
 {  
     ble_ots_c_oacp_proc_type_t request_op_code;
     ble_ots_c_oacp_res_code_t  result_code;
 } nrf_ble_ots_c_oacp_response_t;
 
+/** @brief Structure to hold the size of the object on the server when read from the Object Size characteristic on the server. */
 typedef struct
 {
     uint32_t current_size;
@@ -184,11 +205,12 @@ typedef struct
     uint16_t                 conn_handle; /**< Handle of the connection for which this event has occurred. */
     union
     {
-        nrf_ble_ots_c_feature_t         feature;        /**< Will be provided if the event type is @ref NRF_BLE_OTS_C_EVT_FEATURE_READ_RESP.*/
-        nrf_ble_ots_c_service_t         handles;        /**< Handles that the Object Transfer service occupies in the peer device. Will be filled if the event type is @ref NRF_BLE_OTS_C_EVT_DISCOVERY_COMPLETE.*/
-        nrf_ble_ots_c_oacp_response_t   response;       /**< Will be provided if the event type is @ref NRF_BLE_OTS_C_EVT_OACP_RESP. */
-        ble_data_t                      object;         /**< Will be provided if the event type is @ref NRF_BLE_OTS_C_EVT_OBJ_READ. */
-        nrf_ble_ots_c_obj_size          size;           /**< Will be provided if the event type is @ref NRF_BLE_OTS_C_EVT_SIZE_READ_RESP. */
+        nrf_ble_ots_c_feature_t        feature;  /**< Will be provided if the event type is @ref NRF_BLE_OTS_C_EVT_FEATURE_READ_RESP.*/
+        nrf_ble_ots_c_service_t        handles;  /**< Handles that the Object Transfer service occupies in the peer device. Will be filled if the event type is @ref NRF_BLE_OTS_C_EVT_DISCOVERY_COMPLETE.*/
+        nrf_ble_ots_c_oacp_response_t  response; /**< Will be provided if the event type is @ref NRF_BLE_OTS_C_EVT_OACP_RESP. */
+        ble_data_t                     object;   /**< Will be provided if the event type is @ref NRF_BLE_OTS_C_EVT_OBJ_READ. */
+        nrf_ble_ots_c_obj_size         size;     /**< Will be provided if the event type is @ref NRF_BLE_OTS_C_EVT_SIZE_READ_RESP. */
+        nrf_ble_ots_c_obj_properties_t prop;     /**< Will be provided if the eevnt type is @ref NRF_BLE_OTS_C_EVT_PROP_READ_RESP. */
     } params;
 } nrf_ble_ots_c_evt_t;
 
@@ -203,18 +225,16 @@ typedef void (* nrf_ble_ots_c_evt_handler_t)(nrf_ble_ots_c_evt_t * p_evt);
 */
 typedef struct
 {
-    bool                          initialized;      /**< Boolean telling whether the context has been initialized or not. */
-    uint16_t                      conn_handle;      /**< Active connection handle */
-    nrf_ble_ots_c_service_t       service;          /**< Structure to store the different handles and UUIDs related to the service. */
-    nrf_ble_ots_c_evt_handler_t   evt_handler;      /**< Pointer to event handler function. */
-    ble_srv_error_handler_t       err_handler;      /**< Pointer to error handler function. */
-    uint16_t                      local_cid;
-    ble_l2cap_evt_ch_setup_t      ch_setup;         /**< L2CAP Channel Setup Completed Event Parameters. */
-    uint32_t                      current_credits;
-    uint32_t                      remaining_bytes;
-    uint32_t                      transmitted_bytes;
-    uint32_t                      received_bytes;
-    ble_data_t                  * current_obj;
+    bool                        initialized;       /**< Boolean telling whether the context has been initialized or not. */
+    uint16_t                    conn_handle;       /**< Active connection handle */
+    nrf_ble_ots_c_service_t     service;           /**< Structure to store the different handles and UUIDs related to the service. */
+    nrf_ble_ots_c_evt_handler_t evt_handler;       /**< Pointer to event handler function. */
+    ble_srv_error_handler_t     err_handler;       /**< Pointer to error handler function. */
+    uint16_t                    local_cid;         /**< Connection ID of the current connection. */
+    ble_l2cap_evt_ch_setup_t    ch_setup;          /**< L2CAP Channel Setup Completed Event Parameters. */
+    uint32_t                    transmitted_bytes; /**< Variable used when transferring an object to the peer. */
+    uint32_t                    received_bytes;    /**< Variable used when transferring an object from the peer. */
+    ble_data_t                * current_obj;       /**< Pointer to the current object to be transferred. */
 } nrf_ble_ots_c_t;
 
 
@@ -270,10 +290,23 @@ ret_code_t nrf_ble_ots_c_feature_read(nrf_ble_ots_c_t * const p_ots_c);
    @param[in,out] p_ots_c Pointer to Object Transfer client structure.
 
    @retval NRF_SUCCESS Operation success.
-   @return             NRF_ERROR_INVALID_STATE if the Object Size characteristic has not been discovered. If functions from other modules return errors to this function,
+   @return             NRF_ERROR_INVALID_STATE if the Object Size characteristic has not been discovered. 
+   @return             If functions from other modules return errors to this function,
                        the @ref nrf_error are propagated.
 */
 ret_code_t nrf_ble_ots_c_obj_size_read(nrf_ble_ots_c_t * const p_ots_c);
+
+
+/**@brief Function for reading the Object properties (@ref BLE_UUID_OTS_OBJECT_PROPERTIES) on the server.
+
+   @param[in,out] p_ots_c Pointer to Object Transfer client structure.
+
+   @retval NRF_SUCCESS             Operation success.
+   @retval NRF_ERROR_INVALID_STATE If the Object Properties characteristic has not been discovered.
+   @return                         If functions from other modules return errors to this function,
+                                   the @ref nrf_error are propagated.
+*/
+ret_code_t nrf_ble_ots_c_obj_properties_read(nrf_ble_ots_c_t * const p_ots_c);
 
 
 /**@brief Function for handling the Application's BLE Stack events.
@@ -281,15 +314,12 @@ ret_code_t nrf_ble_ots_c_obj_size_read(nrf_ble_ots_c_t * const p_ots_c);
    @param[in]     p_ble_evt   Pointer to the BLE event received.
    @param[in,out] p_context   Pointer to the Object Transfer Service client structure instance.
 */
-void nrf_ble_ots_c_on_ble_evt(const ble_evt_t   * const p_ble_evt,
-                              void * p_context);
+void nrf_ble_ots_c_on_ble_evt(const ble_evt_t   * const p_ble_evt, void * p_context);
 
 
 ret_code_t nrf_ble_ots_c_obj_name_read(nrf_ble_ots_c_t * const p_ots_c, ble_data_t  * p_obj);
 ret_code_t nrf_ble_ots_c_obj_name_write(nrf_ble_ots_c_t * const p_ots_c, ble_data_t  * p_obj);
 ret_code_t nrf_ble_ots_c_obj_type_read(nrf_ble_ots_c_t * const p_ots_c);
-ret_code_t nrf_ble_ots_c_obj_size_read(nrf_ble_ots_c_t * const p_ots_c);
-ret_code_t nrf_ble_ots_c_obj_properties_read(nrf_ble_ots_c_t * const p_ots_c);
 
 
 /**@brief   Function for assigning handles to a Object Transfer Service client instance.

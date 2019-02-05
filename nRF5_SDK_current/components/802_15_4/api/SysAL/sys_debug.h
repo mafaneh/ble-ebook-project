@@ -1,31 +1,31 @@
 /**
  * Copyright (c) 2016 - 2018 Nordic Semiconductor ASA and Luxoft Global Operations Gmbh.
- * 
+ *
  * All Rights Reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * 
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -37,7 +37,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #ifndef SYS_DEBUG_H_INCLUDED
 #define SYS_DEBUG_H_INCLUDED
@@ -49,6 +49,9 @@
 #include <stdarg.h>
 
 /*  This header file contains macros for debugging. */
+#ifndef __FILENAME__
+    #define __FILENAME__ __FILE__
+#endif // __FILENAME__
 
 #ifndef ASSERT
     #ifdef CONFIG_DEBUG
@@ -58,7 +61,7 @@
                 bool LOCAL_CONDITION_CHECK = (CONDITION_STATEMENT); \
                 if (LOCAL_CONDITION_CHECK != true) \
                 { \
-                    sys_assert_handler((#CONDITION_STATEMENT), __LINE__, __FILE__); \
+                    sys_assert_handler((#CONDITION_STATEMENT), __LINE__, __FILENAME__); \
                 } \
             } while (0)
     #else
@@ -76,7 +79,7 @@
                 bool LOCAL_CONDITION_CHECK = (CONDITION_STATEMENT); \
                 if (LOCAL_CONDITION_CHECK != true) \
                 { \
-                    sys_assert_info_handler((#CONDITION_STATEMENT), __LINE__, __FILE__, \
+                    sys_assert_info_handler((#CONDITION_STATEMENT), __LINE__, __FILENAME__, \
                         INFO_FMT, __VA_ARGS__); \
                 } \
             } while (0)
@@ -84,7 +87,7 @@
     #else
 
     #define ASSERT_INFO(CONDITION_STATEMENT, INFO_FMT, ...)
-    
+
     #endif  // CONFIG_DEBUG
 #endif // ASSERT_INFO
 
@@ -96,7 +99,7 @@
     #endif  // CONFIG_DEBUG
 #endif // ASSERT_STATIC
 
-/** 
+/**
  * @defgroup sys_debug Debugging macros
  * @ingroup sys_15_4
  * @{
@@ -131,7 +134,7 @@
         #define TRACE(INFO_FMT, ...)  sys_trace_handler(INFO_FMT, __VA_ARGS__)
     #else
         #define TRACE(INFO_FMT, ...)
-    #endif  // CONFIG_DEBUG 
+    #endif  // CONFIG_DEBUG
 #endif // TRACE
 
 

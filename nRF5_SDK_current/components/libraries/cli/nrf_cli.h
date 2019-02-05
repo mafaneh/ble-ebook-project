@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2017 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #ifndef NRF_CLI_H__
 #define NRF_CLI_H__
@@ -47,6 +47,7 @@
 #include "nrf_queue.h"
 #include "nrf_log_ctrl.h"
 #include "app_util_platform.h"
+#include "nrf_memobj.h"
 
 #if NRF_MODULE_ENABLED(NRF_CLI_USES_TASK_MANAGER)
 #include "task_manager.h"
@@ -208,7 +209,8 @@ typedef enum
 {
     NRF_CLI_RECEIVE_DEFAULT,
     NRF_CLI_RECEIVE_ESC,
-    NRF_CLI_RECEIVE_ESC_SEQ
+    NRF_CLI_RECEIVE_ESC_SEQ,
+    NRF_CLI_RECEIVE_TILDE_EXP
 } nrf_cli_receive_t;
 
 
@@ -399,20 +401,19 @@ extern const nrf_log_backend_api_t nrf_log_backend_cli_api;
 
 typedef struct
 {
-    nrf_log_backend_t   backend;
     nrf_queue_t const * p_queue;
     void *              p_context;
     nrf_cli_t const *   p_cli;
 } nrf_cli_log_backend_t;
 
 #if NRF_CLI_LOG_BACKEND && NRF_MODULE_ENABLED(NRF_LOG)
-#define NRF_LOG_BACKEND_CLI_DEF(_name_, _queue_size_)                                       \
-        NRF_QUEUE_DEF(nrf_log_entry_t,                                                      \
-                      CONCAT_2(_name_, _queue),_queue_size_, NRF_QUEUE_MODE_NO_OVERFLOW);   \
-        static nrf_cli_log_backend_t _name_ = {                                             \
-                .backend = {.p_api = &nrf_log_backend_cli_api},                             \
-                .p_queue = &CONCAT_2(_name_, _queue),                                       \
-        }
+#define NRF_LOG_BACKEND_CLI_DEF(_name_, _queue_size_)                                          \
+        NRF_QUEUE_DEF(nrf_log_entry_t,                                                         \
+                      CONCAT_2(_name_, _queue),_queue_size_, NRF_QUEUE_MODE_NO_OVERFLOW);      \
+        static nrf_cli_log_backend_t CONCAT_2(cli_log_backend,_name_) = {                      \
+                .p_queue = &CONCAT_2(_name_, _queue),                                          \
+        };                                                                                     \
+        NRF_LOG_BACKEND_DEF(_name_, nrf_log_backend_cli_api, &CONCAT_2(cli_log_backend,_name_))
 
 #define NRF_CLI_BACKEND_PTR(_name_) &CONCAT_2(_name_, _log_backend)
 #else
@@ -447,7 +448,7 @@ struct nrf_cli
 
     nrf_cli_transport_t const * p_iface;        //!< Transport interface.
     nrf_cli_ctx_t *             p_ctx;          //!< Internal context.
-    nrf_cli_log_backend_t *     p_log_backend;  //!< Logger backend.
+    nrf_log_backend_t const *   p_log_backend;  //!< Logger backend.
     nrf_fprintf_ctx_t *         p_fprintf_ctx;  //!< fprintf context.
     nrf_memobj_pool_t const *   p_cmd_hist_mempool; //!< Memory reserved for commands history.
     char const newline_char;   //!< New line character, only allowed values: \\n and \\r.

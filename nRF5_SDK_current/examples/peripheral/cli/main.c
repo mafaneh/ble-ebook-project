@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2016 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #include <stdio.h>
 #include <stdbool.h>
@@ -47,7 +47,7 @@
 #include "nrf_delay.h"
 
 #include "app_timer.h"
-
+#include "fds.h"
 #include "app_error.h"
 #include "app_util.h"
 
@@ -62,6 +62,9 @@
 #include "nrf_log_default_backends.h"
 #include "nrf_log_backend_flash.h"
 #include "nrf_fstorage_nvmc.h"
+
+#include "nrf_mpu.h"
+#include "nrf_stack_guard.h"
 
 #if defined(APP_USBD_ENABLED) && APP_USBD_ENABLED
 #define CLI_OVER_USB_CDC_ACM 1
@@ -290,20 +293,25 @@ static void flashlog_init(void)
     ret = nrf_log_backend_flash_init(&nrf_fstorage_nvmc);
     APP_ERROR_CHECK(ret);
 #if NRF_LOG_BACKEND_FLASHLOG_ENABLED
-    backend_id = nrf_log_backend_add(&m_flash_log_backend.backend, NRF_LOG_SEVERITY_WARNING);
+    backend_id = nrf_log_backend_add(&m_flash_log_backend, NRF_LOG_SEVERITY_WARNING);
     APP_ERROR_CHECK_BOOL(backend_id >= 0);
 
-    nrf_log_backend_enable(&m_flash_log_backend.backend);
+    nrf_log_backend_enable(&m_flash_log_backend);
 #endif
     
 #if NRF_LOG_BACKEND_CRASHLOG_ENABLED
-    backend_id = nrf_log_backend_add(&m_crash_log_backend.backend, NRF_LOG_SEVERITY_INFO);
+    backend_id = nrf_log_backend_add(&m_crash_log_backend, NRF_LOG_SEVERITY_INFO);
     APP_ERROR_CHECK_BOOL(backend_id >= 0);
     
-    nrf_log_backend_enable(&m_crash_log_backend.backend);
+    nrf_log_backend_enable(&m_crash_log_backend);
 #endif
 }
 
+static inline void stack_guard_init(void)
+{
+    APP_ERROR_CHECK(nrf_mpu_init());
+    APP_ERROR_CHECK(nrf_stack_guard_init());
+}
 
 uint32_t cyccnt_get(void)
 {
@@ -327,7 +335,6 @@ int main(void)
         APP_ERROR_CHECK(NRF_LOG_INIT(app_timer_cnt_get));
     }
 
-
     ret = nrf_drv_clock_init();
     APP_ERROR_CHECK(ret);
     nrf_drv_clock_lfclk_request(NULL);
@@ -345,9 +352,17 @@ int main(void)
 
     usbd_init();
 
+    ret = fds_init();
+    APP_ERROR_CHECK(ret);
+
+
+    UNUSED_RETURN_VALUE(nrf_log_config_load());
+
     cli_start();
 
     flashlog_init();
+
+    stack_guard_init();
 
     NRF_LOG_RAW_INFO("Command Line Interface example started.\r\n");
     NRF_LOG_RAW_INFO("Please press the Tab key to see all available commands.\r\n");

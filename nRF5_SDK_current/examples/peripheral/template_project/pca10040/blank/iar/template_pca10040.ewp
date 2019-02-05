@@ -344,13 +344,7 @@
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\csense_drv</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\delay</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\ecc</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_log</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_log\src</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_memobj</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_mpu</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_ringbuf</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_section_vars</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_stack_guard</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_task_manager</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\fds</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\fifo</state>
@@ -361,17 +355,23 @@
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\hardfault\nrf52</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\hci</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\led_softblink</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\log</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\log\src</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\low_power_pwm</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\mem_manager</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\memobj</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\mpu</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\mutex</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\pwm</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\pwr_mgmt</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\queue</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\ringbuf</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\scheduler</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\sdcard</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\slip</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\sortlist</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\spi_mngr</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\stack_guard</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\stack_info</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\strerror</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\timer</state>
@@ -692,13 +692,7 @@
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\csense_drv</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\delay</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\ecc</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_log</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_log\src</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_memobj</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_mpu</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_ringbuf</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_section_vars</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_stack_guard</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_task_manager</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\fds</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\fifo</state>
@@ -709,17 +703,23 @@
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\hardfault\nrf52</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\hci</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\led_softblink</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\log</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\log\src</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\low_power_pwm</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\mem_manager</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\memobj</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\mpu</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\mutex</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\pwm</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\pwr_mgmt</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\queue</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\ringbuf</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\scheduler</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\sdcard</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\slip</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\sortlist</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\spi_mngr</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\stack_guard</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\stack_info</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\strerror</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\timer</state>
@@ -1132,7 +1132,7 @@
     </settings>
   </configuration>  <group>
   <name>nrf_cc310</name>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\external\nrf_cc310\lib\libnrf_cc310_short_wchar_0.9.9.a</name>    </file>  </group>  <group>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\external\nrf_cc310\lib\libnrf_cc310_short_wchar_0.9.10.a</name>    </file>  </group>  <group>
   <name>Board Support</name>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\bsp\bsp.c</name>    </file>  </group>  <group>
   <name>nRF_Crypto backend nRF HW</name>    <file>
@@ -1142,8 +1142,8 @@
   <name>Board Definition</name>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\boards\boards.c</name>    </file>  </group>  <group>
   <name>nRF_Core</name>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_mpu\nrf_mpu.c</name>    </file>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_stack_guard\nrf_stack_guard.c</name>    </file>  </group>  <group>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\mpu\nrf_mpu.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\stack_guard\nrf_stack_guard.c</name>    </file>  </group>  <group>
   <name>nRF_Crypto backend uECC</name>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\backend\micro_ecc\micro_ecc_backend_ecc.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\backend\micro_ecc\micro_ecc_backend_ecdh.c</name>    </file>    <file>
@@ -1195,10 +1195,10 @@
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\fstorage\nrf_fstorage.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\fstorage\nrf_fstorage_nvmc.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\gfx\nrf_gfx.c</name>    </file>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_memobj\nrf_memobj.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\memobj\nrf_memobj.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\pwr_mgmt\nrf_pwr_mgmt.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\queue\nrf_queue.c</name>    </file>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_ringbuf\nrf_ringbuf.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\ringbuf\nrf_ringbuf.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_section_vars\nrf_section_iter.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\sortlist\nrf_sortlist.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\spi_mngr\nrf_spi_mngr.c</name>    </file>    <file>
@@ -1217,8 +1217,8 @@
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\backend\mbedtls\mbedtls_backend_hmac.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\backend\mbedtls\mbedtls_backend_init.c</name>    </file>  </group>  <group>
   <name>nRF_Log</name>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_log\src\nrf_log_frontend.c</name>    </file>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_log\src\nrf_log_str_formatter.c</name>    </file>  </group>  <group>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\log\src\nrf_log_frontend.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\log\src\nrf_log_str_formatter.c</name>    </file>  </group>  <group>
   <name>nRF_Drivers</name>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\integration\nrfx\legacy\nrf_drv_clock.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\integration\nrfx\legacy\nrf_drv_power.c</name>    </file>    <file>
@@ -1265,6 +1265,7 @@
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\nrf_crypto_ecc.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\nrf_crypto_ecdh.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\nrf_crypto_ecdsa.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\nrf_crypto_eddsa.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\nrf_crypto_error.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\nrf_crypto_hash.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\nrf_crypto_hkdf.c</name>    </file>    <file>
@@ -1345,7 +1346,7 @@
     <name>$PROJ_DIR$\..\..\..\..\..\..\external\mbedtls\library\x509_csr.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\external\mbedtls\library\xtea.c</name>    </file>  </group>  <group>
   <name>nRF_Oberon_Crypto</name>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\external\nrf_oberon\lib\nrf52\liboberon_short_wchar_2.0.4.a</name>    </file>  </group>  <group>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\external\nrf_oberon\lib\nrf52\liboberon_short_wchar_2.0.5.a</name>    </file>  </group>  <group>
   <name>None</name>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\modules\nrfx\mdk\iar_startup_nrf52.s</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\modules\nrfx\mdk\system_nrf52.c</name>    </file>  </group>  <group>
@@ -1358,6 +1359,7 @@
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\backend\oberon\oberon_backend_ecc.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\backend\oberon\oberon_backend_ecdh.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\backend\oberon\oberon_backend_ecdsa.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\backend\oberon\oberon_backend_eddsa.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\backend\oberon\oberon_backend_hash.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\backend\oberon\oberon_backend_hmac.c</name>    </file>  </group></project>
 

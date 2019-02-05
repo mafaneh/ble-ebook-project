@@ -1,30 +1,30 @@
 /**
- * Copyright (c) 2018 - 2018, Nordic Semiconductor ASA
- * 
+ * Copyright (c) 2018, Nordic Semiconductor ASA
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 
 #include <stdio.h>
@@ -114,7 +114,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_random, test_vector_ecdh_t test_
 };
 
 // ECDH - NIST CAVS 14.1 P-192 - Count 0
-NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_t test_vector_ecdh_secp192r1_1) =
+NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t test_vector_ecdh_secp192r1_1) =
 {
     .p_curve_info               = &g_nrf_crypto_ecc_secp192r1_curve_info,
     .expected_err_code          = NRF_SUCCESS,
@@ -127,7 +127,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_
 };
 
 // ECDH - NIST CAVS 14.1 P-192 - Count 1
-NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_t test_vector_ecdh_secp192r1_2) =
+NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t test_vector_ecdh_secp192r1_2) =
 {
     .p_curve_info               = &g_nrf_crypto_ecc_secp192r1_curve_info,
     .expected_err_code          = NRF_SUCCESS,
@@ -140,7 +140,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_
 };
 
 // ECDH - NIST CAVS 14.1 P-192 - Count 2
-NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_t test_vector_ecdh_secp192r1_3) =
+NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t test_vector_ecdh_secp192r1_3) =
 {
     .p_curve_info               = &g_nrf_crypto_ecc_secp192r1_curve_info,
     .expected_err_code          = NRF_SUCCESS,
@@ -153,7 +153,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_
 };
 
 // ECDH - NIST CAVS 14.1 P-192 - Count 3
-NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_t test_vector_ecdh_secp192r1_4) =
+NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t test_vector_ecdh_secp192r1_4) =
 {
     .p_curve_info               = &g_nrf_crypto_ecc_secp192r1_curve_info,
     .expected_err_code          = NRF_SUCCESS,
@@ -166,7 +166,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_
 };
 
 // ECDH - NIST CAVS 14.1 P-192 - Count 4
-NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_t test_vector_ecdh_secp192r1_5) =
+NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t test_vector_ecdh_secp192r1_5) =
 {
     .p_curve_info               = &g_nrf_crypto_ecc_secp192r1_curve_info,
     .expected_err_code          = NRF_SUCCESS,
@@ -179,10 +179,10 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_
 };
 
 // ECDH - NIST CAVS 14.1 P-192 - Invalid public key test case
-NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_t test_vector_ecdh_secp192r1_inv_q) =
+NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t test_vector_ecdh_secp192r1_inv_q) =
 {
     .p_curve_info               = &g_nrf_crypto_ecc_secp192r1_curve_info,
-#if NRF_CRYPTO_BACKEND_MBEDTLS_ENABLED || NRF_CRYPTO_BACKEND_MICRO_ECC_ENABLED
+#if NRF_CRYPTO_BACKEND_MBEDTLS_ENABLED
     .expected_err_code          = NRF_ERROR_CRYPTO_ECC_KEY_NOT_INITIALIZED,
 #else
     .expected_err_code          = NRF_ERROR_CRYPTO_INTERNAL,
@@ -196,7 +196,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_
 };
 
 // ECDH - NIST CAVS 14.1 P-192 - Invalid private key test case
-NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_t test_vector_ecdh_secp192r1_inv_d) =
+NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t test_vector_ecdh_secp192r1_inv_d) =
 {
     .p_curve_info               = &g_nrf_crypto_ecc_secp192r1_curve_info,
     .expected_err_code          = NRF_SUCCESS,
@@ -209,7 +209,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_
 };
 
 // ECDH - NIST CAVS 14.1 P-192 - Invalid shared secret test case
-NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_t test_vector_ecdh_secp192r1_inv_ss) =
+NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t test_vector_ecdh_secp192r1_inv_ss) =
 {
     .p_curve_info               = &g_nrf_crypto_ecc_secp192r1_curve_info,
     .expected_err_code          = NRF_SUCCESS,
@@ -234,7 +234,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_random, test_vector_ecdh_t test_
 };
 
 // ECDH - NIST CAVS 14.1 P-224 - Count 0
-NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_t test_vector_ecdh_secp224r1_1) =
+NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t test_vector_ecdh_secp224r1_1) =
 {
     .p_curve_info               = &g_nrf_crypto_ecc_secp224r1_curve_info,
     .expected_err_code          = NRF_SUCCESS,
@@ -247,7 +247,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_
 };
 
 // ECDH - NIST CAVS 14.1 P-224 - Count 1
-NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_t test_vector_ecdh_secp224r1_2) =
+NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t test_vector_ecdh_secp224r1_2) =
 {
     .p_curve_info               = &g_nrf_crypto_ecc_secp224r1_curve_info,
     .expected_err_code          = NRF_SUCCESS,
@@ -260,7 +260,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_
 };
 
 // ECDH - NIST CAVS 14.1 P-224 - Count 2
-NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_t test_vector_ecdh_secp224r1_3) =
+NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t test_vector_ecdh_secp224r1_3) =
 {
     .p_curve_info               = &g_nrf_crypto_ecc_secp224r1_curve_info,
     .expected_err_code          = NRF_SUCCESS,
@@ -273,7 +273,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_
 };
 
 // ECDH - NIST CAVS 14.1 P-224 - Count 3
-NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_t test_vector_ecdh_secp224r1_4) =
+NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t test_vector_ecdh_secp224r1_4) =
 {
     .p_curve_info               = &g_nrf_crypto_ecc_secp224r1_curve_info,
     .expected_err_code          = NRF_SUCCESS,
@@ -286,7 +286,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_
 };
 
 // ECDH - NIST CAVS 14.1 P-224 - Count 4
-NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_t test_vector_ecdh_secp224r1_5) =
+NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t test_vector_ecdh_secp224r1_5) =
 {
     .p_curve_info               = &g_nrf_crypto_ecc_secp224r1_curve_info,
     .expected_err_code          = NRF_SUCCESS,
@@ -299,10 +299,10 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_
 };
 
 // ECDH - NIST CAVS 14.1 P-224 - Invalid public key test case
-NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_t test_vector_ecdh_secp224r1_inv_q) =
+NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t test_vector_ecdh_secp224r1_inv_q) =
 {
     .p_curve_info               = &g_nrf_crypto_ecc_secp224r1_curve_info,
-#if NRF_CRYPTO_BACKEND_MBEDTLS_ENABLED || NRF_CRYPTO_BACKEND_MICRO_ECC_ENABLED
+#if NRF_CRYPTO_BACKEND_MBEDTLS_ENABLED
     .expected_err_code          = NRF_ERROR_CRYPTO_ECC_KEY_NOT_INITIALIZED,
 #else
     .expected_err_code          = NRF_ERROR_CRYPTO_INTERNAL,
@@ -316,7 +316,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_
 };
 
 // ECDH - NIST CAVS 14.1 P-224 - Invalid private key test case
-NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_t test_vector_ecdh_secp224r1_inv_d) =
+NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t test_vector_ecdh_secp224r1_inv_d) =
 {
     .p_curve_info               = &g_nrf_crypto_ecc_secp224r1_curve_info,
     .expected_err_code          = NRF_SUCCESS,
@@ -329,7 +329,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_
 };
 
 // ECDH - NIST CAVS 14.1 P-224 - Invalid shared secret test case
-NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_t test_vector_ecdh_secp224r1_inv_ss) =
+NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t test_vector_ecdh_secp224r1_inv_ss) =
 {
     .p_curve_info               = &g_nrf_crypto_ecc_secp224r1_curve_info,
     .expected_err_code          = NRF_SUCCESS,
@@ -371,7 +371,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_full, test_vector_
 
 
 // ECDH - NIST CAVS 14.1 P-256 - Count 0
-NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_t test_vector_ecdh_secp256r1_1) =
+NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t test_vector_ecdh_secp256r1_1) =
 {
     .p_curve_info               = &g_nrf_crypto_ecc_secp256r1_curve_info,
     .expected_err_code          = NRF_SUCCESS,
@@ -384,7 +384,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_
 };
 
 // ECDH - NIST CAVS 14.1 P-256 - Count 1
-NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_t test_vector_ecdh_secp256r1_2) =
+NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t test_vector_ecdh_secp256r1_2) =
 {
     .p_curve_info               = &g_nrf_crypto_ecc_secp256r1_curve_info,
     .expected_err_code          = NRF_SUCCESS,
@@ -397,7 +397,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_
 };
 
 // ECDH - NIST CAVS 14.1 P-256 - Count 2
-NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_t test_vector_ecdh_secp256r1_3) =
+NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t test_vector_ecdh_secp256r1_3) =
 {
     .p_curve_info               = &g_nrf_crypto_ecc_secp256r1_curve_info,
     .expected_err_code          = NRF_SUCCESS,
@@ -410,7 +410,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_
 };
 
 // ECDH - NIST CAVS 14.1 P-256 - Count 3
-NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_t test_vector_ecdh_secp256r1_4) =
+NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t test_vector_ecdh_secp256r1_4) =
 {
     .p_curve_info               = &g_nrf_crypto_ecc_secp256r1_curve_info,
     .expected_err_code          = NRF_SUCCESS,
@@ -423,7 +423,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_
 };
 
 // ECDH - NIST CAVS 14.1 P-256 - Count 4
-NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_t test_vector_ecdh_secp256r1_5) =
+NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t test_vector_ecdh_secp256r1_5) =
 {
     .p_curve_info               = &g_nrf_crypto_ecc_secp256r1_curve_info,
     .expected_err_code          = NRF_SUCCESS,
@@ -436,10 +436,10 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_
 };
 
 // ECDH - NIST CAVS 14.1 P-256 - Invalid public key test case
-NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_t test_vector_ecdh_secp256r1_inv_q) =
+NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t test_vector_ecdh_secp256r1_inv_q) =
 {
     .p_curve_info               = &g_nrf_crypto_ecc_secp256r1_curve_info,
-#if NRF_CRYPTO_BACKEND_MBEDTLS_ENABLED || NRF_CRYPTO_BACKEND_MICRO_ECC_ENABLED
+#if NRF_CRYPTO_BACKEND_MBEDTLS_ENABLED
     .expected_err_code          = NRF_ERROR_CRYPTO_ECC_KEY_NOT_INITIALIZED,
 #else
     .expected_err_code          = NRF_ERROR_CRYPTO_INTERNAL,
@@ -453,7 +453,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_
 };
 
 // ECDH - NIST CAVS 14.1 P-256 - Invalid private key test case
-NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_t test_vector_ecdh_secp256r1_inv_d) =
+NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t test_vector_ecdh_secp256r1_inv_d) =
 {
     .p_curve_info               = &g_nrf_crypto_ecc_secp256r1_curve_info,
     .expected_err_code          = NRF_SUCCESS,
@@ -466,7 +466,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_
 };
 
 // ECDH - NIST CAVS 14.1 P-256 - Invalid shared secret test case
-NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_t test_vector_ecdh_secp256r1_inv_ss) =
+NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t test_vector_ecdh_secp256r1_inv_ss) =
 {
     .p_curve_info               = &g_nrf_crypto_ecc_secp256r1_curve_info,
     .expected_err_code          = NRF_SUCCESS,
@@ -507,7 +507,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_full, test_vector_
 };
 
 // ECDH - NIST CAVS 14.1 P-384 - Count 0
-NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_t test_vector_ecdh_secp384r1_1) =
+NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t test_vector_ecdh_secp384r1_1) =
 {
     .p_curve_info               = &g_nrf_crypto_ecc_secp384r1_curve_info,
     .expected_err_code          = NRF_SUCCESS,
@@ -520,7 +520,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_
 };
 
 // ECDH - NIST CAVS 14.1 P-384 - Count 1
-NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_t test_vector_ecdh_secp384r1_2) =
+NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t test_vector_ecdh_secp384r1_2) =
 {
     .p_curve_info               = &g_nrf_crypto_ecc_secp384r1_curve_info,
     .expected_err_code          = NRF_SUCCESS,
@@ -533,7 +533,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_
 };
 
 // ECDH - NIST CAVS 14.1 P-384 - Count 2
-NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_t test_vector_ecdh_secp384r1_3) =
+NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t test_vector_ecdh_secp384r1_3) =
 {
     .p_curve_info               = &g_nrf_crypto_ecc_secp384r1_curve_info,
     .expected_err_code          = NRF_SUCCESS,
@@ -546,7 +546,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_
 };
 
 // ECDH - NIST CAVS 14.1 P-384 - Count 3
-NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_t test_vector_ecdh_secp384r1_4) =
+NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t test_vector_ecdh_secp384r1_4) =
 {
     .p_curve_info               = &g_nrf_crypto_ecc_secp384r1_curve_info,
     .expected_err_code          = NRF_SUCCESS,
@@ -559,7 +559,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_
 };
 
 // ECDH - NIST CAVS 14.1 P-384 - Count 4
-NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_t test_vector_ecdh_secp384r1_5) =
+NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t test_vector_ecdh_secp384r1_5) =
 {
     .p_curve_info               = &g_nrf_crypto_ecc_secp384r1_curve_info,
     .expected_err_code          = NRF_SUCCESS,
@@ -572,7 +572,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_
 };
 
 // ECDH - NIST CAVS 14.1 P-384 - Invalid public key test case
-NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_t test_vector_ecdh_secp384r1_inv_q) =
+NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t test_vector_ecdh_secp384r1_inv_q) =
 {
     .p_curve_info               = &g_nrf_crypto_ecc_secp384r1_curve_info,
 #if NRF_CRYPTO_BACKEND_MBEDTLS_ENABLED || NRF_CRYPTO_BACKEND_MICRO_ECC_ENABLED
@@ -589,7 +589,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_
 };
 
 // ECDH - NIST CAVS 14.1 P-384 - Invalid private key test case
-NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_t test_vector_ecdh_secp384r1_inv_d) =
+NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t test_vector_ecdh_secp384r1_inv_d) =
 {
     .p_curve_info               = &g_nrf_crypto_ecc_secp384r1_curve_info,
     .expected_err_code          = NRF_SUCCESS,
@@ -602,7 +602,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_
 };
 
 // ECDH - NIST CAVS 14.1 P-384 - Invalid shared secret test case
-NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_t test_vector_ecdh_secp384r1_inv_ss) =
+NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t test_vector_ecdh_secp384r1_inv_ss) =
 {
     .p_curve_info               = &g_nrf_crypto_ecc_secp384r1_curve_info,
     .expected_err_code          = NRF_SUCCESS,
@@ -643,7 +643,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_full, test_vector_
 };
 
 // ECDH - NIST CAVS 14.1 P-521 - Count 0
-NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_t test_vector_ecdh_secp521r1_1) =
+NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t test_vector_ecdh_secp521r1_1) =
 {
     .p_curve_info               = &g_nrf_crypto_ecc_secp521r1_curve_info,
     .expected_err_code          = NRF_SUCCESS,
@@ -656,7 +656,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_
 };
 
 // ECDH - NIST CAVS 14.1 P-521 - Count 1
-NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_t test_vector_ecdh_secp521r1_2) =
+NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t test_vector_ecdh_secp521r1_2) =
 {
     .p_curve_info               = &g_nrf_crypto_ecc_secp521r1_curve_info,
     .expected_err_code          = NRF_SUCCESS,
@@ -669,7 +669,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_
 };
 
 // ECDH - NIST CAVS 14.1 P-521 - Count 2
-NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_t test_vector_ecdh_secp521r1_3) =
+NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t test_vector_ecdh_secp521r1_3) =
 {
     .p_curve_info               = &g_nrf_crypto_ecc_secp521r1_curve_info,
     .expected_err_code          = NRF_SUCCESS,
@@ -682,7 +682,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_
 };
 
 // ECDH - NIST CAVS 14.1 P-521 - Count 3
-NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_t test_vector_ecdh_secp521r1_4) =
+NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t test_vector_ecdh_secp521r1_4) =
 {
     .p_curve_info               = &g_nrf_crypto_ecc_secp521r1_curve_info,
     .expected_err_code          = NRF_SUCCESS,
@@ -695,7 +695,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_
 };
 
 // ECDH - NIST CAVS 14.1 P-521 - Count 4
-NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_t test_vector_ecdh_secp521r1_5) =
+NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t test_vector_ecdh_secp521r1_5) =
 {
     .p_curve_info               = &g_nrf_crypto_ecc_secp521r1_curve_info,
     .expected_err_code          = NRF_SUCCESS,
@@ -708,7 +708,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_
 };
 
 // ECDH - NIST CAVS 14.1 P-521 - Invalid public key test case
-NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_t test_vector_ecdh_secp521r1_inv_q) =
+NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t test_vector_ecdh_secp521r1_inv_q) =
 {
     .p_curve_info               = &g_nrf_crypto_ecc_secp521r1_curve_info,
 #if NRF_CRYPTO_BACKEND_MBEDTLS_ENABLED || NRF_CRYPTO_BACKEND_MICRO_ECC_ENABLED
@@ -725,7 +725,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_
 };
 
 // ECDH - NIST CAVS 14.1 P-521 - Invalid private key test case
-NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_t test_vector_ecdh_secp521r1_inv_d) =
+NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t test_vector_ecdh_secp521r1_inv_d) =
 {
     .p_curve_info               = &g_nrf_crypto_ecc_secp521r1_curve_info,
     .expected_err_code          = NRF_SUCCESS,
@@ -738,7 +738,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_
 };
 
 // ECDH - NIST CAVS 14.1 P-521 - Invalid shared secret test case
-NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_t test_vector_ecdh_secp521r1_inv_ss) =
+NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t test_vector_ecdh_secp521r1_inv_ss) =
 {
     .p_curve_info               = &g_nrf_crypto_ecc_secp521r1_curve_info,
     .expected_err_code          = NRF_SUCCESS,
@@ -753,15 +753,15 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic, test_vector_ecdh_
 
 #if NRF_MODULE_ENABLED(NRF_CRYPTO_ECC_CURVE25519)
 
-const char ecdh_curve25519_initiater_priv[]         = { "2a2cb91da5fb77b12a99c0eb872f4cdf4566b25172c1163c7da518730a6d0777" };
-const char ecdh_curve25519_responder_priv[]         = { "ebe088ff278b2f1cfdb6182629b13b6fe60e80838b7fe1794b8a4a627e08ab5d" };
-const char ecdh_curve25519_initiater_publ_x[]       = { "6a4e9baa8ea9a4ebf41a38260d3abf0d" };
-const char ecdh_curve25519_initiater_publ_y[]       = { "5af73eb4dc7d8b7454a7308909f02085" };
-const char ecdh_curve25519_responder_publ_x[]       = { "4f2b886f147efcad4d67785bc843833f" };
-const char ecdh_curve25519_responder_publ_y[]       = { "3735e4ecc2615bd3b4c17d7b7ddb9ede" };
-const char ecdh_curve25519_expected_shared_secret[] = { "4217161e3c9bf076339ed147c9217ee0250f3580f43b8e72e12dcea45b9d5d4a" };
+const char ecdh_curve25519_initiater_priv[]         = { "77076d0a7318a57d3c16c17251b26645df4c2f87ebc0992ab177fba51db92c2a" };
+const char ecdh_curve25519_responder_priv[]         = { "5dab087e624a8a4b79e17f8b83800ee66f3bb1292618b6fd1c2f8b27ff88e0eb" };
+const char ecdh_curve25519_initiater_publ_x[]       = { "8520f0098930a754748b7ddcb43ef75a" };
+const char ecdh_curve25519_initiater_publ_y[]       = { "0dbf3a0d26381af4eba4a98eaa9b4e6a" };
+const char ecdh_curve25519_responder_publ_x[]       = { "de9edb7d7b7dc1b4d35b61c2ece43537" };
+const char ecdh_curve25519_responder_publ_y[]       = { "3f8343c85b78674dadfc7e146f882b4f" };
+const char ecdh_curve25519_expected_shared_secret[] = { "4a5d9d5ba4ce2de1728e3bf480350f25e07e21c947d19e3376f09b3c1e161742" };
 
-// ECDH - RFC 7748 - 6.1. Curve25519 - Endianess is swapped
+// ECDH - RFC 7748 - 6.1. Curve25519
 NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_full, test_vector_ecdh_t test_vector_ecdh_curve25519_full_1) =
 {
     .p_curve_info               = &g_nrf_crypto_ecc_curve25519_curve_info,
@@ -784,8 +784,8 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_full, test_vector_
     .expected_err_code          = NRF_SUCCESS,
     .expected_result            = EXPECTED_TO_FAIL,
     .p_test_vector_name         = "curve25519 invalid private key",
-    .p_initiater_priv           = "2a2cb91da5fb77b12a99c0eb872f4cdf4566b25172c1163c7da518730a6d0787",
-    .p_responder_priv           = "ebe088ff278b2f1cfdb6182629b13b6fe60e80838b7fe1794b8a4a627e08ab6d",
+    .p_initiater_priv           = "87076d0a7318a57d3c16c17251b26645df4c2f87ebc0992ab177fba51db92c2a",
+    .p_responder_priv           = "6dab087e624a8a4b79e17f8b83800ee66f3bb1292618b6fd1c2f8b27ff88e0eb",
     .p_initiater_publ_x         = ecdh_curve25519_initiater_publ_x,
     .p_initiater_publ_y         = ecdh_curve25519_initiater_publ_y,
     .p_responder_publ_x         = ecdh_curve25519_responder_publ_x,
@@ -802,7 +802,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_full, test_vector_
     .p_test_vector_name         = "curve25519 invalid public X key",
     .p_initiater_priv           = ecdh_curve25519_initiater_priv,
     .p_responder_priv           = ecdh_curve25519_responder_priv,
-    .p_initiater_publ_x         = "5af73eb4dc7d8b7454a7308909f02095",
+    .p_initiater_publ_x         = "9520f0098930a754748b7ddcb43ef75a",
     .p_initiater_publ_y         = ecdh_curve25519_initiater_publ_y,
     .p_responder_publ_x         = ecdh_curve25519_responder_publ_x,
     .p_responder_publ_y         = ecdh_curve25519_responder_publ_y,
@@ -819,7 +819,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_ecdh_data_deterministic_full, test_vector_
     .p_initiater_priv           = ecdh_curve25519_initiater_priv,
     .p_responder_priv           = ecdh_curve25519_responder_priv,
     .p_initiater_publ_x         = ecdh_curve25519_initiater_publ_x,
-    .p_initiater_publ_y         = "6a4e9baa8ea9a4ebf41a38260d3abf1d",
+    .p_initiater_publ_y         = "1dbf3a0d26381af4eba4a98eaa9b4e6a",
     .p_responder_publ_x         = ecdh_curve25519_responder_publ_x,
     .p_responder_publ_y         = ecdh_curve25519_responder_publ_y,
     .p_expected_shared_secret   = ecdh_curve25519_expected_shared_secret

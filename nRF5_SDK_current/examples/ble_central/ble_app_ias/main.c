@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2017 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,14 +35,14 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 
 /**
  * @brief Immediate Alert Application main file.
  *
  * This file contains source code for a sample application using the
- * Immediate Alert service.
+ * Immediate Alert Service.
  *
  * This application accepts pairing requests from any peer device.
  */
@@ -63,12 +63,15 @@
 #include "app_timer.h"
 #include "bsp_btn_ble.h"
 #include "peer_manager.h"
+#include "peer_manager_handler.h"
 #include "nrf_fstorage.h"
 #include "fds.h"
 #include "ble_conn_state.h"
 #include "nrf_ble_gatt.h"
-#include "ble_advdata.h"
 #include "nrf_pwr_mgmt.h"
+#include "nrf_ble_scan.h"
+#include "sensorsim.h"
+#include "ble_bas.h"
 
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
@@ -76,7 +79,7 @@
 
 
 #define APP_BLE_OBSERVER_PRIO           3                                       /**< Application's BLE observer priority. You shouldn't need to modify this value. */
-#define APP_SOC_OBSERVER_PRIO           1                                       /**< Applications' SoC observer priority. You shoulnd't need to modify this value. */
+#define APP_SOC_OBSERVER_PRIO           1                                       /**< Applications' SoC observer priority. You shouldn't need to modify this value. */
 #define APP_BLE_CONN_CFG_TAG            1                                       /**< A tag identifying the SoftDevice BLE configuration. */
 
 #define CENTRAL_SCANNING_LED            BSP_BOARD_LED_0                         /**< LED to indicate that scanning is active. */
@@ -87,11 +90,7 @@
 #define SLAVE_LATENCY                   0                                       /**< Slave latency. */
 #define CONN_SUP_TIMEOUT                MSEC_TO_UNITS(4000, UNIT_10_MS)         /**< Connection supervisory timeout (4 seconds). */
 
-#define SCAN_INTERVAL                   0x00A0                                  /**< Determines scan interval in units of 0.625 millisecond. */
-#define SCAN_WINDOW                     0x0050                                  /**< Determines scan window in units of 0.625 millisecond. */
-#define SCAN_DURATION                   0x0000                                  /**< Timeout when scanning. 0x0000 disables the timeout. */
-
-#define SECURITY_REQUEST_DELAY          APP_TIMER_TICKS(4000)                   /**< Delay after connection until Security Request is sent, if necessary (ticks). */
+#define SCAN_DURATION_WITELIST          3000                                    /**< Duration of the scanning in units of 10 milliseconds. */
 
 #define SEC_PARAM_BOND                  1                                       /**< Perform bonding. */
 #define SEC_PARAM_MITM                  0                                       /**< Man In The Middle protection not required. */
@@ -106,32 +105,46 @@
 
 #define DEAD_BEEF                       0xDEADBEEF                              /**< Value used as error code on stack dump. Can be used to identify stack location on stack unwind. */
 
+#define BATTERY_LEVEL_MEAS_INTERVAL     APP_TIMER_TICKS(10000)                  /**< Battery level measurement interval (ticks). */
+#define BATTERY_NOTIFY_DELAY            APP_TIMER_TICKS(3500)                   /**< Battery notification delay time. */
+#define MIN_BATTERY_LEVEL               50                                      /**< Minimum simulated battery level. */
+#define MAX_BATTERY_LEVEL               100                                     /**< Maximum simulated 7battery level. */
+#define BATTERY_LEVEL_INCREMENT         1                                       /**< Increment between each simulated battery level measurement. */
+#define MAX_BAS_BONDED_CLIENT           NRF_SDH_BLE_TOTAL_LINK_COUNT            /**< The maximum number of clients for which battery data will be stored. */
+#define INVALID_BATTERY_LEVEL           255
 
-APP_TIMER_DEF(m_sec_req_timer_id);                        /**< Security request timer. The timer allows for starting a pairing request if one does not arrive from the Central. */
+APP_TIMER_DEF(m_battery_timer_id);                        /**< Battery timer. */
+APP_TIMER_DEF(m_battery_notify_timer_id);                 /**< Battery notification delay timer. */
 NRF_BLE_GATT_DEF(m_gatt);                                 /**< GATT module instance. */
-BLE_IAS_DEF(m_ias, NRF_SDH_BLE_TOTAL_LINK_COUNT);         /**< Structure used to identify the Immediate Alert service. */
+BLE_IAS_DEF(m_ias, NRF_SDH_BLE_TOTAL_LINK_COUNT);         /**< Structure used to identify the Immediate Alert Service. */
+NRF_BLE_SCAN_DEF(m_scan);                                 /**< Scanning Module instance. */
+BLE_BAS_DEF(m_bas);                                       /**< Structure used to identify the Battery Service. */
 
 static bool                  m_whitelist_disabled;        /**< True if whitelist has been temporarily disabled. */
-static bool                  m_memory_access_in_progress; /**< Flag to keep track of ongoing operations on persistent memory. */
-static bool                  m_sec_req_pending;           /**< Security Request is pending. */
-static ble_gap_scan_params_t m_scan_param;                /**< Scan parameters requested for scanning and connection. */
-static uint8_t               m_scan_buffer_data[BLE_GAP_SCAN_BUFFER_MIN]; /**< buffer where advertising reports will be stored by the SoftDevice. */
-
-/**@brief Pointer to the buffer where advertising reports will be stored by the SoftDevice. */
-static ble_data_t m_scan_buffer =
+static sensorsim_cfg_t       m_battery_sim_cfg;           /**< Battery Level sensor simulator configuration. */
+static sensorsim_state_t     m_battery_sim_state;         /**< Battery Level sensor simulator state. */
+static ble_gap_scan_params_t m_scan_param =               /**< Scan parameters requested for scanning and connection. */
 {
-    m_scan_buffer_data,
-    BLE_GAP_SCAN_BUFFER_MIN
+    .active        = 0x01,
+    .interval      = NRF_BLE_SCAN_SCAN_INTERVAL,
+    .window        = NRF_BLE_SCAN_SCAN_WINDOW,
+    .filter_policy = BLE_GAP_SCAN_FP_WHITELIST,
+    .timeout       = SCAN_DURATION_WITELIST,
+    .scan_phys     = BLE_GAP_PHY_1MBPS,
 };
 
-/**@brief Connection parameters requested for connection. */
-static ble_gap_conn_params_t const m_connection_param =
+
+static struct
 {
-    (uint16_t)MIN_CONN_INTERVAL,
-    (uint16_t)MAX_CONN_INTERVAL,
-    (uint16_t)SLAVE_LATENCY,
-    (uint16_t)CONN_SUP_TIMEOUT
-};
+    struct
+    {
+        uint16_t conn_handle;         /*< Connection handle. */
+        uint16_t peer_id;             /*< Peer Id. Identifies bonded peer. */
+        uint8_t  last_battery_lvl;    /*< Last battery value for bonded peer. Filled during disconnection. */
+    } devices[MAX_BAS_BONDED_CLIENT];
+    uint8_t counter;                  /*< Count of bonded clients. */
+} m_bas_bonded_clients;
+
 
 /**@brief Strings to display alert level information */
 static char const * const m_alerts[] =
@@ -162,155 +175,191 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
 }
 
 
+/**@brief Function for adding a bonded client.
+ *
+ * @param[in] p_evt Pointer to peer manager event structure.
+ */
+static void bonded_client_add(pm_evt_t const * p_evt)
+{
+    uint16_t   conn_handle = p_evt->conn_handle;
+    uint16_t   peer_id     = p_evt->peer_id;
+    uint8_t  * p_counter   = &m_bas_bonded_clients.counter;
+
+    if (*p_counter == MAX_BAS_BONDED_CLIENT)
+    {
+        return;
+    }
+
+    for (uint8_t i = 0; i < *p_counter; i++)
+    {
+        // If the device is already on the list, update conn_handle.
+        if (m_bas_bonded_clients.devices[i].peer_id == peer_id)
+        {
+            m_bas_bonded_clients.devices[i].conn_handle = conn_handle;
+            return;
+        }
+    }
+
+    m_bas_bonded_clients.devices[*p_counter].conn_handle      = conn_handle;
+    m_bas_bonded_clients.devices[*p_counter].peer_id          = peer_id;
+    m_bas_bonded_clients.devices[*p_counter].last_battery_lvl = INVALID_BATTERY_LEVEL;
+
+    (*p_counter)++;
+}
+
+
+/**@brief Function for removing all bonded clients.
+ */
+inline static void bonded_client_remove_all(void)
+{
+    memset(&m_bas_bonded_clients, 0, sizeof(m_bas_bonded_clients));
+}
+
+
+/**@brief Function for triggering notification with battery level
+ *        after bonded client reconnection.
+ *
+ * @param[in] p_evt Pointer to peer manager event structure.
+ */
+static void on_bonded_peer_reconnection_lvl_notify(pm_evt_t const * p_evt)
+{
+    ret_code_t        err_code;
+    static uint16_t   peer_id   = PM_PEER_ID_INVALID;
+
+    peer_id = p_evt->peer_id;
+
+    // Notification must be sent later to allow the client to
+    // perform a database discovery first
+    err_code = app_timer_start(m_battery_notify_timer_id,
+                                       BATTERY_NOTIFY_DELAY,
+                                       &peer_id);
+    APP_ERROR_CHECK(err_code);
+}
+
+
+/**@brief Function for saving last battery value for bonded client upon disconnection.
+ *
+ * @param[in] conn_handle Connection handle.
+ */
+static void on_disconnect_battery_lvl_store(uint16_t conn_handle)
+{
+    uint8_t counter = m_bas_bonded_clients.counter;
+
+    for (uint8_t i = 0; i < counter; i++)
+    {
+        // Store the last battery value.
+        if (m_bas_bonded_clients.devices[i].conn_handle == conn_handle)
+        {
+            m_bas_bonded_clients.devices[i].last_battery_lvl = m_bas.battery_level_last;
+
+            return;
+        }
+    }
+}
+
+
 /**@brief Function for handling Peer Manager events.
  *
  * @param[in] p_evt  Peer Manager event.
  */
 static void pm_evt_handler(pm_evt_t const * p_evt)
 {
-    ret_code_t err_code;
+    pm_handler_on_pm_evt(p_evt);
+    pm_handler_disconnect_on_sec_failure(p_evt);
+    pm_handler_flash_clean(p_evt);
 
     switch (p_evt->evt_id)
     {
         case PM_EVT_BONDED_PEER_CONNECTED:
-        {
-            NRF_LOG_INFO("Connected to a previously bonded device.");
-        } break;
+            bonded_client_add(p_evt);
+            on_bonded_peer_reconnection_lvl_notify(p_evt);
+            break;
 
         case PM_EVT_CONN_SEC_SUCCEEDED:
-        {
-            m_sec_req_pending = false;
-            NRF_LOG_INFO("Connection secured: role: %d, conn_handle: 0x%x, procedure: %d.",
-                         ble_conn_state_role(p_evt->conn_handle),
-                         p_evt->conn_handle,
-                         p_evt->params.conn_sec_succeeded.procedure);
-            scan_start();
-        } break;
-
-        case PM_EVT_CONN_SEC_FAILED:
-        {
-            /* Often, when securing fails, it shouldn't be restarted, for security reasons.
-             * Other times, it can be restarted directly.
-             * Sometimes it can be restarted, but only after changing some Security Parameters.
-             * Sometimes, it cannot be restarted until the link is disconnected and reconnected.
-             * Sometimes it is impossible, to secure the link, or the peer device does not support it.
-             * How to handle this error is highly application dependent. */
-            m_sec_req_pending = false;
-            NRF_LOG_INFO("Securing connection failed: role: %d, conn_handle: 0x%x, procedure: %d. Reason: 0x%04X",
-                         ble_conn_state_role(p_evt->conn_handle),
-                         p_evt->conn_handle,
-                         p_evt->params.conn_sec_failed.procedure,
-                         p_evt->params.conn_sec_failed.error);
-
-            err_code = sd_ble_gap_disconnect(p_evt->conn_handle,
-                                             BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
-            if ((err_code != NRF_ERROR_INVALID_STATE) && (err_code != BLE_ERROR_INVALID_CONN_HANDLE))
-            {
-                APP_ERROR_CHECK(err_code);
-            }
-        } break;
-
-        case PM_EVT_CONN_SEC_CONFIG_REQ:
-        {
-            // Reject pairing request from an already bonded peer.
-            pm_conn_sec_config_t conn_sec_config = {.allow_repairing = false};
-            pm_conn_sec_config_reply(p_evt->conn_handle, &conn_sec_config);
-        } break;
-
-        case PM_EVT_STORAGE_FULL:
-        {
-            // Run garbage collection on the flash.
-            err_code = fds_gc();
-            if (err_code == FDS_ERR_NO_SPACE_IN_QUEUES)
-            {
-                // Retry.
-            }
-            else
-            {
-                APP_ERROR_CHECK(err_code);
-            }
-        } break;
+            bonded_client_add(p_evt);
+            break;
 
         case PM_EVT_PEERS_DELETE_SUCCEEDED:
-        {
+            bonded_client_remove_all();
+
             // Bonds are deleted. Start scanning.
             scan_start();
-        } break;
+            break;
 
-        case PM_EVT_PEER_DATA_UPDATE_FAILED:
-        {
-            // Assert.
-            APP_ERROR_CHECK(p_evt->params.peer_data_update_failed.error);
-        } break;
-
-        case PM_EVT_PEER_DELETE_FAILED:
-        {
-            // Assert.
-            APP_ERROR_CHECK(p_evt->params.peer_delete_failed.error);
-        } break;
-
-        case PM_EVT_PEERS_DELETE_FAILED:
-        {
-            // Assert.
-            APP_ERROR_CHECK(p_evt->params.peers_delete_failed_evt.error);
-        } break;
-
-        case PM_EVT_ERROR_UNEXPECTED:
-        {
-            // Assert.
-            APP_ERROR_CHECK(p_evt->params.error_unexpected.error);
-        } break;
-
-        case PM_EVT_CONN_SEC_START:
-        case PM_EVT_PEER_DATA_UPDATE_SUCCEEDED:
-        case PM_EVT_PEER_DELETE_SUCCEEDED:
-        case PM_EVT_LOCAL_DB_CACHE_APPLIED:
-        case PM_EVT_LOCAL_DB_CACHE_APPLY_FAILED:
-            // This can happen when the local DB has changed.
-        case PM_EVT_SERVICE_CHANGED_IND_SENT:
-        case PM_EVT_SERVICE_CHANGED_IND_CONFIRMED:
         default:
             break;
     }
 }
 
 
-/**@brief Function for handling the Security Request timer timeout.
- *
- * @details This function will be called each time the Security Request timer expires.
- *
- * @param[in]   p_context   Pointer used for passing some arbitrary information (context) from the
- *                          app_start_timer() call to the timeout handler.
+/**@brief Function for performing battery measurement and updating the Battery Level characteristic
+ *        in Battery Service.
  */
-static void sec_req_timeout_handler(void * p_context)
+static void battery_level_update(void)
 {
-    ret_code_t           err_code;
-    uint16_t             conn_handle;
-    pm_conn_sec_status_t status;
+    ret_code_t err_code;
+    uint8_t  battery_level;
 
-    if (p_context != NULL)
+    battery_level = (uint8_t)sensorsim_measure(&m_battery_sim_state, &m_battery_sim_cfg);
+
+    err_code = ble_bas_battery_level_update(&m_bas, battery_level, BLE_CONN_HANDLE_ALL);
+    if ((err_code != NRF_SUCCESS) &&
+        (err_code != NRF_ERROR_INVALID_STATE) &&
+        (err_code != NRF_ERROR_RESOURCES) &&
+        (err_code != NRF_ERROR_BUSY) &&
+        (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
+       )
     {
-        conn_handle = *((uint16_t *) p_context);
+        APP_ERROR_HANDLER(err_code);
+    }
+}
 
-        NRF_LOG_INFO("Establishing secure connection using: 0x%04X.", conn_handle);
 
-        if (conn_handle != BLE_CONN_HANDLE_INVALID)
+/**@brief Function for handling Battery notification delay timer tomeout.
+ *
+ * @details This function send notification to bonded client after reconnection,
+ *          if current value is different from the value during disconnection.
+ */
+static void bettery_notify_send_handler(void * p_context)
+{
+    ret_code_t     err_code  = NRF_SUCCESS;
+    uint8_t      * p_counter = &m_bas_bonded_clients.counter;
+    pm_peer_id_t * p_peer_id = (pm_peer_id_t *)p_context;
+
+    for (uint8_t i = 0; i < *p_counter; i++)
+    {
+        if (m_bas_bonded_clients.devices[i].peer_id == *p_peer_id)
         {
-            err_code = pm_conn_sec_status_get(conn_handle, &status);
-            APP_ERROR_CHECK(err_code);
-
-            // If the link is still not secured by the peer, initiate security procedure.
-            if (!status.encrypted)
+            if (m_bas_bonded_clients.devices[i].last_battery_lvl != m_bas.battery_level_last)
             {
-                err_code = pm_conn_secure(conn_handle, false);
-                APP_ERROR_CHECK(err_code);
+                err_code = ble_bas_battery_lvl_on_reconnection_update(&m_bas,
+                                                                      m_bas_bonded_clients.devices[i].conn_handle);
             }
         }
     }
-    else
+
+    // These errors can be ignored because the application may
+    // try to send notification earlier.
+    if (err_code != NRF_SUCCESS &&
+        err_code != NRF_ERROR_INVALID_STATE &&
+        err_code != NRF_ERROR_RESOURCES)
     {
-        NRF_LOG_ERROR("No connection handle context available");
+        APP_ERROR_CHECK(err_code);
     }
+}
+
+
+/**@brief Function for handling the Battery measurement timer timeout.
+ *
+ * @details This function will be called each time the battery level measurement timer expires.
+ *
+ * @param[in] p_context  Pointer used for passing some arbitrary information (context) from the
+ *                       app_start_timer() call to the timeout handler.
+ */
+static void battery_level_meas_timeout_handler(void * p_context)
+{
+    UNUSED_PARAMETER(p_context);
+    battery_level_update();
 }
 
 
@@ -326,10 +375,25 @@ static void timers_init(void)
     err_code = app_timer_init();
     APP_ERROR_CHECK(err_code);
 
-    // Create Security Request timer.
-    err_code = app_timer_create(&m_sec_req_timer_id,
+    err_code = app_timer_create(&m_battery_timer_id,
+                                APP_TIMER_MODE_REPEATED,
+                                battery_level_meas_timeout_handler);
+    APP_ERROR_CHECK(err_code);
+
+    err_code = app_timer_create(&m_battery_notify_timer_id,
                                 APP_TIMER_MODE_SINGLE_SHOT,
-                                sec_req_timeout_handler);
+                                bettery_notify_send_handler);
+    APP_ERROR_CHECK(err_code);
+}
+
+
+/**@brief Function for starting application timers.
+ */
+static void timers_start(void)
+{
+    ret_code_t err_code;
+
+    err_code = app_timer_start(m_battery_timer_id, BATTERY_LEVEL_MEAS_INTERVAL, NULL);
     APP_ERROR_CHECK(err_code);
 }
 
@@ -376,9 +440,31 @@ static void ias_init(void)
     ble_ias_init_t ias_init_obj;
 
     memset(&ias_init_obj, 0, sizeof(ias_init_obj));
-    ias_init_obj.evt_handler = on_ias_evt;
+    ias_init_obj.evt_handler  = on_ias_evt;
+
+    ias_init_obj.alert_wr_sec = SEC_JUST_WORKS;
 
     err_code = ble_ias_init(&m_ias, &ias_init_obj);
+    APP_ERROR_CHECK(err_code);
+}
+
+
+static void bas_init(void)
+{
+    ret_code_t     err_code;
+    ble_bas_init_t bas_init_obj;
+
+    memset(&bas_init_obj, 0, sizeof(bas_init_obj));
+
+    bas_init_obj.support_notification = true;
+    bas_init_obj.initial_batt_level   = 100;
+
+    // Here the sec level for the Battery Service can be changed/increased.
+    bas_init_obj.bl_rd_sec        = SEC_OPEN;
+    bas_init_obj.bl_cccd_wr_sec   = SEC_OPEN;
+    bas_init_obj.bl_report_rd_sec = SEC_OPEN;
+
+    err_code = ble_bas_init(&m_bas, &bas_init_obj);
     APP_ERROR_CHECK(err_code);
 }
 
@@ -388,10 +474,24 @@ static void ias_init(void)
 static void services_init(void)
 {
     ias_init();
+    bas_init();
 }
 
 
-/**@brief Function for the Signals alert event from the Immediate Alert service.
+/**@brief Function for initializing the sensor simulators.
+ */
+static void sensor_simulator_init(void)
+{
+    m_battery_sim_cfg.min          = MIN_BATTERY_LEVEL;
+    m_battery_sim_cfg.max          = MAX_BATTERY_LEVEL;
+    m_battery_sim_cfg.incr         = BATTERY_LEVEL_INCREMENT;
+    m_battery_sim_cfg.start_at_max = true;
+
+    sensorsim_init(&m_battery_sim_state, &m_battery_sim_cfg);
+}
+
+
+/**@brief Function for the Signals alert event from the Immediate Alert Service.
  *
  * @param[in] alert_level  Requested alert level.
  */
@@ -462,7 +562,7 @@ static uint8_t alert_level_resolve(void)
  *          application.
  *
  * @param[in] p_ias  Immediate Alert structure.
- * @param[in] p_evt  Event received from the Immediate Alert service.
+ * @param[in] p_evt  Event received from the Immediate Alert Service.
  */
 static void on_ias_evt(ble_ias_t * p_ias, ble_ias_evt_t * p_evt)
 {
@@ -497,46 +597,6 @@ static void on_ias_evt(ble_ias_t * p_ias, ble_ias_evt_t * p_evt)
 }
 
 
-/**@brief Function for handling the advertising report BLE event.
- *
- * @param[in] p_adv_report  Advertising report from the SoftDevice.
- */
-static void on_adv_report(ble_gap_evt_adv_report_t const * p_adv_report)
-{
-    ret_code_t err_code;
-    ble_uuid_t target_uuid = {.uuid = TARGET_UUID, .type = BLE_UUID_TYPE_BLE};
-
-    if (ble_advdata_uuid_find(p_adv_report->data.p_data, p_adv_report->data.len, &target_uuid))
-    {
-        // Stop scanning.
-        (void) sd_ble_gap_scan_stop();
-
-        err_code = bsp_indication_set(BSP_INDICATE_IDLE);
-        APP_ERROR_CHECK(err_code);
-
-        // Initiate connection.
-        m_scan_param.filter_policy = BLE_GAP_SCAN_FP_ACCEPT_ALL;
-
-        err_code = sd_ble_gap_connect(&p_adv_report->peer_addr,
-                                      &m_scan_param,
-                                      &m_connection_param,
-                                      APP_BLE_CONN_CFG_TAG);
-
-        m_whitelist_disabled = false;
-
-        if (err_code != NRF_SUCCESS)
-        {
-            NRF_LOG_DEBUG("Connection Request Failed, reason 0x%x", err_code);
-        }
-    }
-    else
-    {
-        err_code = sd_ble_gap_scan_start(NULL, &m_scan_buffer);
-        APP_ERROR_CHECK(err_code);
-    }
-}
-
-
 /**@brief Function for handling BLE events.
  *
  * @param[in]   p_ble_evt   Bluetooth stack event.
@@ -544,9 +604,9 @@ static void on_adv_report(ble_gap_evt_adv_report_t const * p_adv_report)
  */
 static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
 {
-    ret_code_t            err_code = NRF_SUCCESS;
-    ble_gap_evt_t const * p_gap_evt = &p_ble_evt->evt.gap_evt;
-    static uint16_t       m_conn_handle;
+    ret_code_t err_code = NRF_SUCCESS;
+
+    pm_handler_secure_on_connection(p_ble_evt);
 
     switch (p_ble_evt->header.evt_id)
     {
@@ -558,19 +618,14 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             // Handle LEDs.
             bsp_board_led_on(CENTRAL_CONNECTED_LED);
             bsp_board_led_off(CENTRAL_SCANNING_LED);
-
-            // Prepare security request.
-            m_sec_req_pending = true;
-            m_conn_handle     = p_ble_evt->evt.gap_evt.conn_handle;
-            err_code          = app_timer_start(m_sec_req_timer_id,
-                                                SECURITY_REQUEST_DELAY,
-                                                &m_conn_handle);
-            APP_ERROR_CHECK(err_code);
+            scan_start();
         } break;
 
         case BLE_GAP_EVT_DISCONNECTED:
             NRF_LOG_INFO("Disconnected using conn_handle: 0x%04X.",
                          p_ble_evt->evt.gap_evt.conn_handle);
+
+            on_disconnect_battery_lvl_store(p_ble_evt->evt.gap_evt.conn_handle);
 
             //Handle LEDs.
             if (ble_conn_state_central_conn_count() == 0)
@@ -582,27 +637,17 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
                 BLE_HCI_LOCAL_HOST_TERMINATED_CONNECTION)
             {
                 bsp_board_led_off(CENTRAL_SCANNING_LED);
-                (void) sd_ble_gap_scan_stop();
+                nrf_ble_scan_stop();
             }
             else
             {
-                // Start scanning
                 scan_start();
             }
-            break;
-
-        case BLE_GAP_EVT_ADV_REPORT:
-            on_adv_report(&p_gap_evt->params.adv_report);
             break;
 
         case BLE_GAP_EVT_TIMEOUT:
         {
-            if (p_ble_evt->evt.gap_evt.params.timeout.src == BLE_GAP_TIMEOUT_SRC_SCAN)
-            {
-                NRF_LOG_DEBUG("Scan timed out.");
-                scan_start();
-            }
-            else if (p_ble_evt->evt.gap_evt.params.timeout.src == BLE_GAP_TIMEOUT_SRC_CONN)
+            if (p_ble_evt->evt.gap_evt.params.timeout.src == BLE_GAP_TIMEOUT_SRC_CONN)
             {
                 NRF_LOG_INFO("Connection Request timed out.");
             }
@@ -650,33 +695,6 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
 }
 
 
-/**@brief SoftDevice SoC event handler.
- *
- * @param[in]   evt_id      SoC event.
- * @param[in]   p_context   Context.
- */
-static void soc_evt_handler(uint32_t sys_evt, void * p_context)
-{
-    switch (sys_evt)
-    {
-        case NRF_EVT_FLASH_OPERATION_SUCCESS:
-            /* fall through */
-        case NRF_EVT_FLASH_OPERATION_ERROR:
-
-            if (m_memory_access_in_progress)
-            {
-                m_memory_access_in_progress = false;
-                scan_start();
-            }
-            break;
-
-        default:
-            // No implementation needed.
-            break;
-    }
-}
-
-
 /**@brief Function for initializing the BLE stack.
  *
  * @details Initializes the SoftDevice and the BLE event interrupt.
@@ -700,7 +718,6 @@ static void ble_stack_init(void)
 
     // Register a handler for BLE and SoC events.
     NRF_SDH_BLE_OBSERVER(m_ble_observer, APP_BLE_OBSERVER_PRIO, ble_evt_handler, NULL);
-    NRF_SDH_SOC_OBSERVER(m_soc_observer, APP_SOC_OBSERVER_PRIO, soc_evt_handler, NULL);
 }
 
 
@@ -748,10 +765,7 @@ static void whitelist_disable_and_scan(void)
         m_whitelist_disabled = true;
     }
 
-    if (!m_sec_req_pending)
-    {
-        scan_start();
-    }
+    scan_start();
 }
 
 
@@ -802,6 +816,8 @@ static void peer_list_get(pm_peer_id_t * p_peers, uint32_t * p_size)
 }
 
 
+/**@brief Function for loading the whitelist.
+ */
 static void whitelist_load()
 {
     ret_code_t   ret;
@@ -811,13 +827,13 @@ static void whitelist_load()
     memset(peers, PM_PEER_ID_INVALID, sizeof(peers));
     peer_cnt = (sizeof(peers) / sizeof(pm_peer_id_t));
 
-    // Load all peers from flash and whitelist them.
+    // Load all peers from the flash and whitelist them.
     peer_list_get(peers, &peer_cnt);
 
     ret = pm_whitelist_set(peers, peer_cnt);
     APP_ERROR_CHECK(ret);
 
-    // Set up the device identities list.
+    // Set up the list of device identities.
     // Some SoftDevices do not support this feature.
     ret = pm_device_identities_list_set(peers, peer_cnt);
     if (ret != NRF_ERROR_NOT_SUPPORTED)
@@ -827,29 +843,9 @@ static void whitelist_load()
 }
 
 
-/**@brief Function for starting the scanning.
- */
-static void scan_start(void)
+static void on_whitelist_req(void)
 {
-    ret_code_t err_code;
-    bool       whitelist_on;
-
-    (void) sd_ble_gap_scan_stop();
-    bsp_board_led_off(CENTRAL_SCANNING_LED);
-
-    // Check if there is available connection slot.
-    if (ble_conn_state_central_conn_count() >= NRF_SDH_BLE_CENTRAL_LINK_COUNT)
-    {
-        NRF_LOG_DEBUG("Maximum number of connections: %d has been reached. Scanning cannot be restarted",
-                      NRF_SDH_BLE_CENTRAL_LINK_COUNT);
-        return;
-    }
-
-    if (nrf_fstorage_is_busy(NULL))
-    {
-        m_memory_access_in_progress = true;
-        return;
-    }
+    ret_code_t     err_code;
 
     // Whitelist buffers.
     ble_gap_addr_t whitelist_addrs[8];
@@ -869,43 +865,83 @@ static void scan_start(void)
                                 whitelist_irks,  &irk_cnt);
     APP_ERROR_CHECK(err_code);
 
-    m_scan_param.active   = 0;
-    m_scan_param.interval = SCAN_INTERVAL;
-    m_scan_param.window   = SCAN_WINDOW;
-
     if (((addr_cnt == 0) && (irk_cnt == 0)) ||
         (m_whitelist_disabled))
     {
         // Don't use whitelist
-        whitelist_on = false;
-
-        m_scan_param.timeout           = SCAN_DURATION;
-        m_scan_param.scan_phys         = BLE_GAP_PHY_1MBPS;
-        m_scan_param.filter_policy     = BLE_GAP_SCAN_FP_ACCEPT_ALL;
+        err_code = nrf_ble_scan_params_set(&m_scan, NULL);
+        APP_ERROR_CHECK(err_code);
+        NRF_LOG_INFO("Starting scan.");
     }
     else
     {
         // Use whitelist.
-        whitelist_on = true;
-
-        m_scan_param.scan_phys          = BLE_GAP_PHY_1MBPS;
-        m_scan_param.filter_policy     = BLE_GAP_SCAN_FP_WHITELIST;
-        m_scan_param.timeout          = 0x001E; // 30 seconds.
-    }
-
-    err_code = sd_ble_gap_scan_start(&m_scan_param, &m_scan_buffer);
-    APP_ERROR_CHECK(err_code);
-
-    bsp_board_led_on(CENTRAL_SCANNING_LED);
-
-    if (whitelist_on)
-    {
         NRF_LOG_INFO("Starting scan with whitelist.");
     }
-    else
+
+    bsp_board_led_on(CENTRAL_SCANNING_LED);
+}
+
+
+/**@brief Function for handling events from the Scanning Module.
+ *
+ * @param[in]   event   Event generated.
+ */
+static void scan_evt_handler(scan_evt_t const * p_scan_evt)
+{
+    ret_code_t err_code;
+    switch(p_scan_evt->scan_evt_id)
     {
-        NRF_LOG_INFO("Starting scan.");
+        case NRF_BLE_SCAN_EVT_WHITELIST_REQUEST:
+        {
+            on_whitelist_req();
+            m_whitelist_disabled = false;
+        } break;
+
+        case NRF_BLE_SCAN_EVT_CONNECTING_ERROR:
+        {
+            err_code = p_scan_evt->params.connecting_err.err_code;
+            APP_ERROR_CHECK(err_code);
+        } break;
+
+        case NRF_BLE_SCAN_EVT_SCAN_TIMEOUT:
+        {
+            NRF_LOG_INFO("Scan timed out.");
+            scan_start();
+        } break;
+
+        case NRF_BLE_SCAN_EVT_FILTER_MATCH:
+            break;
+        case NRF_BLE_SCAN_EVT_WHITELIST_ADV_REPORT:
+            break;
+
+        default:
+          break;
     }
+}
+
+
+/**@brief Function for starting the scanning.
+ */
+static void scan_start(void)
+{
+    ret_code_t err_code;
+
+    bsp_board_led_off(CENTRAL_SCANNING_LED);
+
+    // Check whether there is an available connection slot.
+    if (ble_conn_state_central_conn_count() >= NRF_SDH_BLE_CENTRAL_LINK_COUNT)
+    {
+        NRF_LOG_DEBUG("Maximum number of connections: %d has been reached. Scanning cannot be restarted",
+                      NRF_SDH_BLE_CENTRAL_LINK_COUNT);
+        return;
+    }
+
+    err_code = nrf_ble_scan_params_set(&m_scan, &m_scan_param);
+    APP_ERROR_CHECK(err_code);
+
+    err_code = nrf_ble_scan_start(&m_scan);
+    APP_ERROR_CHECK(err_code);
 }
 
 
@@ -945,6 +981,37 @@ static void power_management_init(void)
 {
     ret_code_t err_code;
     err_code = nrf_pwr_mgmt_init();
+    APP_ERROR_CHECK(err_code);
+}
+
+
+/**@brief Function for initializing scanning.
+ */
+static void scan_init(void)
+{
+    ret_code_t          err_code;
+    nrf_ble_scan_init_t init_scan;
+    ble_uuid_t uuid =
+    {
+        .uuid = TARGET_UUID,
+        .type = BLE_UUID_TYPE_BLE,
+    };
+
+    memset(&init_scan, 0, sizeof(init_scan));
+
+    init_scan.connect_if_match = true;
+    init_scan.conn_cfg_tag     = APP_BLE_CONN_CFG_TAG;
+    init_scan.p_scan_param     = &m_scan_param;
+
+    err_code = nrf_ble_scan_init(&m_scan, &init_scan, scan_evt_handler);
+    APP_ERROR_CHECK(err_code);
+
+    err_code = nrf_ble_scan_filter_set(&m_scan, SCAN_UUID_FILTER, &uuid);
+    APP_ERROR_CHECK(err_code);
+
+    err_code = nrf_ble_scan_filters_enable(&m_scan,
+                                           NRF_BLE_SCAN_UUID_FILTER,
+                                           false);
     APP_ERROR_CHECK(err_code);
 }
 
@@ -1010,7 +1077,10 @@ int main(void)
     ble_stack_init();
     gatt_init();
     peer_manager_init();
+    timers_start();
     services_init();
+    scan_init();
+    sensor_simulator_init();
 
     // Start execution.
     NRF_LOG_INFO("Immediate Alert example started.");

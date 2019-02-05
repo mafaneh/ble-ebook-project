@@ -12,7 +12,7 @@
       <TargetOption>
         <TargetCommonOption>          <Device>nRF52832_xxAA</Device>
           <Vendor>Nordic Semiconductor</Vendor>
-          <PackID>NordicSemiconductor.nRF_DeviceFamilyPack.8.16.0</PackID>
+          <PackID>NordicSemiconductor.nRF_DeviceFamilyPack.8.17.0</PackID>
           <PackURL>http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_DeviceFamilyPack/</PackURL>          <Cpu>IROM(0x00000000,0x80000) IRAM(0x20000000,0x10000) CPUTYPE("Cortex-M4") FPU2 CLOCK(64000000) ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
           <StartupFile></StartupFile>
@@ -364,7 +364,7 @@
               <MiscControls>--reduce_paths</MiscControls>
               <Define> BOARD_PCA10040 CONFIG_GPIO_AS_PINRESET DEBUG DEBUG_NRF FLOAT_ABI_HARD MBEDTLS_CONFIG_FILE=&lt;nrf_crypto_mbedtls_config.h&gt; NRF52 NRF52832_XXAA NRF52_PAN_74 NRF_CRYPTO_MAX_INSTANCE_COUNT=1 SWI_DISABLE0 __HEAP_SIZE=8192 __STACK_SIZE=8192 uECC_ENABLE_VLI_API=0 uECC_OPTIMIZATION_LEVEL=3 uECC_SQUARE_FUNC=0 uECC_SUPPORT_COMPRESSED_POINT=0 uECC_VLI_NATIVE_LITTLE_ENDIAN=1</Define>
               <Undefine></Undefine>
-              <IncludePath>..\..\..\config;..\..\..\..\..\..\..\..\components;..\..\..\..\..\..\..\..\components\boards;..\..\..\..\..\..\..\..\components\drivers_nrf\nrf_soc_nosd;..\..\..\..\..\..\..\..\components\libraries\atomic;..\..\..\..\..\..\..\..\components\libraries\balloc;..\..\..\..\..\..\..\..\components\libraries\bsp;..\..\..\..\..\..\..\..\components\libraries\button;..\..\..\..\..\..\..\..\components\libraries\crypto;..\..\..\..\..\..\..\..\components\libraries\crypto\backend\cc310;..\..\..\..\..\..\..\..\components\libraries\crypto\backend\cc310_bl;..\..\..\..\..\..\..\..\components\libraries\crypto\backend\cifra;..\..\..\..\..\..\..\..\components\libraries\crypto\backend\mbedtls;..\..\..\..\..\..\..\..\components\libraries\crypto\backend\micro_ecc;..\..\..\..\..\..\..\..\components\libraries\crypto\backend\nrf_hw;..\..\..\..\..\..\..\..\components\libraries\crypto\backend\nrf_sw;..\..\..\..\..\..\..\..\components\libraries\crypto\backend\oberon;..\..\..\..\..\..\..\..\components\libraries\delay;..\..\..\..\..\..\..\..\components\libraries\experimental_log;..\..\..\..\..\..\..\..\components\libraries\experimental_log\src;..\..\..\..\..\..\..\..\components\libraries\experimental_memobj;..\..\..\..\..\..\..\..\components\libraries\experimental_section_vars;..\..\..\..\..\..\..\..\components\libraries\hardfault;..\..\..\..\..\..\..\..\components\libraries\hardfault\nrf52;..\..\..\..\..\..\..\..\components\libraries\mem_manager;..\..\..\..\..\..\..\..\components\libraries\mutex;..\..\..\..\..\..\..\..\components\libraries\queue;..\..\..\..\..\..\..\..\components\libraries\scheduler;..\..\..\..\..\..\..\..\components\libraries\stack_info;..\..\..\..\..\..\..\..\components\libraries\strerror;..\..\..\..\..\..\..\..\components\libraries\timer;..\..\..\..\..\..\..\..\components\libraries\util;..\..\..;..\..\..\..\..\..\..\..\external\cifra_AES128-EAX;..\..\..\..\..\..\..\..\external\fprintf;..\..\..\..\..\..\..\..\external\mbedtls\include;..\..\..\..\..\..\..\..\external\micro-ecc\micro-ecc;..\..\..\..\..\..\..\..\external\nrf_cc310\include;..\..\..\..\..\..\..\..\external\nrf_oberon;..\..\..\..\..\..\..\..\external\nrf_oberon\include;..\..\..\..\..\..\..\..\external\nrf_tls\mbedtls\nrf_crypto\config;..\..\..\..\..\..\..\..\external\segger_rtt;..\..\..\..\..\..\..\..\integration\nrfx;..\..\..\..\..\..\..\..\integration\nrfx\legacy;..\..\..\..\..\..\..\..\modules\nrfx;..\..\..\..\..\..\..\..\modules\nrfx\drivers\include;..\..\..\..\..\..\..\..\modules\nrfx\hal;..\..\..\..\..\..\..\..\modules\nrfx\mdk;..\config</IncludePath>
+              <IncludePath>..\..\..\config;..\..\..\..\..\..\..\..\components;..\..\..\..\..\..\..\..\components\boards;..\..\..\..\..\..\..\..\components\drivers_nrf\nrf_soc_nosd;..\..\..\..\..\..\..\..\components\libraries\atomic;..\..\..\..\..\..\..\..\components\libraries\balloc;..\..\..\..\..\..\..\..\components\libraries\bsp;..\..\..\..\..\..\..\..\components\libraries\button;..\..\..\..\..\..\..\..\components\libraries\crypto;..\..\..\..\..\..\..\..\components\libraries\crypto\backend\cc310;..\..\..\..\..\..\..\..\components\libraries\crypto\backend\cc310_bl;..\..\..\..\..\..\..\..\components\libraries\crypto\backend\cifra;..\..\..\..\..\..\..\..\components\libraries\crypto\backend\mbedtls;..\..\..\..\..\..\..\..\components\libraries\crypto\backend\micro_ecc;..\..\..\..\..\..\..\..\components\libraries\crypto\backend\nrf_hw;..\..\..\..\..\..\..\..\components\libraries\crypto\backend\nrf_sw;..\..\..\..\..\..\..\..\components\libraries\crypto\backend\oberon;..\..\..\..\..\..\..\..\components\libraries\delay;..\..\..\..\..\..\..\..\components\libraries\experimental_section_vars;..\..\..\..\..\..\..\..\components\libraries\hardfault;..\..\..\..\..\..\..\..\components\libraries\hardfault\nrf52;..\..\..\..\..\..\..\..\components\libraries\log;..\..\..\..\..\..\..\..\components\libraries\log\src;..\..\..\..\..\..\..\..\components\libraries\mem_manager;..\..\..\..\..\..\..\..\components\libraries\memobj;..\..\..\..\..\..\..\..\components\libraries\mutex;..\..\..\..\..\..\..\..\components\libraries\queue;..\..\..\..\..\..\..\..\components\libraries\ringbuf;..\..\..\..\..\..\..\..\components\libraries\scheduler;..\..\..\..\..\..\..\..\components\libraries\stack_info;..\..\..\..\..\..\..\..\components\libraries\strerror;..\..\..\..\..\..\..\..\components\libraries\timer;..\..\..\..\..\..\..\..\components\libraries\util;..\..\..;..\..\..\..\..\..\..\..\external\cifra_AES128-EAX;..\..\..\..\..\..\..\..\external\fprintf;..\..\..\..\..\..\..\..\external\mbedtls\include;..\..\..\..\..\..\..\..\external\micro-ecc\micro-ecc;..\..\..\..\..\..\..\..\external\nrf_cc310\include;..\..\..\..\..\..\..\..\external\nrf_oberon;..\..\..\..\..\..\..\..\external\nrf_oberon\include;..\..\..\..\..\..\..\..\external\nrf_tls\mbedtls\nrf_crypto\config;..\..\..\..\..\..\..\..\external\segger_rtt;..\..\..\..\..\..\..\..\integration\nrfx;..\..\..\..\..\..\..\..\integration\nrfx\legacy;..\..\..\..\..\..\..\..\modules\nrfx;..\..\..\..\..\..\..\..\modules\nrfx\drivers\include;..\..\..\..\..\..\..\..\modules\nrfx\hal;..\..\..\..\..\..\..\..\modules\nrfx\mdk;..\config</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -381,7 +381,7 @@
               <MiscControls> --cpreproc_opts=-DBOARD_PCA10040,-DCONFIG_GPIO_AS_PINRESET,-DDEBUG,-DDEBUG_NRF,-DFLOAT_ABI_HARD,-DNRF52,-DNRF52832_XXAA,-DNRF52_PAN_74,-DNRF_CRYPTO_MAX_INSTANCE_COUNT=1,-DSWI_DISABLE0,-D__HEAP_SIZE=8192,-D__STACK_SIZE=8192,-DuECC_ENABLE_VLI_API=0,-DuECC_OPTIMIZATION_LEVEL=3,-DuECC_SQUARE_FUNC=0,-DuECC_SUPPORT_COMPRESSED_POINT=0,-DuECC_VLI_NATIVE_LITTLE_ENDIAN=1</MiscControls>
               <Define> BOARD_PCA10040 CONFIG_GPIO_AS_PINRESET DEBUG DEBUG_NRF FLOAT_ABI_HARD NRF52 NRF52832_XXAA NRF52_PAN_74 NRF_CRYPTO_MAX_INSTANCE_COUNT=1 SWI_DISABLE0 __HEAP_SIZE=8192 __STACK_SIZE=8192 uECC_ENABLE_VLI_API=0 uECC_OPTIMIZATION_LEVEL=3 uECC_SQUARE_FUNC=0 uECC_SUPPORT_COMPRESSED_POINT=0 uECC_VLI_NATIVE_LITTLE_ENDIAN=1</Define>
               <Undefine></Undefine>
-              <IncludePath>..\..\..\config;..\..\..\..\..\..\..\..\components;..\..\..\..\..\..\..\..\components\boards;..\..\..\..\..\..\..\..\components\drivers_nrf\nrf_soc_nosd;..\..\..\..\..\..\..\..\components\libraries\atomic;..\..\..\..\..\..\..\..\components\libraries\balloc;..\..\..\..\..\..\..\..\components\libraries\bsp;..\..\..\..\..\..\..\..\components\libraries\button;..\..\..\..\..\..\..\..\components\libraries\crypto;..\..\..\..\..\..\..\..\components\libraries\crypto\backend\cc310;..\..\..\..\..\..\..\..\components\libraries\crypto\backend\cc310_bl;..\..\..\..\..\..\..\..\components\libraries\crypto\backend\cifra;..\..\..\..\..\..\..\..\components\libraries\crypto\backend\mbedtls;..\..\..\..\..\..\..\..\components\libraries\crypto\backend\micro_ecc;..\..\..\..\..\..\..\..\components\libraries\crypto\backend\nrf_hw;..\..\..\..\..\..\..\..\components\libraries\crypto\backend\nrf_sw;..\..\..\..\..\..\..\..\components\libraries\crypto\backend\oberon;..\..\..\..\..\..\..\..\components\libraries\delay;..\..\..\..\..\..\..\..\components\libraries\experimental_log;..\..\..\..\..\..\..\..\components\libraries\experimental_log\src;..\..\..\..\..\..\..\..\components\libraries\experimental_memobj;..\..\..\..\..\..\..\..\components\libraries\experimental_section_vars;..\..\..\..\..\..\..\..\components\libraries\hardfault;..\..\..\..\..\..\..\..\components\libraries\hardfault\nrf52;..\..\..\..\..\..\..\..\components\libraries\mem_manager;..\..\..\..\..\..\..\..\components\libraries\mutex;..\..\..\..\..\..\..\..\components\libraries\queue;..\..\..\..\..\..\..\..\components\libraries\scheduler;..\..\..\..\..\..\..\..\components\libraries\stack_info;..\..\..\..\..\..\..\..\components\libraries\strerror;..\..\..\..\..\..\..\..\components\libraries\timer;..\..\..\..\..\..\..\..\components\libraries\util;..\..\..;..\..\..\..\..\..\..\..\external\cifra_AES128-EAX;..\..\..\..\..\..\..\..\external\fprintf;..\..\..\..\..\..\..\..\external\mbedtls\include;..\..\..\..\..\..\..\..\external\micro-ecc\micro-ecc;..\..\..\..\..\..\..\..\external\nrf_cc310\include;..\..\..\..\..\..\..\..\external\nrf_oberon;..\..\..\..\..\..\..\..\external\nrf_oberon\include;..\..\..\..\..\..\..\..\external\nrf_tls\mbedtls\nrf_crypto\config;..\..\..\..\..\..\..\..\external\segger_rtt;..\..\..\..\..\..\..\..\integration\nrfx;..\..\..\..\..\..\..\..\integration\nrfx\legacy;..\..\..\..\..\..\..\..\modules\nrfx;..\..\..\..\..\..\..\..\modules\nrfx\drivers\include;..\..\..\..\..\..\..\..\modules\nrfx\hal;..\..\..\..\..\..\..\..\modules\nrfx\mdk;..\config</IncludePath>
+              <IncludePath>..\..\..\config;..\..\..\..\..\..\..\..\components;..\..\..\..\..\..\..\..\components\boards;..\..\..\..\..\..\..\..\components\drivers_nrf\nrf_soc_nosd;..\..\..\..\..\..\..\..\components\libraries\atomic;..\..\..\..\..\..\..\..\components\libraries\balloc;..\..\..\..\..\..\..\..\components\libraries\bsp;..\..\..\..\..\..\..\..\components\libraries\button;..\..\..\..\..\..\..\..\components\libraries\crypto;..\..\..\..\..\..\..\..\components\libraries\crypto\backend\cc310;..\..\..\..\..\..\..\..\components\libraries\crypto\backend\cc310_bl;..\..\..\..\..\..\..\..\components\libraries\crypto\backend\cifra;..\..\..\..\..\..\..\..\components\libraries\crypto\backend\mbedtls;..\..\..\..\..\..\..\..\components\libraries\crypto\backend\micro_ecc;..\..\..\..\..\..\..\..\components\libraries\crypto\backend\nrf_hw;..\..\..\..\..\..\..\..\components\libraries\crypto\backend\nrf_sw;..\..\..\..\..\..\..\..\components\libraries\crypto\backend\oberon;..\..\..\..\..\..\..\..\components\libraries\delay;..\..\..\..\..\..\..\..\components\libraries\experimental_section_vars;..\..\..\..\..\..\..\..\components\libraries\hardfault;..\..\..\..\..\..\..\..\components\libraries\hardfault\nrf52;..\..\..\..\..\..\..\..\components\libraries\log;..\..\..\..\..\..\..\..\components\libraries\log\src;..\..\..\..\..\..\..\..\components\libraries\mem_manager;..\..\..\..\..\..\..\..\components\libraries\memobj;..\..\..\..\..\..\..\..\components\libraries\mutex;..\..\..\..\..\..\..\..\components\libraries\queue;..\..\..\..\..\..\..\..\components\libraries\ringbuf;..\..\..\..\..\..\..\..\components\libraries\scheduler;..\..\..\..\..\..\..\..\components\libraries\stack_info;..\..\..\..\..\..\..\..\components\libraries\strerror;..\..\..\..\..\..\..\..\components\libraries\timer;..\..\..\..\..\..\..\..\components\libraries\util;..\..\..;..\..\..\..\..\..\..\..\external\cifra_AES128-EAX;..\..\..\..\..\..\..\..\external\fprintf;..\..\..\..\..\..\..\..\external\mbedtls\include;..\..\..\..\..\..\..\..\external\micro-ecc\micro-ecc;..\..\..\..\..\..\..\..\external\nrf_cc310\include;..\..\..\..\..\..\..\..\external\nrf_oberon;..\..\..\..\..\..\..\..\external\nrf_oberon\include;..\..\..\..\..\..\..\..\external\nrf_tls\mbedtls\nrf_crypto\config;..\..\..\..\..\..\..\..\external\segger_rtt;..\..\..\..\..\..\..\..\integration\nrfx;..\..\..\..\..\..\..\..\integration\nrfx\legacy;..\..\..\..\..\..\..\..\modules\nrfx;..\..\..\..\..\..\..\..\modules\nrfx\drivers\include;..\..\..\..\..\..\..\..\modules\nrfx\hal;..\..\..\..\..\..\..\..\modules\nrfx\mdk;..\config</IncludePath>
             </VariousControls>
           </Aads>
           <LDads>
@@ -445,6 +445,9 @@
               <FileName>nrf_crypto_ecdsa.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\..\..\components\libraries\crypto\nrf_crypto_ecdsa.c</FilePath>            </File>            <File>
+              <FileName>nrf_crypto_eddsa.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\..\..\components\libraries\crypto\nrf_crypto_eddsa.c</FilePath>            </File>            <File>
               <FileName>nrf_crypto_error.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\..\..\components\libraries\crypto\nrf_crypto_error.c</FilePath>            </File>            <File>
@@ -481,6 +484,9 @@
               <FileName>oberon_backend_ecdsa.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\..\..\components\libraries\crypto\backend\oberon\oberon_backend_ecdsa.c</FilePath>            </File>            <File>
+              <FileName>oberon_backend_eddsa.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\..\..\components\libraries\crypto\backend\oberon\oberon_backend_eddsa.c</FilePath>            </File>            <File>
               <FileName>oberon_backend_hash.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\..\..\components\libraries\crypto\backend\oberon\oberon_backend_hash.c</FilePath>            </File>            <File>
@@ -657,10 +663,13 @@
               <FilePath>..\..\..\..\..\..\..\..\external\fprintf\nrf_fprintf_format.c</FilePath>            </File>            <File>
               <FileName>nrf_memobj.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\..\..\..\components\libraries\experimental_memobj\nrf_memobj.c</FilePath>            </File>            <File>
+              <FilePath>..\..\..\..\..\..\..\..\components\libraries\memobj\nrf_memobj.c</FilePath>            </File>            <File>
               <FileName>nrf_queue.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\..\..\components\libraries\queue\nrf_queue.c</FilePath>            </File>            <File>
+              <FileName>nrf_ringbuf.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\..\..\components\libraries\ringbuf\nrf_ringbuf.c</FilePath>            </File>            <File>
               <FileName>nrf_strerror.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\..\..\components\libraries\strerror\nrf_strerror.c</FilePath>            </File>          </Files>
@@ -669,28 +678,28 @@
           <Files>            <File>
               <FileName>nrf_log_backend_rtt.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\..\..\..\components\libraries\experimental_log\src\nrf_log_backend_rtt.c</FilePath>            </File>            <File>
+              <FilePath>..\..\..\..\..\..\..\..\components\libraries\log\src\nrf_log_backend_rtt.c</FilePath>            </File>            <File>
               <FileName>nrf_log_backend_serial.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\..\..\..\components\libraries\experimental_log\src\nrf_log_backend_serial.c</FilePath>            </File>            <File>
+              <FilePath>..\..\..\..\..\..\..\..\components\libraries\log\src\nrf_log_backend_serial.c</FilePath>            </File>            <File>
               <FileName>nrf_log_backend_uart.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\..\..\..\components\libraries\experimental_log\src\nrf_log_backend_uart.c</FilePath>            </File>            <File>
+              <FilePath>..\..\..\..\..\..\..\..\components\libraries\log\src\nrf_log_backend_uart.c</FilePath>            </File>            <File>
               <FileName>nrf_log_default_backends.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\..\..\..\components\libraries\experimental_log\src\nrf_log_default_backends.c</FilePath>            </File>            <File>
+              <FilePath>..\..\..\..\..\..\..\..\components\libraries\log\src\nrf_log_default_backends.c</FilePath>            </File>            <File>
               <FileName>nrf_log_frontend.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\..\..\..\components\libraries\experimental_log\src\nrf_log_frontend.c</FilePath>            </File>            <File>
+              <FilePath>..\..\..\..\..\..\..\..\components\libraries\log\src\nrf_log_frontend.c</FilePath>            </File>            <File>
               <FileName>nrf_log_str_formatter.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\..\..\..\components\libraries\experimental_log\src\nrf_log_str_formatter.c</FilePath>            </File>          </Files>
+              <FilePath>..\..\..\..\..\..\..\..\components\libraries\log\src\nrf_log_str_formatter.c</FilePath>            </File>          </Files>
         </Group>        <Group>
           <GroupName>nRF_Oberon_Crypto</GroupName>
           <Files>            <File>
-              <FileName>oberon_short_wchar_2.0.4.lib</FileName>
+              <FileName>oberon_short_wchar_2.0.5.lib</FileName>
               <FileType>4</FileType>
-              <FilePath>..\..\..\..\..\..\..\..\external\nrf_oberon\lib\nrf52\oberon_short_wchar_2.0.4.lib</FilePath>            </File>          </Files>
+              <FilePath>..\..\..\..\..\..\..\..\external\nrf_oberon\lib\nrf52\oberon_short_wchar_2.0.5.lib</FilePath>            </File>          </Files>
         </Group>        <Group>
           <GroupName>nRF_Segger_RTT</GroupName>
           <Files>            <File>
@@ -913,9 +922,9 @@
         </Group>        <Group>
           <GroupName>nrf_cc310</GroupName>
           <Files>            <File>
-              <FileName>nrf_cc310_keil_0.9.9.lib</FileName>
+              <FileName>nrf_cc310_keil_0.9.10.lib</FileName>
               <FileType>4</FileType>
-              <FilePath>..\..\..\..\..\..\..\..\external\nrf_cc310\lib\nrf_cc310_keil_0.9.9.lib</FilePath>            </File>          </Files>
+              <FilePath>..\..\..\..\..\..\..\..\external\nrf_cc310\lib\nrf_cc310_keil_0.9.10.lib</FilePath>            </File>          </Files>
         </Group>      </Groups>
     </Target>  </Targets><RTE>
   <packages>
@@ -924,7 +933,7 @@
     </filter>    <package name="CMSIS" url="http://www.keil.com/pack/" vendor="ARM" version="4.5.0">
       <targetInfos>        <targetInfo name="nrf52832_xxaa" versionMatchMode="fixed"/>      </targetInfos>
     </package>
-    <package name="nRF_DeviceFamilyPack" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_DeviceFamilyPack/" vendor="NordicSemiconductor" version="8.16.0">
+    <package name="nRF_DeviceFamilyPack" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_DeviceFamilyPack/" vendor="NordicSemiconductor" version="8.17.0">
       <targetInfos>        <targetInfo name="nrf52832_xxaa" versionMatchMode="fixed"/>      </targetInfos>
     </package>  </packages>
   <apis/>
@@ -932,8 +941,8 @@
       <package name="CMSIS" url="http://www.keil.com/pack/" vendor="ARM" version="4.5.0"/>
       <targetInfos>        <targetInfo name="nrf52832_xxaa" versionMatchMode="fixed"/>      </targetInfos>
     </component>
-    <component Cclass="Device" Cgroup="Startup" Cvendor="NordicSemiconductor" Cversion="8.16.0" condition="nRF5x Series CMSIS Device">
-      <package name="nRF_DeviceFamilyPack" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_DeviceFamilyPack/" vendor="NordicSemiconductor" version="8.16.0"/>
+    <component Cclass="Device" Cgroup="Startup" Cvendor="NordicSemiconductor" Cversion="8.17.0" condition="nRF5x Series CMSIS Device">
+      <package name="nRF_DeviceFamilyPack" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_DeviceFamilyPack/" vendor="NordicSemiconductor" version="8.17.0"/>
       <targetInfos>        <targetInfo name="nrf52832_xxaa" versionMatchMode="fixed"/>      </targetInfos>
     </component>  </components>
   <files>  </files>

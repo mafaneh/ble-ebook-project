@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2017 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 
 #include <stdint.h>
@@ -205,48 +205,22 @@ void ble_dfu_buttonless_on_sys_evt(uint32_t sys_evt, void * p_context)
 
 uint32_t ble_dfu_buttonless_char_add(ble_dfu_buttonless_t * p_dfu)
 {
-    ble_gatts_char_md_t char_md         = {{0}};
-    ble_gatts_attr_md_t cccd_md         = {{0}};
-    ble_gatts_attr_t    attr_char_value = {0};
-    ble_gatts_attr_md_t attr_md         = {{0}};
-    ble_uuid_t          char_uuid;
+    ble_add_char_params_t add_char_params;
 
+    memset(&add_char_params, 0, sizeof(add_char_params));
+    add_char_params.uuid                = BLE_DFU_BUTTONLESS_CHAR_UUID;
+    add_char_params.uuid_type           = p_dfu->uuid_type;
+    add_char_params.char_props.indicate = 1;
+    add_char_params.char_props.write    = 1;
+    add_char_params.is_defered_write    = true;
+    add_char_params.is_var_len          = true;
+    add_char_params.max_len             = BLE_GATT_ATT_MTU_DEFAULT;
 
-    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cccd_md.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cccd_md.write_perm);
+    add_char_params.cccd_write_access = SEC_OPEN;
+    add_char_params.write_access      = SEC_OPEN;
+    add_char_params.read_access       = SEC_OPEN;
 
-    cccd_md.vloc = BLE_GATTS_VLOC_STACK;
-
-    char_md.char_props.indicate     = 1;
-    char_md.char_props.write        = 1;
-    char_md.p_char_user_desc        = NULL;
-    char_md.p_char_pf               = NULL;
-    char_md.p_user_desc_md          = NULL;
-    char_md.p_cccd_md               = &cccd_md;
-    char_md.p_sccd_md               = NULL;
-
-    char_uuid.type = p_dfu->uuid_type;
-    char_uuid.uuid = BLE_DFU_BUTTONLESS_CHAR_UUID;
-
-    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.write_perm);
-
-    attr_md.vloc    = BLE_GATTS_VLOC_STACK;
-    attr_md.rd_auth = 0;
-    attr_md.wr_auth = 1;
-    attr_md.vlen    = 1;
-
-    attr_char_value.p_uuid    = &char_uuid;
-    attr_char_value.p_attr_md = &attr_md;
-    attr_char_value.init_len  = 0;
-    attr_char_value.init_offs = 0;
-    attr_char_value.max_len   = BLE_GATT_ATT_MTU_DEFAULT;
-    attr_char_value.p_value   = 0;
-
-    return sd_ble_gatts_characteristic_add(p_dfu->service_handle,
-                                           &char_md,
-                                           &attr_char_value,
-                                           &p_dfu->control_point_char);
+    return characteristic_add(p_dfu->service_handle, &add_char_params, &p_dfu->control_point_char);
 }
 
 

@@ -1,30 +1,30 @@
 /**
- * Copyright (c) 2018 - 2018, Nordic Semiconductor ASA
- * 
+ * Copyright (c) 2018, Nordic Semiconductor ASA
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 
 #include <stdio.h>
@@ -58,30 +58,47 @@
 #if NRF_CRYPTO_ECC_ENABLED
 
 NRF_SECTION_DEF(test_vector_ecdh_data_random, test_vector_ecdh_t);
-NRF_SECTION_DEF(test_vector_ecdh_data_deterministic, test_vector_ecdh_t);
+NRF_SECTION_DEF(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t);
 NRF_SECTION_DEF(test_vector_ecdh_data_deterministic_full, test_vector_ecdh_t);
 
-#define TEST_VECTOR_ECDH_RANDOM_GET(i)      NRF_SECTION_ITEM_GET(test_vector_ecdh_data_random, test_vector_ecdh_t, (i))             /**< Get number of ECDH test vectors. */
-#define TEST_VECTOR_ECDH_RANDOM_COUNT       NRF_SECTION_ITEM_COUNT(test_vector_ecdh_data_random, test_vector_ecdh_t)                /**< Get test vector reference from array of test vectors. */
-#define TEST_VECTOR_ECDH_DET_FULL_GET(i)    NRF_SECTION_ITEM_GET(test_vector_ecdh_data_deterministic_full, test_vector_ecdh_t, (i)) /**< Get number of ECDH test vectors. */
-#define TEST_VECTOR_ECDH_DET_FULL_COUNT     NRF_SECTION_ITEM_COUNT(test_vector_ecdh_data_deterministic_full, test_vector_ecdh_t)    /**< Get test vector reference from array of test vectors. */
-#define TEST_VECTOR_ECDH_DET_SIMPLE_GET(i)  NRF_SECTION_ITEM_GET(test_vector_ecdh_data_deterministic, test_vector_ecdh_t, (i))      /**< Get number of ECDH test vectors. */
-#define TEST_VECTOR_ECDH_DET_SIMPLE_COUNT   NRF_SECTION_ITEM_COUNT(test_vector_ecdh_data_deterministic, test_vector_ecdh_t)         /**< Get test vector reference from array of test vectors. */
+/**< Get number of ECDH test vectors. */
+#define TEST_VECTOR_ECDH_RANDOM_GET(i)     \
+    NRF_SECTION_ITEM_GET(test_vector_ecdh_data_random, test_vector_ecdh_t, (i))
 
-static nrf_crypto_ecc_public_key_t          m_initiater_public_key;                                     /**< Public key structure */
-static nrf_crypto_ecc_private_key_t         m_initiater_private_key;                                    /**< Private key structure */
-static nrf_crypto_ecc_public_key_t          m_responder_public_key;                                     /**< Public key structure */
-static nrf_crypto_ecc_private_key_t         m_responder_private_key;                                    /**< Private key structure */
-static nrf_crypto_ecdh_context_t            m_initiater_ecdh_context;                                   /**< ECDH context for initiater */
-static nrf_crypto_ecdh_context_t            m_responder_ecdh_context;                                   /**< ECDH context for responder */
+/**< Get test vector reference from array of test vectors. */
+#define TEST_VECTOR_ECDH_RANDOM_COUNT      \
+    NRF_SECTION_ITEM_COUNT(test_vector_ecdh_data_random, test_vector_ecdh_t)
 
-static uint8_t m_ecdh_initiater_priv_key_buf[NRF_CRYPTO_ECC_RAW_PRIVATE_KEY_MAX_SIZE];                  /**< Buffer for storing unhexified initiater private key. */
-static uint8_t m_ecdh_responder_priv_key_buf[NRF_CRYPTO_ECC_RAW_PRIVATE_KEY_MAX_SIZE];                  /**< Buffer for storing unhexified responder private key. */
-static uint8_t m_ecdh_initiater_publ_key_buf[NRF_CRYPTO_ECC_RAW_PUBLIC_KEY_MAX_SIZE];                   /**< Buffer for storing unhexified initiater public key. */
-static uint8_t m_ecdh_responder_publ_key_buf[NRF_CRYPTO_ECC_RAW_PUBLIC_KEY_MAX_SIZE];                   /**< Buffer for storing unhexified responder public key. */
-static uint8_t m_ecdh_initiater_ss_buf[NRF_CRYPTO_ECDH_SHARED_SECRET_MAX_SIZE];                         /**< Buffer for holding the initiater calculated shared secret. */
-static uint8_t m_ecdh_responder_ss_buf[NRF_CRYPTO_ECDH_SHARED_SECRET_MAX_SIZE];                         /**< Buffer for holding the responder calculated shared secret. */
-static uint8_t m_ecdh_expected_ss_buf[NRF_CRYPTO_ECDH_SHARED_SECRET_MAX_SIZE];                          /**< Buffer for storing unhexified expected ouput data. */
+/**< Get number of ECDH test vectors. */
+#define TEST_VECTOR_ECDH_DET_FULL_GET(i)   \
+    NRF_SECTION_ITEM_GET(test_vector_ecdh_data_deterministic_full, test_vector_ecdh_t, (i))
+
+/**< Get test vector reference from array of test vectors. */
+#define TEST_VECTOR_ECDH_DET_FULL_COUNT    \
+    NRF_SECTION_ITEM_COUNT(test_vector_ecdh_data_deterministic_full, test_vector_ecdh_t)
+
+/**< Get number of ECDH test vectors. */
+#define TEST_VECTOR_ECDH_DET_SIMPLE_GET(i) \
+    NRF_SECTION_ITEM_GET(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t, (i))
+
+/**< Get test vector reference from array of test vectors. */
+#define TEST_VECTOR_ECDH_DET_SIMPLE_COUNT  \
+    NRF_SECTION_ITEM_COUNT(test_vector_ecdh_data_deterministic_simple, test_vector_ecdh_t)
+
+static nrf_crypto_ecc_public_key_t  m_initiater_public_key;                             /**< Public key structure */
+static nrf_crypto_ecc_private_key_t m_initiater_private_key;                            /**< Private key structure */
+static nrf_crypto_ecc_public_key_t  m_responder_public_key;                             /**< Public key structure */
+static nrf_crypto_ecc_private_key_t m_responder_private_key;                            /**< Private key structure */
+static nrf_crypto_ecdh_context_t    m_initiater_ecdh_context;                           /**< ECDH context for initiater */
+static nrf_crypto_ecdh_context_t    m_responder_ecdh_context;                           /**< ECDH context for responder */
+
+static uint8_t m_ecdh_initiater_priv_key_buf[NRF_CRYPTO_ECC_RAW_PRIVATE_KEY_MAX_SIZE];  /**< Buffer for storing unhexified initiater private key. */
+static uint8_t m_ecdh_responder_priv_key_buf[NRF_CRYPTO_ECC_RAW_PRIVATE_KEY_MAX_SIZE];  /**< Buffer for storing unhexified responder private key. */
+static uint8_t m_ecdh_initiater_publ_key_buf[NRF_CRYPTO_ECC_RAW_PUBLIC_KEY_MAX_SIZE];   /**< Buffer for storing unhexified initiater public key. */
+static uint8_t m_ecdh_responder_publ_key_buf[NRF_CRYPTO_ECC_RAW_PUBLIC_KEY_MAX_SIZE];   /**< Buffer for storing unhexified responder public key. */
+static uint8_t m_ecdh_initiater_ss_buf[NRF_CRYPTO_ECDH_SHARED_SECRET_MAX_SIZE];         /**< Buffer for holding the initiater calculated shared secret. */
+static uint8_t m_ecdh_responder_ss_buf[NRF_CRYPTO_ECDH_SHARED_SECRET_MAX_SIZE];         /**< Buffer for holding the responder calculated shared secret. */
+static uint8_t m_ecdh_expected_ss_buf[NRF_CRYPTO_ECDH_SHARED_SECRET_MAX_SIZE];          /**< Buffer for storing unhexified expected ouput data. */
 
 
 /**@brief Function for running test setup.
@@ -361,7 +378,7 @@ ret_code_t exec_test_case_ecdh_deterministic(test_info_t * p_test_info)
                                            p_test_vector->p_initiater_publ_y);
         expected_ss_len         = unhexify(m_ecdh_expected_ss_buf,
                                               p_test_vector->p_expected_shared_secret);
-        responder_ss_len = expected_ss_len;
+        responder_ss_len        = expected_ss_len;
 
         // Generate public and private keys from raw data.
         (void) nrf_crypto_ecc_public_key_from_raw(p_test_vector->p_curve_info,

@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2016 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #ifndef APP_USBD_MSC_SCSI_H__
 #define APP_USBD_MSC_SCSI_H__
@@ -94,7 +94,7 @@ typedef enum {
 #pragma pack(push, 1)
 
 /**
- * @brief Payload of @ref APP_USBD_SCSI_CMD_REQUESTSENSE command
+ * @brief Payload of @ref APP_USBD_SCSI_CMD_REQUESTSENSE command.
  */
 typedef struct {
     uint8_t opcode;        //!< @ref APP_USBD_SCSI_CMD_REQUESTSENSE
@@ -131,7 +131,7 @@ typedef struct {
 #define APP_USBD_SCSI_CMD_TESTUNITREADY_LEN 6 /**< @ref APP_USBD_SCSI_CMD_TESTUNITREADY command length*/
 
 /**
- * @brief Payload of @ref APP_USBD_SCSI_CMD_REQUESTSENSE response
+ * @brief Payload of @ref APP_USBD_SCSI_CMD_REQUESTSENSE response.
  */
 typedef struct {
     uint8_t code;          //!< Response code: APP_USBD_SCSI_CMD_REQSENSE_CODE_*
@@ -190,7 +190,7 @@ typedef struct {
 #define  APP_USBD_MSC_SCSI_INQ_FLAG2_HISUP          0x10   /**< Hierarchal LUN addressing    */
 #define  APP_USBD_MSC_SCSI_INQ_FLAG2_RSP_SPC2       0x02   /**< SPC-2 / SPC-3 response format*/
 /**
- * @brief Payload of @ref APP_USBD_SCSI_CMD_INQUIRY response
+ * @brief Payload of @ref APP_USBD_SCSI_CMD_INQUIRY response.
  */
 typedef struct {
     uint8_t qualtype;      //!< Bits 5-7: Peripheral qualifier; Bits 0-4: Peripheral device type
@@ -207,7 +207,7 @@ typedef struct {
 } app_usbd_scsi_cmd_inquiry_resp_t;
 
 /**
- * @brief Payload of @ref APP_USBD_SCSI_CMD_READ6 command
+ * @brief Payload of @ref APP_USBD_SCSI_CMD_READ6 command.
  */
 typedef struct {
     uint8_t opcode;        //!< @ref APP_USBD_SCSI_CMD_READ6
@@ -218,7 +218,7 @@ typedef struct {
 } app_usbd_scsi_cmd_read6_t;
 
 /**
- * @brief Payload of @ref APP_USBD_SCSI_CMD_WRITE6 command
+ * @brief Payload of @ref APP_USBD_SCSI_CMD_WRITE6 command.
  */
 typedef struct {
     uint8_t opcode;        //!< @ref APP_USBD_SCSI_CMD_WRITE6
@@ -229,7 +229,7 @@ typedef struct {
 } app_usbd_scsi_cmd_write6_t;
 
 /**
- * @brief Payload of @ref APP_USBD_SCSI_CMD_MODESENSE6 command
+ * @brief Payload of @ref APP_USBD_SCSI_CMD_MODESENSE6 command.
  */
 typedef struct {
     uint8_t opcode;        //!<* @ref APP_USBD_SCSI_CMD_MODESENSE6
@@ -241,7 +241,7 @@ typedef struct {
 } app_usbd_scsi_cmd_modesense6_t;
 
 /**
- * @brief Payload of @ref APP_USBD_SCSI_CMD_MODESENSE6 response
+ * @brief Payload of @ref APP_USBD_SCSI_CMD_MODESENSE6 response.
  */
 typedef struct {
     uint8_t mdlen;         //!< Mode data length
@@ -251,7 +251,7 @@ typedef struct {
 } app_usbd_scsi_cmd_modesense6_resp_t;
 
 /**
- * @brief Payload of @ref APP_USBD_SCSI_CMD_READCAPACITY10 command
+ * @brief Payload of @ref APP_USBD_SCSI_CMD_READCAPACITY10 command.
  */
 typedef struct {
     uint8_t opcode;        //!< @ref APP_USBD_SCSI_CMD_READCAPACITY10
@@ -263,7 +263,7 @@ typedef struct {
 } app_usbd_scsi_cmd_readcapacity10_t;
 
 /**
- * @brief Payload of @ref APP_USBD_SCSI_CMD_READCAPACITY10 response
+ * @brief Payload of @ref APP_USBD_SCSI_CMD_READCAPACITY10 response.
  */
 typedef struct {
     uint8_t lba[4];        //!< Returned logical block address (LBA)
@@ -271,7 +271,7 @@ typedef struct {
 } app_usbd_scsi_cmd_readcapacity10_resp_t;
 
 /**
- * @brief Payload of @ref APP_USBD_SCSI_CMD_READ10 command
+ * @brief Payload of @ref APP_USBD_SCSI_CMD_READ10 command.
  */
 typedef struct {
     uint8_t opcode;        //!< @ref APP_USBD_SCSI_CMD_READ10
@@ -283,7 +283,7 @@ typedef struct {
 } app_usbd_scsi_cmd_read10_t;
 
 /**
- * @brief Payload of @ref APP_USBD_SCSI_CMD_WRITE10 command
+ * @brief Payload of @ref APP_USBD_SCSI_CMD_WRITE10 command.
  */
 typedef struct {
     uint8_t opcode;        //!< @ref APP_USBD_SCSI_CMD_WRITE10
@@ -295,7 +295,7 @@ typedef struct {
 } app_usbd_scsi_cmd_write10_t;
 
 /**
- * @brief Payload of @ref APP_USBD_SCSI_CMD_MODESENSE10 command
+ * @brief Payload of @ref APP_USBD_SCSI_CMD_MODESENSE10 command.
  */
 typedef struct {
   uint8_t opcode;        //!< @ref APP_USBD_SCSI_CMD_MODESENSE10
@@ -308,7 +308,7 @@ typedef struct {
 } app_usbd_scsi_cmd_modesense10_t;
 
 /**
- * @brief Payload of @ref APP_USBD_SCSI_CMD_MODESENSE10 response
+ * @brief Payload of @ref APP_USBD_SCSI_CMD_MODESENSE10 response.
  */
 typedef struct {
   uint8_t mdlen[2];      //!< Mode data length

@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2012 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 /* Attention!
  * To maintain compliance with Nordic Semiconductor ASA's Bluetooth profile
@@ -149,62 +149,11 @@ void ble_lls_on_ble_evt(ble_evt_t const * p_ble_evt, void * p_context)
 }
 
 
-/**@brief Function for adding Alert Level characteristics.
- *
- * @param[in]   p_lls        Link Loss Service structure.
- * @param[in]   p_lls_init   Information needed to initialize the service.
- *
- * @return      NRF_SUCCESS on success, otherwise an error code.
- */
-static uint32_t alert_level_char_add(ble_lls_t * p_lls, const ble_lls_init_t * p_lls_init)
-{
-    ble_gatts_char_md_t char_md;
-    ble_gatts_attr_t    attr_char_value;
-    ble_uuid_t          ble_uuid;
-    ble_gatts_attr_md_t attr_md;
-    uint8_t             initial_alert_level;
-
-    memset(&char_md, 0, sizeof(char_md));
-
-    char_md.char_props.read  = 1;
-    char_md.char_props.write = 1;
-    char_md.p_char_user_desc = NULL;
-    char_md.p_char_pf        = NULL;
-    char_md.p_user_desc_md   = NULL;
-    char_md.p_cccd_md        = NULL;
-    char_md.p_sccd_md        = NULL;
-
-    BLE_UUID_BLE_ASSIGN(ble_uuid, BLE_UUID_ALERT_LEVEL_CHAR);
-    memset(&attr_md, 0, sizeof(attr_md));
-
-    attr_md.read_perm  = p_lls_init->lls_attr_md.read_perm;
-    attr_md.write_perm = p_lls_init->lls_attr_md.write_perm;
-    attr_md.vloc       = BLE_GATTS_VLOC_STACK;
-    attr_md.rd_auth    = 0;
-    attr_md.wr_auth    = 0;
-    attr_md.vlen       = 0;
-
-    memset(&attr_char_value, 0, sizeof(attr_char_value));
-    initial_alert_level = p_lls_init->initial_alert_level;
-
-    attr_char_value.p_uuid    = &ble_uuid;
-    attr_char_value.p_attr_md = &attr_md;
-    attr_char_value.init_len  = sizeof (uint8_t);
-    attr_char_value.init_offs = 0;
-    attr_char_value.max_len   = sizeof (uint8_t);
-    attr_char_value.p_value   = &initial_alert_level;
-
-    return sd_ble_gatts_characteristic_add(p_lls->service_handle,
-                                           &char_md,
-                                           &attr_char_value,
-                                           &p_lls->alert_level_handles);
-}
-
-
 uint32_t ble_lls_init(ble_lls_t * p_lls, const ble_lls_init_t * p_lls_init)
 {
-    uint32_t   err_code;
-    ble_uuid_t ble_uuid;
+    uint32_t              err_code;
+    ble_uuid_t            ble_uuid;
+    ble_add_char_params_t add_char_params;
 
     if (p_lls == NULL || p_lls_init == NULL)
     {
@@ -226,14 +175,26 @@ uint32_t ble_lls_init(ble_lls_t * p_lls, const ble_lls_init_t * p_lls_init)
     err_code = sd_ble_gatts_service_add(BLE_GATTS_SRVC_TYPE_PRIMARY,
                                         &ble_uuid,
                                         &p_lls->service_handle);
-
     if (err_code != NRF_SUCCESS)
     {
         return err_code;
     }
 
     // Add alert level characteristic
-    return alert_level_char_add(p_lls, p_lls_init);
+    memset(&add_char_params, 0, sizeof(add_char_params));
+
+    add_char_params.uuid             = BLE_UUID_ALERT_LEVEL_CHAR;
+    add_char_params.max_len          = sizeof(uint8_t);
+    add_char_params.char_props.read  = 1;
+    add_char_params.char_props.write = 1;
+    add_char_params.write_access     = p_lls_init->alert_level_wr_sec;
+    add_char_params.read_access      = p_lls_init->alert_level_rd_sec;
+    add_char_params.init_len         = sizeof(uint8_t);
+    add_char_params.p_init_value     = (uint8_t *) &(p_lls_init->initial_alert_level);
+
+    return characteristic_add(p_lls->service_handle,
+                              &add_char_params,
+                              &p_lls->alert_level_handles);
 }
 
 

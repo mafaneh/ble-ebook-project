@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2014 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 /**
  * @brief BLE LED Button Service central and client application main file.
@@ -56,12 +56,12 @@
 #include "bsp_btn_ble.h"
 #include "ble.h"
 #include "ble_hci.h"
-#include "ble_advdata.h"
 #include "ble_advertising.h"
 #include "ble_conn_params.h"
 #include "ble_db_discovery.h"
 #include "ble_lbs_c.h"
 #include "nrf_ble_gatt.h"
+#include "nrf_ble_scan.h"
 
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
@@ -87,42 +87,12 @@
 #define APP_BLE_CONN_CFG_TAG            1                                   /**< A tag identifying the SoftDevice BLE configuration. */
 #define APP_BLE_OBSERVER_PRIO           3                                   /**< Application's BLE observer priority. You shouldn't need to modify this value. */
 
-
+NRF_BLE_SCAN_DEF(m_scan);                                       /**< Scanning module instance. */
 BLE_LBS_C_DEF(m_ble_lbs_c);                                     /**< Main structure used by the LBS client module. */
 NRF_BLE_GATT_DEF(m_gatt);                                       /**< GATT module instance. */
 BLE_DB_DISCOVERY_DEF(m_db_disc);                                /**< DB discovery module instance. */
 
 static char const m_target_periph_name[] = "Nordic_Blinky";     /**< Name of the device we try to connect to. This name is searched in the scan report data*/
-
-/**@brief Parameters used when scanning. */
-static ble_gap_scan_params_t const m_scan_params =
-{
-    .active   = 1,
-    .interval = SCAN_INTERVAL,
-    .window   = SCAN_WINDOW,
-
-    .timeout           = SCAN_DURATION,
-    .scan_phys         = BLE_GAP_PHY_1MBPS,
-    .filter_policy     = BLE_GAP_SCAN_FP_ACCEPT_ALL,
-};
-
-static uint8_t m_scan_buffer_data[BLE_GAP_SCAN_BUFFER_MIN]; /**< buffer where advertising reports will be stored by the SoftDevice. */
-
-/**@brief Pointer to the buffer where advertising reports will be stored by the SoftDevice. */
-static ble_data_t m_scan_buffer =
-{
-    m_scan_buffer_data,
-    BLE_GAP_SCAN_BUFFER_MIN
-};
-
-/**@brief Connection parameters requested for connection. */
-static ble_gap_conn_params_t const m_connection_param =
-{
-    (uint16_t)MIN_CONNECTION_INTERVAL,
-    (uint16_t)MAX_CONNECTION_INTERVAL,
-    (uint16_t)SLAVE_LATENCY,
-    (uint16_t)SUPERVISION_TIMEOUT
-};
 
 
 /**@brief Function to handle asserts in the SoftDevice.
@@ -158,9 +128,7 @@ static void scan_start(void)
 {
     ret_code_t err_code;
 
-    (void) sd_ble_gap_scan_stop();
-
-    err_code = sd_ble_gap_scan_start(&m_scan_params, &m_scan_buffer);
+    err_code = nrf_ble_scan_start(&m_scan);
     APP_ERROR_CHECK(err_code);
 
     bsp_board_led_off(CENTRAL_CONNECTED_LED);
@@ -210,32 +178,6 @@ static void lbs_c_evt_handler(ble_lbs_c_t * p_lbs_c, ble_lbs_c_evt_t * p_lbs_c_e
     }
 }
 
-/**@brief Function for handling the advertising report BLE event.
- *
- * @param[in] p_adv_report  Advertising report from the SoftDevice.
- */
-static void on_adv_report(ble_gap_evt_adv_report_t const * p_adv_report)
-{
-    ret_code_t err_code;
-
-    if (ble_advdata_name_find(p_adv_report->data.p_data,
-                              p_adv_report->data.len,
-                              m_target_periph_name))
-    {
-        // Name is a match, initiate connection.
-        err_code = sd_ble_gap_connect(&p_adv_report->peer_addr,
-                                      &m_scan_params,
-                                      &m_connection_param,
-                                      APP_BLE_CONN_CFG_TAG);
-        APP_ERROR_CHECK(err_code);
-    }
-    else
-    {
-        err_code = sd_ble_gap_scan_start(NULL, &m_scan_buffer);
-        APP_ERROR_CHECK(err_code);
-    }
-}
-
 
 /**@brief Function for handling BLE events.
  *
@@ -274,11 +216,6 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
         {
             NRF_LOG_INFO("Disconnected.");
             scan_start();
-        } break;
-
-        case BLE_GAP_EVT_ADV_REPORT:
-        {
-            on_adv_report(&p_gap_evt->params.adv_report);
         } break;
 
         case BLE_GAP_EVT_TIMEOUT:
@@ -407,6 +344,27 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_action)
 }
 
 
+/**@brief Function for handling Scaning events.
+ *
+ * @param[in]   p_scan_evt   Scanning event.
+ */
+static void scan_evt_handler(scan_evt_t const * p_scan_evt)
+{
+    ret_code_t err_code;
+
+    switch(p_scan_evt->scan_evt_id)
+    {
+        case NRF_BLE_SCAN_EVT_CONNECTING_ERROR:
+            err_code = p_scan_evt->params.connecting_err.err_code;
+            APP_ERROR_CHECK(err_code);
+            break;
+        default:
+          break;
+    }
+}
+
+
+
 /**@brief Function for initializing the button handler module.
  */
 static void buttons_init(void)
@@ -477,6 +435,28 @@ static void power_management_init(void)
 }
 
 
+static void scan_init(void)
+{
+    ret_code_t          err_code;
+    nrf_ble_scan_init_t init_scan;
+
+    memset(&init_scan, 0, sizeof(init_scan));
+
+    init_scan.connect_if_match = true;
+    init_scan.conn_cfg_tag     = APP_BLE_CONN_CFG_TAG;
+
+    err_code = nrf_ble_scan_init(&m_scan, &init_scan, scan_evt_handler);
+    APP_ERROR_CHECK(err_code);
+
+    // Setting filters for scanning.
+    err_code = nrf_ble_scan_filters_enable(&m_scan, NRF_BLE_SCAN_NAME_FILTER, false);
+    APP_ERROR_CHECK(err_code);
+
+    err_code = nrf_ble_scan_filter_set(&m_scan, SCAN_NAME_FILTER, m_target_periph_name);
+    APP_ERROR_CHECK(err_code);
+}
+
+
 /**@brief Function for initializing the GATT module.
  */
 static void gatt_init(void)
@@ -506,6 +486,7 @@ int main(void)
     buttons_init();
     power_management_init();
     ble_stack_init();
+    scan_init();
     gatt_init();
     db_discovery_init();
     lbs_c_init();

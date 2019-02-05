@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2015 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #include "sdk_common.h"
 #if NRF_MODULE_ENABLED(PEER_MANAGER)
@@ -47,8 +47,25 @@
 #include "ble_err.h"
 #include "ble_conn_state.h"
 #include "peer_manager_types.h"
+#include "peer_data_storage.h"
 #include "peer_database.h"
 #include "id_manager.h"
+#if PM_RA_PROTECTION_ENABLED
+#include "auth_status_tracker.h"
+#endif // PM_RA_PROTECTION_ENABLED
+
+#define NRF_LOG_MODULE_NAME peer_manager_smd
+#if PM_LOG_ENABLED
+    #define NRF_LOG_LEVEL       PM_LOG_LEVEL
+    #define NRF_LOG_INFO_COLOR  PM_LOG_INFO_COLOR
+    #define NRF_LOG_DEBUG_COLOR PM_LOG_DEBUG_COLOR
+#else
+    #define NRF_LOG_LEVEL       0
+#endif // PM_LOG_ENABLED
+#include "nrf_log.h"
+#include "nrf_log_ctrl.h"
+NRF_LOG_MODULE_REGISTER();
+#include "nrf_strerror.h"
 
 #ifndef PM_CENTRAL_ENABLED
     #define PM_CENTRAL_ENABLED 1
@@ -75,7 +92,6 @@ static bool                          m_module_initialized;
 static ble_conn_state_user_flag_id_t m_flag_sec_proc          = BLE_CONN_STATE_USER_FLAG_INVALID;
 static ble_conn_state_user_flag_id_t m_flag_sec_proc_pairing  = BLE_CONN_STATE_USER_FLAG_INVALID;
 static ble_conn_state_user_flag_id_t m_flag_sec_proc_bonding  = BLE_CONN_STATE_USER_FLAG_INVALID;
-static ble_conn_state_user_flag_id_t m_flag_sec_proc_new_peer = BLE_CONN_STATE_USER_FLAG_INVALID;
 static ble_conn_state_user_flag_id_t m_flag_allow_repairing   = BLE_CONN_STATE_USER_FLAG_INVALID;
 
 static ble_gap_lesc_p256_pk_t        m_peer_pk;
@@ -94,11 +110,6 @@ static __INLINE bool pairing(uint16_t conn_handle)
 static __INLINE bool bonding(uint16_t conn_handle)
 {
     return ble_conn_state_user_flag_get(conn_handle, m_flag_sec_proc_bonding);
-}
-
-static __INLINE bool peer_created(uint16_t conn_handle)
-{
-    return ble_conn_state_user_flag_get(conn_handle, m_flag_sec_proc_new_peer);
 }
 
 static __INLINE bool allow_repairing(uint16_t conn_handle)
@@ -155,11 +166,27 @@ static void send_unexpected_error(uint16_t conn_handle, ret_code_t err_code)
         {
             .error_unexpected =
             {
-                .error = err_code,
+                .error     = err_code,
+                .fds_error = false
             }
         }
     };
     evt_send(&error_evt);
+}
+
+
+/**@brief Function for sending a PM_EVT_STORAGE_FULL event.
+ *
+ * @param[in]  conn_handle  The connection handle the event pertains to.
+ */
+static void send_storage_full_evt(uint16_t conn_handle)
+{
+    pm_evt_t evt =
+    {
+        .evt_id      = PM_EVT_STORAGE_FULL,
+        .conn_handle = conn_handle
+    };
+    evt_send(&evt);
 }
 
 
@@ -209,24 +236,17 @@ static void pairing_failure(uint16_t            conn_handle,
                             uint8_t             error_src)
 {
     ret_code_t              err_code  = NRF_SUCCESS;
-    pm_peer_id_t            peer_id   = im_peer_id_get_by_conn_handle(conn_handle);
     pm_conn_sec_procedure_t procedure = bonding(conn_handle) ? PM_CONN_SEC_PROCEDURE_BONDING
                                                              : PM_CONN_SEC_PROCEDURE_PAIRING;
 
-    if (peer_created(conn_handle))
+    err_code = pdb_write_buf_release(PDB_TEMP_PEER_ID(conn_handle), PM_PEER_DATA_ID_BONDING);
+    if ((err_code != NRF_SUCCESS) && (err_code != NRF_ERROR_NOT_FOUND /* No buffer was allocated */))
     {
-        // The peer_id was created during the procedure, and should be freed, because no data is
-        // stored under it.
-        err_code = im_peer_free(peer_id);  // Attempt to free allocated peer.
-        UNUSED_VARIABLE(err_code);
-    }
-    else if(peer_id != PM_PEER_ID_INVALID)
-    {
-        err_code = pdb_write_buf_release(peer_id, PM_PEER_DATA_ID_BONDING);
-        if ((err_code != NRF_SUCCESS) && (err_code != NRF_ERROR_NOT_FOUND /* No buffer was allocated */))
-        {
-            send_unexpected_error(conn_handle, err_code);
-        }
+        NRF_LOG_ERROR("Could not clean up after failed bonding procedure. "\
+                      "pdb_write_buf_release() returned %s. conn_handle: %d.",
+                      nrf_strerror_get(err_code),
+                      conn_handle);
+        send_unexpected_error(conn_handle, err_code);
     }
 
     conn_sec_failure(conn_handle, procedure, error, error_src);
@@ -294,43 +314,9 @@ static void sec_proc_start(uint16_t                conn_handle,
         ble_conn_state_user_flag_set(conn_handle,
                                      m_flag_sec_proc_bonding,
                                      (procedure == PM_CONN_SEC_PROCEDURE_BONDING));
-        ble_conn_state_user_flag_set(conn_handle, m_flag_sec_proc_new_peer, false);
         sec_start_send(conn_handle, procedure);
     }
 }
-
-
-
-/**@brief Function for administrative actions to be taken during the course of a security process.
- *
- * @param[in]  conn_handle       The connection the security process was attempted on.
- * @param[in]  peer_id           The peer ID given to the connected peer.
- * @param[in]  success           Whether the process was started successfully.
- * @param[in]  new_peer_created  Whether a new peer was created during the process attempt.
- */
-static void sec_proc_housekeeping(uint16_t     conn_handle,
-                                  pm_peer_id_t peer_id,
-                                  bool         success,
-                                  bool         new_peer_created)
-{
-    if (success)
-    {
-        if (new_peer_created)
-        {
-            ble_conn_state_user_flag_set(conn_handle, m_flag_sec_proc_new_peer, true);
-            im_new_peer_id(conn_handle, peer_id);
-        }
-    }
-    else
-    {
-        if (new_peer_created)
-        {
-            ret_code_t err_code = im_peer_free(peer_id); // Attempt to free allocated peer.
-            UNUSED_VARIABLE(err_code);
-        }
-    }
-}
-
 
 
 /**@brief Function for processing the @ref BLE_GAP_EVT_SEC_INFO_REQUEST event from the SoftDevice.
@@ -380,12 +366,15 @@ static void sec_info_request_process(ble_gap_evt_t const * p_gap_evt)
 
     if (err_code != NRF_SUCCESS)
     {
-        sec_proc_housekeeping(p_gap_evt->conn_handle, peer_id, false, false);
+        NRF_LOG_ERROR("Could not complete encryption procedure. sd_ble_gap_sec_info_reply() "\
+                      "returned %s. conn_handle: %d, peer_id: %d.",
+                      nrf_strerror_get(err_code),
+                      p_gap_evt->conn_handle,
+                      peer_id);
         send_unexpected_error(p_gap_evt->conn_handle, err_code);
     }
     else if (p_enc_info == NULL)
     {
-        sec_proc_housekeeping(p_gap_evt->conn_handle, peer_id, false, false);
         encryption_failure(p_gap_evt->conn_handle,
                            PM_CONN_SEC_ERROR_PIN_OR_KEY_MISSING,
                            BLE_GAP_SEC_STATUS_SOURCE_LOCAL);
@@ -481,6 +470,26 @@ static void sec_params_request_process(ble_gap_evt_t const * p_gap_evt)
 }
 
 
+/**@brief Function for sending a Peer Manager event indicating that pairing has succeeded.
+ *
+ * @param[in]  p_gap_evt    The AUTH_STATUS event from the SoftDevice that triggered this.
+ * @param[in]  data_stored  Whether bonding data was stored.
+ */
+static void pairing_success_evt_send(ble_gap_evt_t const * p_gap_evt, bool data_stored)
+{
+    pm_evt_t pairing_success_evt;
+
+    pairing_success_evt.evt_id                                = PM_EVT_CONN_SEC_SUCCEEDED;
+    pairing_success_evt.conn_handle                           = p_gap_evt->conn_handle;
+    pairing_success_evt.params.conn_sec_succeeded.procedure   = p_gap_evt->params.auth_status.bonded
+                                                              ? PM_CONN_SEC_PROCEDURE_BONDING
+                                                              : PM_CONN_SEC_PROCEDURE_PAIRING;
+    pairing_success_evt.params.conn_sec_succeeded.data_stored = data_stored;
+
+    evt_send(&pairing_success_evt);
+}
+
+
 /**@brief Function for processing the @ref BLE_GAP_EVT_AUTH_STATUS event from the SoftDevice, when
  *        the auth_status is success.
  *
@@ -488,37 +497,41 @@ static void sec_params_request_process(ble_gap_evt_t const * p_gap_evt)
  */
 static void auth_status_success_process(ble_gap_evt_t const * p_gap_evt)
 {
-    ret_code_t           err_code    = NRF_SUCCESS;
-    uint16_t             conn_handle = p_gap_evt->conn_handle;
-    pm_peer_id_t         peer_id     = im_peer_id_get_by_conn_handle(conn_handle);
-    pm_peer_id_t         new_peer_id = peer_id;
-    pm_peer_data_t       peer_data;
-    bool                 data_stored = false;
+    ret_code_t     err_code;
+    uint16_t       conn_handle = p_gap_evt->conn_handle;
+    pm_peer_id_t   peer_id;
+    pm_peer_data_t peer_data;
+    bool           new_peer_id = false;
 
     ble_conn_state_user_flag_set(conn_handle, m_flag_sec_proc, false);
 
-    if (p_gap_evt->params.auth_status.bonded)
+    if (!p_gap_evt->params.auth_status.bonded)
     {
-        pm_peer_id_t duplicate_peer_id = PM_PEER_ID_INVALID;
-        data_stored = true;
+        pairing_success_evt_send(p_gap_evt, false);
+        return;
+    }
 
-        err_code = pdb_write_buf_get(peer_id, PM_PEER_DATA_ID_BONDING, 1, &peer_data);
-        if (err_code != NRF_SUCCESS)
-        {
-            send_unexpected_error(conn_handle, err_code);
-            data_stored = false;
-        }
-        else
-        {
-            duplicate_peer_id = im_find_duplicate_bonding_data(peer_data.p_bonding_data,
-                                                               PM_PEER_ID_INVALID);
-        }
+    err_code = pdb_write_buf_get(PDB_TEMP_PEER_ID(conn_handle), PM_PEER_DATA_ID_BONDING, 1, &peer_data);
+    if (err_code != NRF_SUCCESS)
+    {
+        NRF_LOG_ERROR("RAM buffer for new bond was unavailable. pdb_write_buf_get() returned %s. conn_handle: %d.",
+                      nrf_strerror_get(err_code),
+                      conn_handle);
+        send_unexpected_error(conn_handle, err_code);
+        pairing_success_evt_send(p_gap_evt, false);
+        return;
+    }
 
-        if (duplicate_peer_id != PM_PEER_ID_INVALID)
+    peer_id = im_peer_id_get_by_conn_handle(conn_handle);
+
+    if (peer_id == PM_PEER_ID_INVALID)
+    {
+        peer_id = im_find_duplicate_bonding_data(peer_data.p_bonding_data, PM_PEER_ID_INVALID);
+
+        if (peer_id != PM_PEER_ID_INVALID)
         {
             // The peer has been identified as someone we have already bonded with.
-            new_peer_id = duplicate_peer_id;
-            im_new_peer_id(conn_handle, new_peer_id);
+            im_new_peer_id(conn_handle, peer_id);
 
             // If the flag is true, the configuration has been requested before.
             if (!allow_repairing(conn_handle))
@@ -526,50 +539,53 @@ static void auth_status_success_process(ble_gap_evt_t const * p_gap_evt)
                 send_config_req(conn_handle);
                 if (!allow_repairing(conn_handle))
                 {
-                    data_stored = false;
+                    pairing_success_evt_send(p_gap_evt, false);
+                    return;
                 }
             }
         }
-
-        if (data_stored)
-        {
-            err_code = pdb_write_buf_store(peer_id, PM_PEER_DATA_ID_BONDING, new_peer_id);
-            if (err_code != NRF_SUCCESS)
-            {
-                /* Unexpected */
-                send_unexpected_error(conn_handle, err_code);
-                data_stored = false;
-            }
-        }
-
-        if ((duplicate_peer_id != PM_PEER_ID_INVALID) && peer_created(conn_handle))
-        {
-            // We already have a bond with the peer. Now that the data has been stored for the
-            // existing peer, the peer created for this bonding procedure can be freed.
-            ret_code_t err_code_free = im_peer_free(peer_id);
-            UNUSED_VARIABLE(err_code_free); // Errors can be safely ignored.
-        }
     }
-    else if (peer_created(conn_handle))
+
+    if (peer_id == PM_PEER_ID_INVALID)
     {
-        ret_code_t err_code_free = im_peer_free(peer_id);
-        UNUSED_VARIABLE(err_code_free); // Errors can be safely ignored.
+        peer_id = pds_peer_id_allocate();
+        if (peer_id == PM_PEER_ID_INVALID)
+        {
+            NRF_LOG_ERROR("Could not allocate new peer_id for incoming bond.");
+            send_unexpected_error(conn_handle, NRF_ERROR_NO_MEM);
+            pairing_success_evt_send(p_gap_evt, false);
+            return;
+        }
+        im_new_peer_id(conn_handle, peer_id);
+        new_peer_id = true;
+    }
+
+    err_code = pdb_write_buf_store(PDB_TEMP_PEER_ID(conn_handle), PM_PEER_DATA_ID_BONDING, peer_id);
+
+    if (err_code == NRF_SUCCESS)
+    {
+        pairing_success_evt_send(p_gap_evt, true);
+    }
+    else if (err_code == NRF_ERROR_STORAGE_FULL)
+    {
+        send_storage_full_evt(conn_handle);
+        pairing_success_evt_send(p_gap_evt, true);
     }
     else
     {
-        // No action.
+        /* Unexpected error */
+        NRF_LOG_ERROR("Could not store bond. pdb_write_buf_store() returned %s. "\
+                      "conn_handle: %d, peer_id: %d",
+                      nrf_strerror_get(err_code),
+                      conn_handle,
+                      peer_id);
+        send_unexpected_error(conn_handle, err_code);
+        pairing_success_evt_send(p_gap_evt, false);
+        if (new_peer_id)
+        {
+            UNUSED_RETURN_VALUE(im_peer_free(peer_id)); // We are already in a bad state.
+        }
     }
-
-    pm_evt_t pairing_success_evt;
-
-    pairing_success_evt.evt_id                                = PM_EVT_CONN_SEC_SUCCEEDED;
-    pairing_success_evt.conn_handle                           = conn_handle;
-    pairing_success_evt.params.conn_sec_succeeded.procedure   = p_gap_evt->params.auth_status.bonded
-                                                              ? PM_CONN_SEC_PROCEDURE_BONDING
-                                                              : PM_CONN_SEC_PROCEDURE_PAIRING;
-    pairing_success_evt.params.conn_sec_succeeded.data_stored = data_stored;
-
-    evt_send(&pairing_success_evt);
 
     return;
 }
@@ -602,6 +618,9 @@ static void auth_status_process(ble_gap_evt_t const * p_gap_evt)
 
         default:
             auth_status_failure_process(p_gap_evt);
+#if PM_RA_PROTECTION_ENABLED
+            ast_auth_error_notify(p_gap_evt->conn_handle);
+#endif // PM_RA_PROTECTION_ENABLED
             break;
     }
 }
@@ -660,17 +679,25 @@ ret_code_t smd_init(void)
     flag_id_init(&m_flag_sec_proc);
     flag_id_init(&m_flag_sec_proc_pairing);
     flag_id_init(&m_flag_sec_proc_bonding);
-    flag_id_init(&m_flag_sec_proc_new_peer);
     flag_id_init(&m_flag_allow_repairing);
 
     if ((m_flag_sec_proc          == BLE_CONN_STATE_USER_FLAG_INVALID) ||
         (m_flag_sec_proc_pairing  == BLE_CONN_STATE_USER_FLAG_INVALID) ||
         (m_flag_sec_proc_bonding  == BLE_CONN_STATE_USER_FLAG_INVALID) ||
-        (m_flag_sec_proc_new_peer == BLE_CONN_STATE_USER_FLAG_INVALID) ||
         (m_flag_allow_repairing   == BLE_CONN_STATE_USER_FLAG_INVALID))
     {
+        NRF_LOG_ERROR("Could not acquire conn_state user flags. Increase "\
+                      "BLE_CONN_STATE_USER_FLAG_COUNT in the ble_conn_state module.");
         return NRF_ERROR_INTERNAL;
     }
+
+#if PM_RA_PROTECTION_ENABLED
+    ret_code_t err_code = ast_init();
+    if (err_code != NRF_SUCCESS)
+    {
+        return err_code;
+    }
+#endif // PM_RA_PROTECTION_ENABLED
 
     m_module_initialized = true;
 
@@ -681,19 +708,17 @@ ret_code_t smd_init(void)
 /**@brief Function for putting retrieving a buffer and putting pointers into a @ref ble_gap_sec_keyset_t.
  *
  * @param[in]  conn_handle   The connection the security procedure is happening on.
- * @param[in]  peer_id       The peer the security procedure is happening with.
  * @param[in]  role          Our role in the connection.
  * @param[in]  p_public_key  Pointer to a buffer holding the public key, or NULL.
  * @param[out] p_sec_keyset  Pointer to the keyset to be filled.
  *
  * @retval NRF_SUCCESS              Success.
- * @retval NRF_ERROR_STORAGE_FULL   Not enough room in persistent storage.
  * @retval NRF_ERROR_BUSY           Could not process request at this time. Reattempt later.
  * @retval NRF_ERROR_INVALID_PARAM  Data ID or Peer ID was invalid or unallocated.
+ * @retval NRF_ERROR_INVALID_STATE  The link is disconnected.
  * @retval NRF_ERROR_INTERNAL       Fatal error.
  */
 static ret_code_t sec_keyset_fill(uint16_t                 conn_handle,
-                                  pm_peer_id_t             peer_id,
                                   uint8_t                  role,
                                   ble_gap_lesc_p256_pk_t * p_public_key,
                                   ble_gap_sec_keyset_t   * p_sec_keyset)
@@ -703,11 +728,12 @@ static ret_code_t sec_keyset_fill(uint16_t                 conn_handle,
 
     if (p_sec_keyset == NULL)
     {
+        NRF_LOG_ERROR("Internal error: %s received NULL for p_sec_keyset.", __func__);
         return NRF_ERROR_INTERNAL;
     }
 
     // Acquire a memory buffer to receive bonding data into.
-    err_code = pdb_write_buf_get(peer_id, PM_PEER_DATA_ID_BONDING, 1, &peer_data);
+    err_code = pdb_write_buf_get(PDB_TEMP_PEER_ID(conn_handle), PM_PEER_DATA_ID_BONDING, 1, &peer_data);
 
     if (err_code == NRF_ERROR_BUSY)
     {
@@ -715,6 +741,10 @@ static ret_code_t sec_keyset_fill(uint16_t                 conn_handle,
     }
     else if (err_code != NRF_SUCCESS)
     {
+        NRF_LOG_ERROR("Could not retrieve RAM buffer for incoming bond. pdb_write_buf_get() "\
+                      "returned %s. conn_handle: %d",
+                      nrf_strerror_get(err_code),
+                      conn_handle);
         err_code = NRF_ERROR_INTERNAL;
     }
     else /* if (err_code == NRF_SUCCESS) */
@@ -734,14 +764,10 @@ static ret_code_t sec_keyset_fill(uint16_t                 conn_handle,
         err_code = im_ble_addr_get(conn_handle, &peer_data.p_bonding_data->peer_ble_id.id_addr_info);
         if (err_code != NRF_SUCCESS)
         {
-            return NRF_ERROR_INTERNAL;
-        }
-
-        // Buffer is OK, reserve room in flash for the data.
-        err_code = pdb_write_buf_store_prepare(peer_id, PM_PEER_DATA_ID_BONDING);
-        if (err_code == NRF_ERROR_NOT_FOUND)
-        {
-            return NRF_ERROR_INTERNAL;
+            NRF_LOG_WARNING("im_ble_addr_get() returned %s. conn_handle: %d. Link was likely disconnected.",
+                            nrf_strerror_get(err_code),
+                            conn_handle);
+            return NRF_ERROR_INVALID_STATE;
         }
     }
 
@@ -755,11 +781,9 @@ ret_code_t smd_params_reply(uint16_t                 conn_handle,
 {
     NRF_PM_DEBUG_CHECK(m_module_initialized);
 
-    uint8_t              role             = ble_conn_state_role(conn_handle);
-    pm_peer_id_t         peer_id          = PM_PEER_ID_INVALID;
-    ret_code_t           err_code         = NRF_SUCCESS;
-    uint8_t              sec_status       = BLE_GAP_SEC_STATUS_SUCCESS;
-    bool                 new_peer_created = peer_created(conn_handle);
+    uint8_t              role       = ble_conn_state_role(conn_handle);
+    ret_code_t           err_code   = NRF_SUCCESS;
+    uint8_t              sec_status = BLE_GAP_SEC_STATUS_SUCCESS;
     ble_gap_sec_keyset_t sec_keyset;
 
     memset(&sec_keyset, 0, sizeof(ble_gap_sec_keyset_t));
@@ -774,41 +798,25 @@ ret_code_t smd_params_reply(uint16_t                 conn_handle,
         return BLE_ERROR_INVALID_CONN_HANDLE;
     }
 
+#if PM_RA_PROTECTION_ENABLED
+    if (ast_peer_blacklisted(conn_handle)) //Check for repeated attempts here.
+    {
+        sec_status = BLE_GAP_SEC_STATUS_REPEATED_ATTEMPTS;
+    }
+    else
+#endif // PM_RA_PROTECTION_ENABLED
     if (p_sec_params == NULL)
     {
         // NULL params means reject pairing.
         sec_status = BLE_GAP_SEC_STATUS_PAIRING_NOT_SUPP;
     }
-    else if (!p_sec_params->bond)
-    {
-        // Pairing, no bonding.
-
-        sec_keyset.keys_own.p_pk  = p_public_key;
-        sec_keyset.keys_peer.p_pk = &m_peer_pk;
-    }
     else
     {
-        // Bonding is to be performed, prepare to receive bonding data.
-
-        peer_id = im_peer_id_get_by_conn_handle(conn_handle);
-
-        if (peer_id == PM_PEER_ID_INVALID)
-        {
-            // Peer is unknown to us, allocate a new peer ID for it.
-            peer_id = pdb_peer_allocate();
-            if (peer_id != PM_PEER_ID_INVALID)
-            {
-                new_peer_created = true;
-            }
-            else
-            {
-                err_code = NRF_ERROR_INTERNAL;
-            }
-        }
-        else if (role == BLE_GAP_ROLE_PERIPH && !allow_repairing(conn_handle))
+        if ((im_peer_id_get_by_conn_handle(conn_handle) != PM_PEER_ID_INVALID) &&
+            (role == BLE_GAP_ROLE_PERIPH) &&
+            !allow_repairing(conn_handle))
         {
             // Bond already exists. Reject the pairing request if the user doesn't intervene.
-            // send_config_req(conn_handle, peer_id);
             send_config_req(conn_handle);
             if (!allow_repairing(conn_handle))
             {
@@ -817,9 +825,16 @@ ret_code_t smd_params_reply(uint16_t                 conn_handle,
             }
         }
 
-        if ((sec_status != BLE_GAP_SEC_STATUS_PAIRING_NOT_SUPP) && (err_code == NRF_SUCCESS))
+        if (!p_sec_params->bond)
         {
-            err_code = sec_keyset_fill(conn_handle, peer_id, role, p_public_key, &sec_keyset);
+            // Pairing, no bonding.
+            sec_keyset.keys_own.p_pk  = p_public_key;
+            sec_keyset.keys_peer.p_pk = &m_peer_pk;
+        }
+        else if (sec_status != BLE_GAP_SEC_STATUS_PAIRING_NOT_SUPP)
+        {
+            // Bonding is to be performed, prepare to receive bonding data.
+            err_code = sec_keyset_fill(conn_handle, role, p_public_key, &sec_keyset);
         }
     }
 
@@ -837,10 +852,24 @@ ret_code_t smd_params_reply(uint16_t                 conn_handle,
         }
     }
 
-    sec_proc_housekeeping(conn_handle,
-                          peer_id,
-                          (err_code == NRF_SUCCESS) && (sec_status == BLE_GAP_SEC_STATUS_SUCCESS),
-                          new_peer_created);
+    return err_code;
+}
+
+
+/**@brief Function for initiating pairing as a central, or all security as a periheral.
+ *
+ * See @ref smd_link_secure and @ref sd_ble_gap_authenticate for more information.
+ */
+static ret_code_t link_secure_authenticate(uint16_t               conn_handle,
+                                           ble_gap_sec_params_t * p_sec_params)
+{
+    ret_code_t err_code = sd_ble_gap_authenticate(conn_handle, p_sec_params);
+
+    if (err_code == NRF_ERROR_NO_MEM)
+    {
+        // sd_ble_gap_authenticate() returned NRF_ERROR_NO_MEM. Too many other sec procedures running.
+        err_code = NRF_ERROR_BUSY;
+    }
 
     return err_code;
 }
@@ -876,7 +905,10 @@ static ret_code_t link_secure_central_encryption(uint16_t     conn_handle,
     {
         if (err_code != NRF_ERROR_BUSY)
         {
-            // Unexpected error code.
+            NRF_LOG_ERROR("Could not retrieve stored bond. pdb_peer_data_ptr_get() returned %s. "\
+                          "peer_id: %d",
+                          nrf_strerror_get(err_code),
+                          peer_id);
             err_code = NRF_ERROR_INTERNAL;
         }
     }
@@ -900,95 +932,23 @@ static ret_code_t link_secure_central_encryption(uint16_t     conn_handle,
     }
 
     sec_proc_start(conn_handle, err_code == NRF_SUCCESS, PM_CONN_SEC_PROCEDURE_ENCRYPTION);
-    sec_proc_housekeeping(conn_handle, peer_id, (err_code == NRF_SUCCESS), false);
 
     return err_code;
 }
-
-
-/**@brief Function for intiating pairing as a central. See @ref smd_link_secure for more info.
- */
-static ret_code_t link_secure_central_pairing(uint16_t               conn_handle,
-                                              pm_peer_id_t           peer_id,
-                                              ble_gap_sec_params_t * p_sec_params)
-{
-    pm_conn_sec_procedure_t procedure        = PM_CONN_SEC_PROCEDURE_PAIRING;
-    bool                    new_peer_created = false;
-    ret_code_t              err_code         = NRF_SUCCESS;
-    pm_peer_data_t          dummy_peer_data;
-
-    if (p_sec_params == NULL)
-    {
-        err_code  = sd_ble_gap_authenticate(conn_handle, NULL);
-    }
-    else
-    {
-        if (p_sec_params->bond)
-        {
-            procedure = PM_CONN_SEC_PROCEDURE_BONDING;
-
-            if (peer_id == PM_PEER_ID_INVALID)
-            {
-                // New peer is required.
-                peer_id = pdb_peer_allocate();
-                new_peer_created = true;
-            }
-
-            if (peer_id == PM_PEER_ID_INVALID)
-            {
-                err_code = NRF_ERROR_INTERNAL;
-            }
-            else
-            {
-                err_code = pdb_write_buf_get(peer_id, PM_PEER_DATA_ID_BONDING, 1, &dummy_peer_data);
-                if (err_code == NRF_SUCCESS)
-                {
-                    err_code = pdb_write_buf_store_prepare(peer_id, PM_PEER_DATA_ID_BONDING);
-                }
-            }
-        }
-
-        if (err_code == NRF_SUCCESS)
-        {
-            err_code = sd_ble_gap_authenticate(conn_handle, p_sec_params);
-        }
-
-        if (err_code != NRF_SUCCESS)
-        {
-            ret_code_t err_code_free = pdb_write_buf_release(peer_id, PM_PEER_DATA_ID_BONDING);
-            if ((err_code_free != NRF_SUCCESS) && (err_code_free != NRF_ERROR_NOT_FOUND))
-            {
-                err_code = NRF_ERROR_INTERNAL;
-            }
-        }
-    }
-
-    if (err_code == NRF_ERROR_NO_MEM)
-    {
-        // sd_ble_gap_authenticate() returned NRF_ERROR_NO_MEM. Too many other sec procedures running.
-        err_code = NRF_ERROR_BUSY;
-    }
-
-    sec_proc_start(conn_handle, err_code == NRF_SUCCESS, procedure);
-    sec_proc_housekeeping(conn_handle, peer_id, (err_code == NRF_SUCCESS), new_peer_created);
-
-    return err_code;
-}
-
 
 
 /**@brief Function for intiating security as a central. See @ref smd_link_secure for more info.
  */
-static ret_code_t link_secure_central(uint16_t conn_handle,
+static ret_code_t link_secure_central(uint16_t               conn_handle,
                                       ble_gap_sec_params_t * p_sec_params,
-                                      bool     force_repairing)
+                                      bool                   force_repairing)
 {
     ret_code_t   err_code;
     pm_peer_id_t peer_id;
 
     if (p_sec_params == NULL)
     {
-        return sd_ble_gap_authenticate(conn_handle, NULL);
+        return link_secure_authenticate(conn_handle, NULL);
     }
 
     // Set the default value for allowing repairing at the start of the sec proc. (for central)
@@ -999,14 +959,18 @@ static ret_code_t link_secure_central(uint16_t conn_handle,
     if ((peer_id != PM_PEER_ID_INVALID) && !force_repairing)
     {
         // There is already data in flash for this peer, and repairing has not been requested, so
-        // link will be encrypted with the existing keys.
+        // the link will be encrypted with the existing keys.
         err_code  = link_secure_central_encryption(conn_handle, peer_id);
     }
     else
     {
         // There are no existing keys, or repairing has been explicitly requested, so pairing
         // (possibly including bonding) will be performed to encrypt the link.
-        err_code = link_secure_central_pairing(conn_handle, peer_id, p_sec_params);
+        err_code = link_secure_authenticate(conn_handle, p_sec_params);
+        pm_conn_sec_procedure_t procedure = (p_sec_params && p_sec_params->bond) ?
+                                            PM_CONN_SEC_PROCEDURE_BONDING        :
+                                            PM_CONN_SEC_PROCEDURE_PAIRING;
+        sec_proc_start(conn_handle, err_code == NRF_SUCCESS, procedure);
     }
 
     return err_code;
@@ -1045,7 +1009,7 @@ static ret_code_t link_secure_peripheral(uint16_t conn_handle, ble_gap_sec_param
 
     if (p_sec_params != NULL)
     {
-        err_code = sd_ble_gap_authenticate(conn_handle, p_sec_params);
+        err_code = link_secure_authenticate(conn_handle, p_sec_params);
     }
 
     return err_code;

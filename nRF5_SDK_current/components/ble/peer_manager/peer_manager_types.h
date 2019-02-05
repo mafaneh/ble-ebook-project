@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2015 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 /**
  * @file peer_manager_types.h
@@ -66,10 +66,6 @@ extern "C" {
 /**@brief Handle to uniquely identify a peer for which we have persistently stored data.
  */
 typedef uint16_t pm_peer_id_t;
-
-/**@brief Type that is used for write prepares (used to reserve space in flash).
- */
-typedef uint32_t pm_prepare_token_t;
 
 /**@brief Type that is used to hold a reference to a stored item in flash.
  */
@@ -122,7 +118,8 @@ typedef uint16_t pm_sec_error_code_t;
 #define PM_PEER_DATA_ID_APPLICATION_V1             4     /**< @brief The data ID of the first version of application data. */
 #define PM_PEER_DATA_ID_GATT_REMOTE_V2             5     /**< @brief The data ID of the second version of remote GATT data. */
 #define PM_PEER_DATA_ID_PEER_RANK_V1               6     /**< @brief The data ID of the first version of the rank. */
-#define PM_PEER_DATA_ID_LAST_VX                    9     /**< @brief The data ID after the last valid one. */
+#define PM_PEER_DATA_ID_CENTRAL_ADDR_RES_V1        9     /**< @brief The data ID of the first version of central address resolution. */
+#define PM_PEER_DATA_ID_LAST_VX                    10     /**< @brief The data ID after the last valid one. */
 #define PM_PEER_DATA_ID_INVALID_VX                 0xFF  /**< @brief A data ID guaranteed to be invalid. */
 /**@}*/
 
@@ -137,6 +134,7 @@ typedef enum
     PM_PEER_DATA_ID_GATT_LOCAL              = PM_PEER_DATA_ID_GATT_LOCAL_V2,              /**< @brief The data ID for local GATT data (sys attributes). Type: @ref pm_peer_data_local_gatt_db_t. */
     PM_PEER_DATA_ID_GATT_REMOTE             = PM_PEER_DATA_ID_GATT_REMOTE_V2,             /**< @brief The data ID for remote GATT data. Type: uint8_t array. */
     PM_PEER_DATA_ID_PEER_RANK               = PM_PEER_DATA_ID_PEER_RANK_V1,               /**< @brief The data ID for peer rank. See @ref pm_peer_rank_highest. Type: uint32_t. */
+    PM_PEER_DATA_ID_CENTRAL_ADDR_RES        = PM_PEER_DATA_ID_CENTRAL_ADDR_RES_V1,        /**< @brief The data ID for central address resolution. See @ref pm_peer_id_list. Type: uint32_t. */
     PM_PEER_DATA_ID_APPLICATION             = PM_PEER_DATA_ID_APPLICATION_V1,             /**< @brief The data ID for application data. Type: uint8_t array. */
     PM_PEER_DATA_ID_LAST                    = PM_PEER_DATA_ID_LAST_VX,                    /**< @brief One more than the highest data ID. */
     PM_PEER_DATA_ID_INVALID                 = PM_PEER_DATA_ID_INVALID_VX,                 /**< @brief A data ID guaranteed to be invalid. */
@@ -225,6 +223,7 @@ typedef enum
     PM_EVT_SERVICE_CHANGED_IND_CONFIRMED,   /**< @brief A service changed indication that was sent has been confirmed by a peer. The peer can now be considered aware that the local database has changed. */
     PM_EVT_SLAVE_SECURITY_REQ,              /**< @brief The peer (peripheral) has requested link encryption, which has been enabled. */
     PM_EVT_FLASH_GARBAGE_COLLECTED,         /**< @brief The flash has been garbage collected (By FDS), possibly freeing up space. */
+    PM_EVT_FLASH_GARBAGE_COLLECTION_FAILED, /**< @brief Garbage collection was attempted but failed. */
 } pm_evt_id_t;
 
 
@@ -288,10 +287,11 @@ typedef struct
  */
 typedef struct
 {
-    pm_peer_data_id_t data_id; /**< @brief The type of the data that was supposed to be changed. */
-    pm_peer_data_op_t action;  /**< @brief The action that failed. */
-    pm_store_token_t  token;   /**< @brief Token that identifies the operation. For @ref PM_PEER_DATA_OP_DELETE actions, this token can be disregarded. For @ref PM_PEER_DATA_OP_UPDATE actions, compare this token with the token that is received from a call to a @ref PM_PEER_DATA_FUNCTIONS function. */
-    ret_code_t        error;   /**< @brief An error code that describes the failure. */
+    pm_peer_data_id_t data_id;   /**< @brief The type of the data that was supposed to be changed. */
+    pm_peer_data_op_t action;    /**< @brief The action that failed. */
+    pm_store_token_t  token;     /**< @brief Token that identifies the operation. For @ref PM_PEER_DATA_OP_DELETE actions, this token can be disregarded. For @ref PM_PEER_DATA_OP_UPDATE actions, compare this token with the token that is received from a call to a @ref PM_PEER_DATA_FUNCTIONS function. */
+    ret_code_t        error;     /**< @brief An error code that describes the failure. */
+    bool              fds_error; /**< @brief If true, The error should be interpreted as an FDS error code. See @ref fds for a list of errors. */
 } pm_peer_data_update_failed_t;
 
 
@@ -299,7 +299,8 @@ typedef struct
  */
 typedef struct
 {
-    ret_code_t error; /**< @brief The error that occurred. */
+    ret_code_t error;     /**< @brief The error that occurred. */
+    bool       fds_error; /**< @brief If true, The error should be interpreted as an FDS error code. See @ref fds for a list of errors. */
 } pm_failure_evt_t;
 
 
@@ -333,6 +334,7 @@ typedef struct
         pm_failure_evt_t                    peers_delete_failed_evt;    /**< @brief Parameters specific to the @ref PM_EVT_PEERS_DELETE_FAILED event. */
         pm_failure_evt_t                    error_unexpected;           /**< @brief Parameters specific to the @ref PM_EVT_ERROR_UNEXPECTED event. */
         pm_evt_slave_security_req_t         slave_security_req;         /**< @brief Parameters specific to the @ref PM_EVT_SLAVE_SECURITY_REQ event. */
+        pm_failure_evt_t                    garbage_collection_failed;  /**< @brief Parameters specific to the @ref PM_EVT_FLASH_GARBAGE_COLLECTION_FAILED event. */
     } params;
 } pm_evt_t;
 

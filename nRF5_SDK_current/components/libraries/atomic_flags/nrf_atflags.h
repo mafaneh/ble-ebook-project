@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2017 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 /**@file
  *
@@ -58,6 +58,8 @@
 #ifndef NRF_ATFLAGS_H__
 #define NRF_ATFLAGS_H__
 
+#include <stdint.h>
+#include <stdbool.h>
 
 /**
  * @brief Array of atomic flags.
@@ -90,18 +92,17 @@ typedef volatile uint32_t nrf_atflags_t;
 #define NRF_ATFLAGS_DEF(_name, flag_count) \
     nrf_atflags_t _name[NRF_ATFLAGS_ARRAY_LEN((flag_count))] = {0}
 
-/**@brief Macro for declaring a flag array with the right size as a member of a struct.
+/**@brief Macro for defining a flag array inside a struct.
  *
  * @note When using this macro, make sure to set the array to 0 or use @ref nrf_atflags_init
  *
  * @param _name    Name to be given to the array.
  * @param flag_count  Number of flags to be kept in the flag array.
  *
- * @return Flag array definition.
+ * @return The flag array definition.
  */
 #define NRF_ATFLAGS_DEF_MEMBER(_name, flag_count) \
     nrf_atflags_t _name[NRF_ATFLAGS_ARRAY_LEN((flag_count))]
-
 
 /**@brief Function for safely initializing a flag array to 0.
  *

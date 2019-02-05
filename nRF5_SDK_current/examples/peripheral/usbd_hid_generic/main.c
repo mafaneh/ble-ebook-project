@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2017 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #include <stdint.h>
 #include <stdbool.h>
@@ -136,7 +136,12 @@ NRF_CLI_DEF(m_cli_uart,
 
 /**
  * @brief Size of maximum output report. HID generic class will reserve
- *        this buffer size + 1 memory space. */
+ *        this buffer size + 1 memory space. 
+ *
+ * Maximum value of this define is 63 bytes. Library automatically adds
+ * one byte for report ID. This means that output report size is limited
+ * to 64 bytes.
+ */
 #define REPORT_OUT_MAXSIZE  0
 
 /**
@@ -365,11 +370,13 @@ static void hid_user_ev_handler(app_usbd_class_inst_t const * p_inst,
         }
         case APP_USBD_HID_USER_EVT_SET_BOOT_PROTO:
         {
+            UNUSED_RETURN_VALUE(hid_generic_clear_buffer(p_inst));
             NRF_LOG_INFO("SET_BOOT_PROTO");
             break;
         }
         case APP_USBD_HID_USER_EVT_SET_REPORT_PROTO:
         {
+            UNUSED_RETURN_VALUE(hid_generic_clear_buffer(p_inst));
             NRF_LOG_INFO("SET_REPORT_PROTO");
             break;
         }
@@ -526,6 +533,24 @@ static void init_cli(void)
     APP_ERROR_CHECK(ret);
 }
 
+static ret_code_t idle_handle(app_usbd_class_inst_t const * p_inst, uint8_t report_id)
+{
+    switch (report_id)
+    {
+        case 0:
+        {
+            uint8_t report[] = {0xBE, 0xEF};
+            return app_usbd_hid_generic_idle_report_set(
+              &m_app_hid_generic,
+              report,
+              sizeof(report));
+        }
+        default:
+            return NRF_ERROR_NOT_SUPPORTED;
+    }
+    
+}
+
 int main(void)
 {
     ret_code_t ret;
@@ -563,6 +588,10 @@ int main(void)
 
     app_usbd_class_inst_t const * class_inst_generic;
     class_inst_generic = app_usbd_hid_generic_class_inst_get(&m_app_hid_generic);
+
+    ret = hid_generic_idle_handler_set(class_inst_generic, idle_handle);
+    APP_ERROR_CHECK(ret);
+
     ret = app_usbd_class_append(class_inst_generic);
     APP_ERROR_CHECK(ret);
 

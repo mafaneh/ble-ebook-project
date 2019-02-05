@@ -17,6 +17,7 @@ SRC_FILES += \
   $(SDK_ROOT)/components/libraries/crypto/nrf_crypto_ecc.c \
   $(SDK_ROOT)/components/libraries/crypto/nrf_crypto_ecdh.c \
   $(SDK_ROOT)/components/libraries/crypto/nrf_crypto_ecdsa.c \
+  $(SDK_ROOT)/components/libraries/crypto/nrf_crypto_eddsa.c \
   $(SDK_ROOT)/components/libraries/crypto/nrf_crypto_error.c \
   $(SDK_ROOT)/components/libraries/crypto/nrf_crypto_hash.c \
   $(SDK_ROOT)/components/libraries/crypto/nrf_crypto_hkdf.c \
@@ -35,6 +36,7 @@ SRC_FILES += \
   $(PROJ_DIR)/test_cases/test_aes.c \
   $(PROJ_DIR)/test_cases/test_ecdh.c \
   $(PROJ_DIR)/test_cases/test_ecdsa.c \
+  $(PROJ_DIR)/test_cases/test_eddsa.c \
   $(PROJ_DIR)/test_cases/test_hkdf.c \
   $(PROJ_DIR)/test_cases/test_hmac.c \
   $(PROJ_DIR)/test_cases/test_sha.c \
@@ -51,6 +53,7 @@ SRC_FILES += \
   $(PROJ_DIR)/test_cases/test_vectors_ecdh.c \
   $(PROJ_DIR)/test_cases/test_vectors_ecdsa_sign.c \
   $(PROJ_DIR)/test_cases/test_vectors_ecdsa_verify.c \
+  $(PROJ_DIR)/test_cases/test_vectors_eddsa.c \
   $(PROJ_DIR)/test_cases/test_vectors_hkdf.c \
   $(PROJ_DIR)/test_cases/test_vectors_hmac.c \
   $(PROJ_DIR)/test_cases/test_vectors_sha.c \
@@ -72,8 +75,9 @@ SRC_FILES += \
   $(SDK_ROOT)/components/libraries/balloc/nrf_balloc.c \
   $(SDK_ROOT)/external/fprintf/nrf_fprintf.c \
   $(SDK_ROOT)/external/fprintf/nrf_fprintf_format.c \
-  $(SDK_ROOT)/components/libraries/experimental_memobj/nrf_memobj.c \
+  $(SDK_ROOT)/components/libraries/memobj/nrf_memobj.c \
   $(SDK_ROOT)/components/libraries/queue/nrf_queue.c \
+  $(SDK_ROOT)/components/libraries/ringbuf/nrf_ringbuf.c \
   $(SDK_ROOT)/components/libraries/strerror/nrf_strerror.c \
   $(SDK_ROOT)/components/libraries/crypto/backend/mbedtls/mbedtls_backend_aes.c \
   $(SDK_ROOT)/components/libraries/crypto/backend/mbedtls/mbedtls_backend_aes_aead.c \
@@ -86,11 +90,11 @@ SRC_FILES += \
   $(SDK_ROOT)/integration/nrfx/legacy/nrf_drv_rng.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_rng.c \
   $(SDK_ROOT)/components/libraries/crypto/backend/cifra/cifra_backend_aes_aead.c \
-  $(SDK_ROOT)/components/libraries/experimental_log/src/nrf_log_backend_rtt.c \
-  $(SDK_ROOT)/components/libraries/experimental_log/src/nrf_log_backend_serial.c \
-  $(SDK_ROOT)/components/libraries/experimental_log/src/nrf_log_default_backends.c \
-  $(SDK_ROOT)/components/libraries/experimental_log/src/nrf_log_frontend.c \
-  $(SDK_ROOT)/components/libraries/experimental_log/src/nrf_log_str_formatter.c \
+  $(SDK_ROOT)/components/libraries/log/src/nrf_log_backend_rtt.c \
+  $(SDK_ROOT)/components/libraries/log/src/nrf_log_backend_serial.c \
+  $(SDK_ROOT)/components/libraries/log/src/nrf_log_default_backends.c \
+  $(SDK_ROOT)/components/libraries/log/src/nrf_log_frontend.c \
+  $(SDK_ROOT)/components/libraries/log/src/nrf_log_str_formatter.c \
   $(PROJ_DIR)/common_test/common_test.c \
   $(PROJ_DIR)/main.c \
   $(SDK_ROOT)/external/mbedtls/library/aes.c \
@@ -166,6 +170,7 @@ SRC_FILES += \
   $(SDK_ROOT)/components/libraries/crypto/backend/cc310/cc310_backend_ecc.c \
   $(SDK_ROOT)/components/libraries/crypto/backend/cc310/cc310_backend_ecdh.c \
   $(SDK_ROOT)/components/libraries/crypto/backend/cc310/cc310_backend_ecdsa.c \
+  $(SDK_ROOT)/components/libraries/crypto/backend/cc310/cc310_backend_eddsa.c \
   $(SDK_ROOT)/components/libraries/crypto/backend/cc310/cc310_backend_hash.c \
   $(SDK_ROOT)/components/libraries/crypto/backend/cc310/cc310_backend_hmac.c \
   $(SDK_ROOT)/components/libraries/crypto/backend/cc310/cc310_backend_init.c \
@@ -179,6 +184,7 @@ SRC_FILES += \
   $(SDK_ROOT)/components/libraries/crypto/backend/oberon/oberon_backend_ecc.c \
   $(SDK_ROOT)/components/libraries/crypto/backend/oberon/oberon_backend_ecdh.c \
   $(SDK_ROOT)/components/libraries/crypto/backend/oberon/oberon_backend_ecdsa.c \
+  $(SDK_ROOT)/components/libraries/crypto/backend/oberon/oberon_backend_eddsa.c \
   $(SDK_ROOT)/components/libraries/crypto/backend/oberon/oberon_backend_hash.c \
   $(SDK_ROOT)/components/libraries/crypto/backend/oberon/oberon_backend_hmac.c \
 
@@ -202,42 +208,43 @@ INC_FOLDERS += \
   $(SDK_ROOT)/external/nrf_tls/mbedtls/nrf_crypto/config \
   $(SDK_ROOT)/components/libraries/crypto \
   $(SDK_ROOT)/components/libraries/crypto/backend/nrf_sw \
+  $(SDK_ROOT)/components/libraries/ringbuf \
   $(SDK_ROOT)/modules/nrfx/hal \
   $(SDK_ROOT)/components/libraries/crypto/backend/mbedtls \
   $(SDK_ROOT)/components/libraries/crypto/backend/cc310 \
   $(SDK_ROOT)/external/nrf_oberon \
   $(SDK_ROOT)/external/micro-ecc/micro-ecc \
   $(SDK_ROOT)/components/libraries/crypto/backend/nrf_hw \
-  $(SDK_ROOT)/components/libraries/experimental_log \
+  $(SDK_ROOT)/components/libraries/timer \
   $(SDK_ROOT)/external/segger_rtt \
+  $(SDK_ROOT)/components/libraries/log \
   $(SDK_ROOT)/modules/nrfx \
   $(SDK_ROOT)/components/libraries/experimental_section_vars \
   $(SDK_ROOT)/integration/nrfx/legacy \
   $(PROJ_DIR)/test_cases \
   $(SDK_ROOT)/components/libraries/mutex \
   $(SDK_ROOT)/external/mbedtls/include \
-  $(SDK_ROOT)/components/libraries/experimental_log/src \
   $(SDK_ROOT)/components/libraries/delay \
   $(SDK_ROOT)/external/nrf_oberon/include \
   $(SDK_ROOT)/components/drivers_nrf/nrf_soc_nosd \
   $(SDK_ROOT)/components/libraries/atomic \
   $(SDK_ROOT)/components/boards \
+  $(SDK_ROOT)/components/libraries/memobj \
   $(SDK_ROOT)/components/libraries/crypto/backend/cc310_bl \
-  $(SDK_ROOT)/components/libraries/experimental_memobj \
   $(SDK_ROOT)/integration/nrfx \
   $(SDK_ROOT)/components/libraries/balloc \
   $(SDK_ROOT)/components/libraries/crypto/backend/micro_ecc \
   $(SDK_ROOT)/components/libraries/crypto/backend/cifra \
   $(SDK_ROOT)/modules/nrfx/drivers/include \
-  $(SDK_ROOT)/components/libraries/timer \
   $(SDK_ROOT)/external/fprintf \
   $(SDK_ROOT)/external/cifra_AES128-EAX \
+  $(SDK_ROOT)/components/libraries/log/src \
 
 # Libraries common to all targets
 LIB_FILES += \
-  $(SDK_ROOT)/external/nrf_cc310/lib/libnrf_cc310_0.9.9.a \
+  $(SDK_ROOT)/external/nrf_cc310/lib/libnrf_cc310_0.9.10.a \
   $(SDK_ROOT)/external/micro-ecc/nrf52hf_armgcc/armgcc/micro_ecc_lib_nrf52.a \
-  $(SDK_ROOT)/external/nrf_oberon/lib/nrf52/liboberon_2.0.4.a \
+  $(SDK_ROOT)/external/nrf_oberon/lib/nrf52/liboberon_2.0.5.a \
 
 # Optimization flags
 OPT = -O3 -g3
@@ -330,9 +337,9 @@ $(foreach target, $(TARGETS), $(call define_target, $(target)))
 .PHONY: flash erase
 
 # Flash the program
-flash: $(OUTPUT_DIRECTORY)/nrf52840_xxaa.hex
-	@echo Flashing: $<
-	nrfjprog -f nrf52 --program $< --sectorerase
+flash: default
+	@echo Flashing: $(OUTPUT_DIRECTORY)/nrf52840_xxaa.hex
+	nrfjprog -f nrf52 --program $(OUTPUT_DIRECTORY)/nrf52840_xxaa.hex --sectorerase
 	nrfjprog -f nrf52 --reset
 
 erase:

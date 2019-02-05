@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2016 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 
 #include "es_gatts_read.h"
@@ -139,7 +139,7 @@ static ret_code_t read_adv_slot(nrf_ble_escs_t * p_escs, uint8_t active_slot, co
 }
 
 
-ret_code_t es_gatts_read_handle_locked_read(nrf_ble_escs_t * p_escs, uint16_t uuid, uint8_t lock_state)
+ret_code_t es_gatts_read_handle_locked_read(nrf_ble_escs_t * p_escs, uint16_t uuid)
 {
     VERIFY_PARAM_NOT_NULL(p_escs);
 
@@ -151,7 +151,7 @@ ret_code_t es_gatts_read_handle_locked_read(nrf_ble_escs_t * p_escs, uint16_t uu
 
     else if (uuid == BLE_UUID_ESCS_LOCK_STATE_CHAR)
     {
-        return read_value(p_escs, sizeof(lock_state), &lock_state);
+        return read_value(p_escs, ESCS_LOCK_STATE_READ_LENGTH, &p_escs->lock_state);
     }
 
     else
@@ -180,8 +180,7 @@ ret_code_t es_gatts_read_handle_unlock(nrf_ble_escs_t * p_escs)
 ret_code_t es_gatts_read_handle_unlocked_read(nrf_ble_escs_t * p_escs,
                                               uint16_t         uuid,
                                               uint16_t         val_handle,
-                                              uint8_t          active_slot,
-                                              uint8_t          lock_state)
+                                              uint8_t          active_slot)
 {
     VERIFY_PARAM_NOT_NULL(p_escs);
 
@@ -196,7 +195,7 @@ ret_code_t es_gatts_read_handle_unlocked_read(nrf_ble_escs_t * p_escs,
             return read_from_gattdb(p_escs, val_handle);
 
         case BLE_UUID_ESCS_LOCK_STATE_CHAR:
-            return read_value(p_escs, sizeof(lock_state), &lock_state);
+            return read_value(p_escs, ESCS_LOCK_STATE_READ_LENGTH, &p_escs->lock_state);
 
         case BLE_UUID_ESCS_ADV_INTERVAL_CHAR:
         {

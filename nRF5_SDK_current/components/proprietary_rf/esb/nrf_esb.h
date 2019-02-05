@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2016 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #ifndef __NRF_ESB_H
 #define __NRF_ESB_H
@@ -63,11 +63,17 @@ extern "C" {
  * @brief If NRF_ESB_DEBUG is defined, these GPIO pins can be used for debug timing.
  */
 
+#ifndef NRF52840_XXAA
 #define DEBUGPIN1   12 //!< If NRF_ESB_DEBUG is defined, this GPIO pin is set with every radio interrupt.
 #define DEBUGPIN2   13 //!< If NRF_ESB_DEBUG is defined, this GPIO pin is set with every NRF_RADIO->EVENTS_END.
 #define DEBUGPIN3   14 //!< If NRF_ESB_DEBUG is defined, this GPIO pin is set with every NRF_RADIO->EVENTS_DISABLED.
 #define DEBUGPIN4   15 //!< If NRF_ESB_DEBUG is defined, this GPIO pin is set when the radio is set to start transmission.
-
+#else
+#define DEBUGPIN1   24 //!< If NRF_ESB_DEBUG is defined, this GPIO pin is set with every radio interrupt.
+#define DEBUGPIN2   25 //!< If NRF_ESB_DEBUG is defined, this GPIO pin is set with every NRF_RADIO->EVENTS_END.
+#define DEBUGPIN3   26 //!< If NRF_ESB_DEBUG is defined, this GPIO pin is set with every NRF_RADIO->EVENTS_DISABLED.
+#define DEBUGPIN4   27 //!< If NRF_ESB_DEBUG is defined, this GPIO pin is set when the radio is set to start transmission.
+#endif
 
 #ifdef  NRF_ESB_DEBUG
 #define DEBUG_PIN_SET(a)    (NRF_GPIO->OUTSET = (1 << (a))) //!< Used internally to set debug pins.
@@ -100,10 +106,14 @@ STATIC_ASSERT(NRF_ESB_MAX_PAYLOAD_LENGTH <= 252);
 #define     NRF_ESB_PPI_RX_TIMEOUT              12                  //!< The PPI channel used for RX time-out.
 #define     NRF_ESB_PPI_TX_START                13                  //!< The PPI channel used for starting TX.
 
-/**@cond NO_DOXYGEN */
+#ifndef NRF_ESB_PIPE_COUNT
+#define     NRF_ESB_PIPE_COUNT                  8                   //!< The maximum number of pipes allowed in the API, can be used if you need to restrict the number of pipes used. Must be 8 or lower because of architectural limitations.
+#endif
+STATIC_ASSERT(NRF_ESB_PIPE_COUNT <= 8);
 
+/**@cond NO_DOXYGEN */
+#ifdef NRF52832_XXAA
 // nRF52 address fix timer and PPI defines
-#ifdef NRF52
 #define     NRF_ESB_PPI_BUGFIX1                 9
 #define     NRF_ESB_PPI_BUGFIX2                 8
 #define     NRF_ESB_PPI_BUGFIX3                 7
@@ -141,7 +151,7 @@ STATIC_ASSERT(NRF_ESB_MAX_PAYLOAD_LENGTH <= 252);
     .base_addr_p1       = { 0xC2, 0xC2, 0xC2, 0xC2 },                           \
     .pipe_prefixes      = { 0xE7, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7, 0xC8 },   \
     .addr_length        = 5,                                                    \
-    .num_pipes          = 8,                                                    \
+    .num_pipes          = NRF_ESB_PIPE_COUNT,                                   \
     .rf_channel         = 2,                                                    \
     .rx_pipes_enabled   = 0xFF                                                  \
 }
@@ -216,9 +226,11 @@ typedef enum {
 typedef enum {
     NRF_ESB_BITRATE_2MBPS     = RADIO_MODE_MODE_Nrf_2Mbit,      /**< 2 Mb radio mode.                                                */
     NRF_ESB_BITRATE_1MBPS     = RADIO_MODE_MODE_Nrf_1Mbit,      /**< 1 Mb radio mode.                                                */
+#if !(defined(NRF52840_XXAA) || defined(NRF52810_XXAA))
     NRF_ESB_BITRATE_250KBPS   = RADIO_MODE_MODE_Nrf_250Kbit,    /**< 250 Kb radio mode.                                              */
+#endif //NRF52840_XXAA
     NRF_ESB_BITRATE_1MBPS_BLE = RADIO_MODE_MODE_Ble_1Mbit,      /**< 1 Mb radio mode using @e Bluetooth low energy radio parameters. */
-#if defined(NRF52)
+#if defined(NRF52_SERIES)
     NRF_ESB_BITRATE_2MBPS_BLE = 4                               /**< 2 Mb radio mode using @e Bluetooth low energy radio parameters. */
 #endif
 } nrf_esb_bitrate_t;
@@ -244,7 +256,8 @@ typedef enum {
     NRF_ESB_TX_POWER_NEG12DBM = RADIO_TXPOWER_TXPOWER_Neg12dBm, /**< -12 dBm radio transmit power. */
     NRF_ESB_TX_POWER_NEG16DBM = RADIO_TXPOWER_TXPOWER_Neg16dBm, /**< -16 dBm radio transmit power. */
     NRF_ESB_TX_POWER_NEG20DBM = RADIO_TXPOWER_TXPOWER_Neg20dBm, /**< -20 dBm radio transmit power. */
-    NRF_ESB_TX_POWER_NEG30DBM = RADIO_TXPOWER_TXPOWER_Neg30dBm  /**< -30 dBm radio transmit power. */
+    NRF_ESB_TX_POWER_NEG30DBM = RADIO_TXPOWER_TXPOWER_Neg30dBm, /**< -30 dBm radio transmit power. */
+    NRF_ESB_TX_POWER_NEG40DBM = RADIO_TXPOWER_TXPOWER_Neg40dBm  /**< -40 dBm radio transmit power. */
 } nrf_esb_tx_power_t;
 
 
@@ -275,7 +288,7 @@ typedef struct
     uint8_t length;                                 //!< Length of the packet (maximum value is @ref NRF_ESB_MAX_PAYLOAD_LENGTH).
     uint8_t pipe;                                   //!< Pipe used for this payload.
     int8_t  rssi;                                   //!< RSSI for the received packet.
-    uint8_t noack;                                  //!< Flag indicating that this packet will not be acknowledgement.
+    uint8_t noack;                                  //!< Flag indicating that this packet will not be acknowledgement. Flag is ignored when selective auto ack is enabled.
     uint8_t pid;                                    //!< PID assigned during communication.
     uint8_t data[NRF_ESB_MAX_PAYLOAD_LENGTH];       //!< The payload data.
 } nrf_esb_payload_t;
@@ -316,7 +329,7 @@ typedef struct
     uint8_t                 event_irq_priority;     //!< ESB event interrupt priority.
     uint8_t                 payload_length;         //!< Length of the payload (maximum length depends on the platforms that are used on each side).
 
-    bool                    selective_auto_ack;     //!< Enable or disable selective auto acknowledgement.
+    bool                    selective_auto_ack;     //!< Enable or disable selective auto acknowledgement. When this feature is disabled, all packets will be acknowledged ignoring the noack field.
 } nrf_esb_config_t;
 
 
@@ -372,7 +385,6 @@ bool nrf_esb_is_idle(void);
  * @retval  NRF_SUCCESS                     If the payload was successfully queued for writing.
  * @retval  NRF_ERROR_NULL                  If the required parameter was NULL.
  * @retval  NRF_INVALID_STATE               If the module is not initialized.
- * @retval  NRF_ERROR_NOT_SUPPORTED         If @p p_payload->noack was false, but selective acknowledgement is not enabled.
  * @retval  NRF_ERROR_NO_MEM                If the TX FIFO is full.
  * @retval  NRF_ERROR_INVALID_LENGTH        If the payload length was invalid (zero or larger than the allowed maximum).
  */
@@ -425,13 +437,27 @@ uint32_t nrf_esb_stop_rx(void);
 uint32_t nrf_esb_flush_tx(void);
 
 
-/**@brief Function for removing the first item from the TX buffer.
+/**@brief Function for removing the newest entry from the TX buffer.
+ *
+ * This function will remove the most recently added element from the FIFO queue.
  *
  * @retval  NRF_SUCCESS                     If the operation completed successfully.
  * @retval  NRF_INVALID_STATE               If the module is not initialized.
  * @retval  NRF_ERROR_BUFFER_EMPTY          If there are no items in the queue to remove.
  */
 uint32_t nrf_esb_pop_tx(void);
+
+
+/**@brief Function for removing the oldest entry from the TX buffer.
+ *
+ * This function will remove the next element scheduled to be sent from the TX FIFO queue.
+ * This is useful if you want to skip a packet which was never acknowledged.
+ *
+ * @retval  NRF_SUCCESS                     If the operation completed successfully.
+ * @retval  NRF_INVALID_STATE               If the module is not initialized.
+ * @retval  NRF_ERROR_BUFFER_EMPTY          If there are no items in the queue to remove.
+ */
+uint32_t nrf_esb_skip_tx(void);
 
 
 /**@brief Function for removing remaining items from the RX buffer.
@@ -483,7 +509,7 @@ uint32_t nrf_esb_set_base_address_1(uint8_t const * p_addr);
  * and sets their prefix addresses.
  *
  * @param[in]   p_prefixes      Pointer to a char array that contains the prefix for each pipe.
- * @param[in]   num_pipes       Number of pipes.
+ * @param[in]   num_pipes       Number of pipes. Must be less than or equal to @ref NRF_ESB_PIPE_COUNT.
  *
  * @retval  NRF_SUCCESS                     If the prefix addresses were set successfully.
  * @retval  NRF_ERROR_BUSY                  If the function failed because the radio is busy.
@@ -496,7 +522,8 @@ uint32_t nrf_esb_set_prefixes(uint8_t const * p_prefixes, uint8_t num_pipes);
 /**@brief Function for enabling pipes.
  *
  * The @p enable_mask parameter must contain the same number of pipes as has been configured
- * with @ref nrf_esb_set_prefixes.
+ * with @ref nrf_esb_set_prefixes. This number may not be greater than the number defined by
+ * @ref NRF_ESB_PIPE_COUNT
  *
  * @param   enable_mask         Bitfield mask to enable or disable pipes. Setting a bit to
  *                              0 disables the pipe. Setting a bit to 1 enables the pipe.

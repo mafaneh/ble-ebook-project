@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2013 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 
 /**@file
@@ -140,18 +140,19 @@ static void usbd_enable(void)
 
 static void on_idle(void)
 {
-#if defined(APP_USBD_ENABLED) && APP_USBD_ENABLED
-    while (app_usbd_event_queue_process())
-    {
-        /* Nothing to do */
-    }
-#endif
     if (!NRF_LOG_PROCESS())
     {
         /* Sleep waiting for an application event. */
         uint32_t err_code = sd_app_evt_wait();
         APP_ERROR_CHECK(err_code);
     }
+
+#if defined(APP_USBD_ENABLED) && APP_USBD_ENABLED
+    while (app_usbd_event_queue_process())
+    {
+        /* Nothing to do */
+    }
+#endif
 }
 
 /**@brief Main function of the connectivity application. */
@@ -164,6 +165,8 @@ int main(void)
     NRF_LOG_DEFAULT_BACKENDS_INIT();
 
     NRF_LOG_INFO("BLE connectivity started");
+
+    bsp_board_init(BSP_INIT_LEDS);
 
 #if (defined(SER_PHY_HCI_DEBUG_ENABLE) || defined(SER_PHY_DEBUG_APP_ENABLE))
     debug_init(NULL);
@@ -212,6 +215,7 @@ int main(void)
     /* Enter main loop. */
     for (;;)
     {
+
         /* Process SoftDevice events. */
         app_sched_execute();
         if (nrf_sdh_is_suspended())

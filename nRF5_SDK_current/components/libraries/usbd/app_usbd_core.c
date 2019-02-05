@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2016 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #include "sdk_common.h"
 #if NRF_MODULE_ENABLED(APP_USBD)
@@ -118,7 +118,7 @@ NRF_LOG_MODULE_REGISTER();
     .wTotalLength = 0,          /*Calculated dynamically*/                              \
     .bNumInterfaces = 0,        /*Calculated dynamically*/                              \
     .bConfigurationValue = 1,   /*Value passed to set configuration*/                   \
-    .iConfiguration = 0,        /*Configuration ID: fixed to 0*/                        \
+    .iConfiguration = APP_USBD_STRING_ID_CONFIGURATION,        /*Configuration ID*/     \
     .bmAttributes = APP_USBD_DESCRIPTOR_CONFIGURATION_ATTRIBUTE_ALWAYS_SET_MASK |       \
                     ((APP_USBD_CONFIG_SELF_POWERED) ?                                   \
                         APP_USBD_DESCRIPTOR_CONFIGURATION_ATTRIBUTE_SELF_POWERED_MASK   \
@@ -154,27 +154,27 @@ static ret_code_t app_usbd_core_event_handler(app_usbd_class_inst_t const * cons
                                               app_usbd_complex_evt_t const * const p_event);
 
 /**
- * @brief Current USB device state
+ * @brief Current USB device state.
  *
  * This variable is updated automatically by core library.
  */
 static app_usbd_state_t m_app_usbd_state = APP_USBD_STATE_Disabled;
 
 /**
- * @brief Active device features
+ * @brief Active device features.
  *
- * @note Only @ref APP_USBD_SETUP_STDFEATURE_DEVICE_REMOTE_WAKEUP is supported for device
+ * @note Only @ref APP_USBD_SETUP_STDFEATURE_DEVICE_REMOTE_WAKEUP is supported for device.
  */
 static uint8_t m_device_features_state;
 
 /**
- * @brief Remote wake-up pending flag
+ * @brief Remote wake-up pending flag.
  */
 static nrf_atomic_flag_t m_rwu_pending;
 
 
 /**
- * @brief Core class methods
+ * @brief Core class methods.
  *
  * Base methods interface for core class.
  * This is quite specific class - it would be only connected into endpoint 0.
@@ -186,15 +186,14 @@ static const app_usbd_class_methods_t m_core_methods = {
 };
 
 /**
- * @brief Setup transfer buffer
+ * @brief Setup transfer buffer.
  */
 static uint8_t m_setup_transfer_buff[NRF_DRV_USBD_EPSIZE];
 
 
 /**
- * @brief Handler for outgoing setup data
+ * @brief Handler for outgoing setup data.
  *
- * @todo RK documentation
  */
 static app_usbd_core_setup_data_handler_desc_t m_ep0_handler_desc;
 
@@ -204,7 +203,7 @@ static app_usbd_core_setup_data_handler_desc_t m_ep0_handler_desc;
 /*lint -u -save -e26 -e40 -e64 -e123 -e505 -e651*/
 
 /**
- * @brief Core instance
+ * @brief Core instance.
  *
  * Create instance that would be connected into endpoints in USBD library.
  */
@@ -217,13 +216,13 @@ APP_USBD_CLASS_INST_GLOBAL_DEF(
 /*lint -restore*/
 
 /**
- * @brief Set the new USB state
+ * @brief Set the new USB state.
  *
  * Function changes the internal status of the bus.
  * If the bus status is different than the one configured, an event is passed to all
  * the instances.
  *
- * @param state New state to be set
+ * @param state New state to be set.
  *
  * @sa usbd_core_state_get
  */
@@ -244,12 +243,12 @@ static void usbd_core_state_set(app_usbd_state_t state)
 }
 
 /**
- * @brief Get the current USB state - internal function
+ * @brief Get the current USB state - internal function.
  *
  * This is just a wrapper for @ref app_usbd_core_state_get
  * to make symmetrical function to the internal @ref usbd_core_state_set.
  *
- * @return Current USB state
+ * @return Current USB state.
  *
  * @sa usbd_core_state_set
  * @sa app_usbd_core_state_get
@@ -260,7 +259,7 @@ static inline app_usbd_state_t usbd_core_state_get(void)
 }
 
 /**
- * @brief Check current USBD power connection status
+ * @brief Check current USBD power connection status.
  *
  */
 static inline bool usbd_core_power_is_detected(void)
@@ -269,9 +268,9 @@ static inline bool usbd_core_power_is_detected(void)
 }
 
 /**
- * @brief Clear current EP0 handler
+ * @brief Clear current EP0 handler.
  *
- * Function just clears the EP0 handler without calling it
+ * Function just clears the EP0 handler without calling it.
  */
 static inline void usbd_core_ep0_handler_clear(void)
 {
@@ -279,7 +278,7 @@ static inline void usbd_core_ep0_handler_clear(void)
 }
 
 /**
- * @brief Safely call EP0 handler
+ * @brief Safely call EP0 handler.
  *
  * Function calls EP0 handler only if its pointer is non-zero.
  *
@@ -298,7 +297,7 @@ static inline ret_code_t usbd_core_ep0_handler_call_and_clear(nrf_drv_usbd_ep_st
 }
 
 /**
- * @brief Check if EP0 handler is configured
+ * @brief Check if EP0 handler is configured.
  *
  * EP0 handler is configured is any instance that has processed SETUP command
  * expects some incoming / outgoing data.
@@ -311,8 +310,8 @@ static inline ret_code_t usbd_core_ep0_handler_call_and_clear(nrf_drv_usbd_ep_st
  * This function adds small layer of abstraction for checking if EP0 handler
  * is already configured.
  *
- * @retval true  EP0 handler is set
- * @retval false EP0 handler is cleared
+ * @retval true  EP0 handler is set.
+ * @retval false EP0 handler is cleared.
  */
 static inline bool usb_core_ep0_handler_check(void)
 {
@@ -320,7 +319,7 @@ static inline bool usb_core_ep0_handler_check(void)
 }
 
 /**
- * @brief Empty data handler
+ * @brief Empty data handler.
  *
  * Data handler used only to mark that there is requested data during SETUP.
  *
@@ -337,7 +336,7 @@ static ret_code_t setup_data_handler_empty(nrf_drv_usbd_ep_status_t status, void
 /**
  * @brief
  *
- * @todo RK Documentation
+ * Empty EP0 transfer transfer handler.
  */
 static app_usbd_core_setup_data_handler_desc_t const m_setup_data_handler_empty_desc =
 {
@@ -346,7 +345,7 @@ static app_usbd_core_setup_data_handler_desc_t const m_setup_data_handler_empty_
 };
 
 /**
- * @brief Structure used as a context for descriptor feeder
+ * @brief Structure used as a context for descriptor feeder.
  *
  * Structure with all the data required to process instances to generate descriptor
  * data chunk.
@@ -365,14 +364,14 @@ typedef struct
 } app_usbd_core_descriptor_conf_feed_data_t;
 
 /**
- * @brief Default data used by the feeder
+ * @brief Default data used by the feeder.
  *
  *
  */
 static app_usbd_core_descriptor_conf_feed_data_t m_descriptor_conf_feed_data;
 
 /**
- * @brief Descriptor feeder
+ * @brief Descriptor feeder.
  *
  * Descriptor feeder is used as an callback function when descriptors are
  * transfered and buffer is ready for next data.
@@ -493,11 +492,11 @@ static bool usbd_descriptor_conf_feeder(
 }
 
 /**
- * @brief Standard endpoint request handle
+ * @brief Standard endpoint request handle.
  *
- * @param[in] p_setup_ev Setup event
+ * @param[in] p_setup_ev Setup event.
  *
- * @return Standard error code
+ * @return Standard error code.
  */
 static ret_code_t setup_endpoint_req_std(app_usbd_setup_evt_t const * p_setup_ev)
 {
@@ -568,13 +567,13 @@ static ret_code_t setup_endpoint_req_std(app_usbd_setup_evt_t const * p_setup_ev
 }
 
 /**
- * @brief Standard interface request handle
+ * @brief Standard interface request handle.
  *
- * @param[in,out] p_class_inst Class instance that holds selected interface
- * @param[in]     iface_idx    Index of the interface in class structure
- * @param[in]     p_event      Event structure to be processed
+ * @param[in,out] p_class_inst Class instance that holds selected interface.
+ * @param[in]     iface_idx    Index of the interface in class structure.
+ * @param[in]     p_event      Event structure to be processed.
  *
- * @return Operation status
+ * @return Operation status.
  */
 static ret_code_t setup_interface_req_std_handle(
     app_usbd_class_inst_t const * const p_class_inst,
@@ -644,7 +643,7 @@ static ret_code_t setup_interface_req_std_handle(
 /**
  * @brief
  *
- * @todo RK Documentation
+ * Descriptors feeder handle structure.
  */
 static const nrf_drv_usbd_handler_desc_t usbd_descriptor_feeder_desc =
 {
@@ -680,12 +679,22 @@ static ret_code_t setup_device_req_get_descriptor(app_usbd_class_inst_t const * 
     {
         case APP_USBD_DESCRIPTOR_DEVICE:
         {
+            if(p_setup_ev->setup.wLength.w == 0)
+            {
+                return NRF_SUCCESS;
+            }
+
             return app_usbd_core_setup_rsp(&(p_setup_ev->setup),
                                            &m_device_dsc,
                                            sizeof(m_device_dsc));
         }
         case APP_USBD_DESCRIPTOR_CONFIGURATION:
         {
+            if(p_setup_ev->setup.wLength.w == 0)
+            {
+                return NRF_SUCCESS;
+            }
+
             /* The size equals the size of configuration descriptor and all classes descriptors */
             const size_t size = MIN(
                 sizeof(app_usbd_descriptor_configuration_t),
@@ -757,6 +766,11 @@ static ret_code_t setup_device_req_get_descriptor(app_usbd_class_inst_t const * 
         }
         case APP_USBD_DESCRIPTOR_STRING:
         {
+            if(p_setup_ev->setup.wLength.w == 0)
+            {
+                return NRF_SUCCESS;
+            }
+
             app_usbd_string_desc_idx_t id =
                     (app_usbd_string_desc_idx_t)(p_setup_ev->setup.wValue.lb);
             uint16_t langid = p_setup_ev->setup.wIndex.w;
@@ -834,12 +848,12 @@ static ret_code_t setup_device_req_set_configuration(
 }
 
 /**
- * @brief Internal SETUP event handler
- * @param[in] p_inst        Instance of the class
- * @param[in] p_setup_ev    Setup request
- * @return Standard error code
- * @retval NRF_SUCCESS if request handled correctly
- * @retval NRF_ERROR_NOT_SUPPORTED if request is not supported
+ * @brief Internal SETUP event handler.
+ * @param[in] p_inst        Instance of the class.
+ * @param[in] p_setup_ev    Setup request.
+ * @return Standard error code.
+ * @retval NRF_SUCCESS              Request handled correctly.
+ * @retval NRF_ERROR_NOT_SUPPORTED  Request is not supported.
  */
 static ret_code_t setup_device_req_std_handler(app_usbd_class_inst_t const * const p_inst,
                                                app_usbd_setup_evt_t const * const  p_setup_ev)
@@ -880,16 +894,8 @@ static ret_code_t setup_device_req_std_handler(app_usbd_class_inst_t const * con
         {
             case APP_USBD_SETUP_STDREQ_SET_ADDRESS:
             {
-                app_usbd_state_t usb_state = usbd_core_state_get();
-                if ((usb_state != APP_USBD_STATE_Default)   &&
-                    (usb_state != APP_USBD_STATE_Addressed) &&
-                    (usb_state != APP_USBD_STATE_Configured))
-                {
-                    return NRF_ERROR_INVALID_STATE;
-                }
-                app_usbd_all_iface_deselect();
-                usbd_core_state_set(APP_USBD_STATE_Addressed);
-                return NRF_SUCCESS;
+                ASSERT(0); /* should never reach this point */
+                break;
             }
             case APP_USBD_SETUP_STDREQ_SET_FEATURE:
             {
@@ -935,9 +941,9 @@ static ret_code_t setup_device_req_std_handler(app_usbd_class_inst_t const * con
 }
 
 /**
- * @brief Process SETUP command
+ * @brief Process SETUP command.
  *
- * Auxiliary function for SETUP command processing
+ * Auxiliary function for SETUP command processing.
  */
 static inline ret_code_t app_usbd_core_setup_req_handler(app_usbd_class_inst_t const * const p_inst)
 {
@@ -1042,7 +1048,7 @@ static inline ret_code_t app_usbd_core_setup_req_handler(app_usbd_class_inst_t c
 }
 
 /**
- * @brief Event handler for core module
+ * @brief Event handler for core module.
  *
  * The event handler that would process all events directed to device.
  *
@@ -1072,6 +1078,15 @@ static ret_code_t app_usbd_core_event_handler(app_usbd_class_inst_t const * cons
 
             ASSERT(usbd_core_state_get() >= APP_USBD_STATE_Unattached);
             ret = NRF_SUCCESS;
+            break;
+        }
+        case APP_USBD_EVT_SETUP_SETADDRESS:
+        {
+            app_usbd_state_t usb_state = usbd_core_state_get();
+            if (usb_state == APP_USBD_STATE_Default)
+            {
+                usbd_core_state_set(APP_USBD_STATE_Addressed);
+            }
             break;
         }
         case APP_USBD_EVT_DRV_SETUP:
@@ -1158,6 +1173,19 @@ static ret_code_t app_usbd_core_event_handler(app_usbd_class_inst_t const * cons
 }
 
 /** @} */
+
+void app_usbd_core_ep0_enable(void)
+{
+    app_usbd_ep_enable(NRF_DRV_USBD_EPOUT0);
+    app_usbd_ep_enable(NRF_DRV_USBD_EPIN0);
+}
+
+void app_usbd_core_ep0_disable(void)
+{
+    app_usbd_ep_disable(NRF_DRV_USBD_EPOUT0);
+    app_usbd_ep_disable(NRF_DRV_USBD_EPIN0);
+}
+
 
 ret_code_t app_usbd_core_setup_rsp(app_usbd_setup_t const * p_setup,
                                    void const *             p_data,

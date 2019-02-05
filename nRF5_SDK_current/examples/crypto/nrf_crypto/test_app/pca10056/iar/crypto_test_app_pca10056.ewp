@@ -334,13 +334,14 @@
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\backend\nrf_sw</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\backend\oberon</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\delay</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_log</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_log\src</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_memobj</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_section_vars</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\log</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\log\src</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\mem_manager</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\memobj</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\mutex</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\queue</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\ringbuf</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\scheduler</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\stack_info</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\strerror</state>
@@ -648,13 +649,14 @@
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\backend\nrf_sw</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\backend\oberon</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\delay</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_log</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_log\src</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_memobj</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_section_vars</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\log</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\log\src</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\mem_manager</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\memobj</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\mutex</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\queue</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\ringbuf</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\scheduler</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\stack_info</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\strerror</state>
@@ -1064,7 +1066,7 @@
     </settings>
   </configuration>  <group>
   <name>nrf_cc310</name>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\external\nrf_cc310\lib\libnrf_cc310_short_wchar_0.9.9.a</name>    </file>  </group>  <group>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\external\nrf_cc310\lib\libnrf_cc310_short_wchar_0.9.10.a</name>    </file>  </group>  <group>
   <name>nRF_Crypto</name>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\nrf_crypto_aead.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\nrf_crypto_aes.c</name>    </file>    <file>
@@ -1072,6 +1074,7 @@
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\nrf_crypto_ecc.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\nrf_crypto_ecdh.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\nrf_crypto_ecdsa.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\nrf_crypto_eddsa.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\nrf_crypto_error.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\nrf_crypto_hash.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\nrf_crypto_hkdf.c</name>    </file>    <file>
@@ -1094,6 +1097,7 @@
     <name>$PROJ_DIR$\..\..\test_cases\test_aes.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\test_cases\test_ecdh.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\test_cases\test_ecdsa.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\test_cases\test_eddsa.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\test_cases\test_hkdf.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\test_cases\test_hmac.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\test_cases\test_sha.c</name>    </file>    <file>
@@ -1110,6 +1114,7 @@
     <name>$PROJ_DIR$\..\..\test_cases\test_vectors_ecdh.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\test_cases\test_vectors_ecdsa_sign.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\test_cases\test_vectors_ecdsa_verify.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\test_cases\test_vectors_eddsa.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\test_cases\test_vectors_hkdf.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\test_cases\test_vectors_hmac.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\test_cases\test_vectors_sha.c</name>    </file>  </group>  <group>
@@ -1132,8 +1137,9 @@
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\balloc\nrf_balloc.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\external\fprintf\nrf_fprintf.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\external\fprintf\nrf_fprintf_format.c</name>    </file>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_memobj\nrf_memobj.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\memobj\nrf_memobj.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\queue\nrf_queue.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\ringbuf\nrf_ringbuf.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\strerror\nrf_strerror.c</name>    </file>  </group>  <group>
   <name>nRF_Crypto backend mbed TLS</name>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\backend\mbedtls\mbedtls_backend_aes.c</name>    </file>    <file>
@@ -1150,11 +1156,11 @@
   <name>nRF_Crypto backend cifra</name>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\backend\cifra\cifra_backend_aes_aead.c</name>    </file>  </group>  <group>
   <name>nRF_Log</name>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_log\src\nrf_log_backend_rtt.c</name>    </file>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_log\src\nrf_log_backend_serial.c</name>    </file>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_log\src\nrf_log_default_backends.c</name>    </file>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_log\src\nrf_log_frontend.c</name>    </file>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_log\src\nrf_log_str_formatter.c</name>    </file>  </group>  <group>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\log\src\nrf_log_backend_rtt.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\log\src\nrf_log_backend_serial.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\log\src\nrf_log_default_backends.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\log\src\nrf_log_frontend.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\log\src\nrf_log_str_formatter.c</name>    </file>  </group>  <group>
   <name>Application</name>    <file>
     <name>$PROJ_DIR$\..\..\common_test\common_test.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\main.c</name>    </file>    <file>
@@ -1229,7 +1235,7 @@
     <name>$PROJ_DIR$\..\..\..\..\..\..\external\mbedtls\library\x509_csr.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\external\mbedtls\library\xtea.c</name>    </file>  </group>  <group>
   <name>nRF_Oberon_Crypto</name>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\external\nrf_oberon\lib\nrf52\liboberon_short_wchar_2.0.4.a</name>    </file>  </group>  <group>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\external\nrf_oberon\lib\nrf52\liboberon_short_wchar_2.0.5.a</name>    </file>  </group>  <group>
   <name>None</name>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\modules\nrfx\mdk\iar_startup_nrf52840.s</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\modules\nrfx\mdk\system_nrf52840.c</name>    </file>  </group>  <group>
@@ -1240,6 +1246,7 @@
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\backend\cc310\cc310_backend_ecc.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\backend\cc310\cc310_backend_ecdh.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\backend\cc310\cc310_backend_ecdsa.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\backend\cc310\cc310_backend_eddsa.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\backend\cc310\cc310_backend_hash.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\backend\cc310\cc310_backend_hmac.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\backend\cc310\cc310_backend_init.c</name>    </file>    <file>
@@ -1255,6 +1262,7 @@
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\backend\oberon\oberon_backend_ecc.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\backend\oberon\oberon_backend_ecdh.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\backend\oberon\oberon_backend_ecdsa.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\backend\oberon\oberon_backend_eddsa.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\backend\oberon\oberon_backend_hash.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\crypto\backend\oberon\oberon_backend_hmac.c</name>    </file>  </group></project>
 

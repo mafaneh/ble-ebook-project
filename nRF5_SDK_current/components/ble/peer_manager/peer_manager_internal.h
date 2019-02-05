@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2015 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #ifndef PEER_MANAGER_INTERNAL_H__
 #define PEER_MANAGER_INTERNAL_H__
@@ -74,6 +74,7 @@ typedef struct
     {
         pm_peer_data_bonding_t       * p_bonding_data;            /**< @brief The exchanged bond information in addition to metadata of the bonding. */
         uint32_t                     * p_peer_rank;               /**< @brief A value locally assigned to this peer. Its interpretation is up to the user. The rank is not set automatically by the Peer Manager, but it is assigned by the user using either @ref pm_peer_rank_highest or a @ref PM_PEER_DATA_FUNCTIONS function. */
+        uint32_t                     * p_central_addr_res;        /**< @brief Value of peer's Central Address Resolution characteristic. */
         bool                         * p_service_changed_pending; /**< @brief Whether a service changed indication should be sent to the peer. */
         pm_peer_data_local_gatt_db_t * p_local_gatt_db;           /**< @brief Persistent information pertaining to a peer GATT client. */
         ble_gatt_db_srv_t            * p_remote_gatt_db;          /**< @brief Persistent information pertaining to a peer GATT server. */
@@ -95,6 +96,7 @@ typedef struct
     {
         pm_peer_data_bonding_t       const * p_bonding_data;            /**< @brief Immutable @ref pm_peer_data_t::p_bonding_data. */
         uint32_t                     const * p_peer_rank;               /**< @brief Immutable @ref pm_peer_data_t::p_peer_rank. */
+        uint32_t                     const * p_central_addr_res;        /**< @brief Immutable @ref pm_peer_data_t::p_central_addr_res. */
         bool                         const * p_service_changed_pending; /**< @brief Immutable @ref pm_peer_data_t::p_service_changed_pending. */
         pm_peer_data_local_gatt_db_t const * p_local_gatt_db;           /**< @brief Immutable @ref pm_peer_data_t::p_local_gatt_db. */
         ble_gatt_db_srv_t            const * p_remote_gatt_db;          /**< @brief Immutable @ref pm_peer_data_t::p_remote_gatt_db. */

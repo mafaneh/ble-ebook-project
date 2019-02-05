@@ -1,30 +1,30 @@
 /**
- * Copyright (c) 2018 - 2018, Nordic Semiconductor ASA
- * 
+ * Copyright (c) 2018, Nordic Semiconductor ASA
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 
 #include <stdio.h>
@@ -240,7 +240,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_aead_simple_data, test_vector_aead_t test_
     .crypt_expected_result  = EXPECTED_TO_PASS,
     .mac_expected_result    = EXPECTED_TO_PASS,
     .direction              = NRF_CRYPTO_ENCRYPT,
-    .p_test_vector_name     = "EAX 128 Encrypt message_len=5 ad_len=8 mac_len=16 nonce_len=16",
+    .p_test_vector_name     = "EAX 128 Encrypt message_len=5 ad_len=8 mac_len=16 nonce_len=16 variant 1",
     .p_plaintext            = "1a47cb4933",
     .p_ciphertext           = "d851d5bae0",
     .p_key                  = "01f74ad64077f2e704c0f60ada3dd523",
@@ -257,7 +257,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_aead_simple_data, test_vector_aead_t test_
     .crypt_expected_result  = EXPECTED_TO_PASS,
     .mac_expected_result    = EXPECTED_TO_PASS,
     .direction              = NRF_CRYPTO_ENCRYPT,
-    .p_test_vector_name     = "EAX 128 Encrypt message_len=5 ad_len=8 mac_len=16 nonce_len=16",
+    .p_test_vector_name     = "EAX 128 Encrypt message_len=5 ad_len=8 mac_len=16 nonce_len=16 variant 2",
     .p_plaintext            = "481c9e39b1",
     .p_ciphertext           = "632a9d131a",
     .p_key                  = "d07cf6cbb7f313bdde66b727afd3c5e8",
@@ -325,7 +325,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_aead_simple_data, test_vector_aead_t test_
     .crypt_expected_result  = EXPECTED_TO_PASS,
     .mac_expected_result    = EXPECTED_TO_PASS,
     .direction              = NRF_CRYPTO_ENCRYPT,
-    .p_test_vector_name     = "EAX 128 Encrypt message_len=18 ad_len=8 mac_len=16 nonce_len=16",
+    .p_test_vector_name     = "EAX 128 Encrypt message_len=18 ad_len=8 mac_len=16 nonce_len=16 variant 1",
     .p_plaintext            = "1bda122bce8a8dbaf1877d962b8592dd2d56",
     .p_ciphertext           = "2ec47b2c4954a489afc7ba4897edcdae8cc3",
     .p_key                  = "5fff20cafab119ca2fc73549e20f5b0d",
@@ -342,7 +342,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_aead_simple_data, test_vector_aead_t test_
     .crypt_expected_result  = EXPECTED_TO_PASS,
     .mac_expected_result    = EXPECTED_TO_PASS,
     .direction              = NRF_CRYPTO_ENCRYPT,
-    .p_test_vector_name     = "EAX 128 Encrypt message_len=18 ad_len=8 mac_len=16 nonce_len=16",
+    .p_test_vector_name     = "EAX 128 Encrypt message_len=18 ad_len=8 mac_len=16 nonce_len=16 variant 2",
     .p_plaintext            = "6cf36720872b8513f6eab1a8a44438d5ef11",
     .p_ciphertext           = "0de18fd0fdd91e7af19f1d8ee8733938b1e8",
     .p_key                  = "a4a4782bcffd3ec5e7ef6d8c34a56123",
@@ -410,7 +410,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_aead_simple_data, test_vector_aead_t test_
     .crypt_expected_result  = EXPECTED_TO_PASS,
     .mac_expected_result    = EXPECTED_TO_PASS,
     .direction              = NRF_CRYPTO_DECRYPT,
-    .p_test_vector_name     = "EAX 128 Decrypt message_len=5 ad_len=8 mac_len=16 nonce_len=16",
+    .p_test_vector_name     = "EAX 128 Decrypt message_len=5 ad_len=8 mac_len=16 nonce_len=16 variant 1",
     .p_plaintext            = "1a47cb4933",
     .p_ciphertext           = "d851d5bae0",
     .p_key                  = "01f74ad64077f2e704c0f60ada3dd523",
@@ -427,7 +427,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_aead_simple_data, test_vector_aead_t test_
     .crypt_expected_result  = EXPECTED_TO_PASS,
     .mac_expected_result    = EXPECTED_TO_PASS,
     .direction              = NRF_CRYPTO_DECRYPT,
-    .p_test_vector_name     = "EAX 128 Decrypt message_len=5 ad_len=8 mac_len=16 nonce_len=16",
+    .p_test_vector_name     = "EAX 128 Decrypt message_len=5 ad_len=8 mac_len=16 nonce_len=16 variant 2",
     .p_plaintext            = "481c9e39b1",
     .p_ciphertext           = "632a9d131a",
     .p_key                  = "d07cf6cbb7f313bdde66b727afd3c5e8",
@@ -495,7 +495,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_aead_simple_data, test_vector_aead_t test_
     .crypt_expected_result  = EXPECTED_TO_PASS,
     .mac_expected_result    = EXPECTED_TO_PASS,
     .direction              = NRF_CRYPTO_DECRYPT,
-    .p_test_vector_name     = "EAX 128 Decrypt message_len=18 ad_len=8 mac_len=16 nonce_len=16",
+    .p_test_vector_name     = "EAX 128 Decrypt message_len=18 ad_len=8 mac_len=16 nonce_len=16 variant 1",
     .p_plaintext            = "1bda122bce8a8dbaf1877d962b8592dd2d56",
     .p_ciphertext           = "2ec47b2c4954a489afc7ba4897edcdae8cc3",
     .p_key                  = "5fff20cafab119ca2fc73549e20f5b0d",
@@ -512,7 +512,7 @@ NRF_SECTION_ITEM_REGISTER(test_vector_aead_simple_data, test_vector_aead_t test_
     .crypt_expected_result  = EXPECTED_TO_PASS,
     .mac_expected_result    = EXPECTED_TO_PASS,
     .direction              = NRF_CRYPTO_DECRYPT,
-    .p_test_vector_name     = "EAX 128 Decrypt message_len=18 ad_len=8 mac_len=16 nonce_len=16",
+    .p_test_vector_name     = "EAX 128 Decrypt message_len=18 ad_len=8 mac_len=16 nonce_len=16 variant 2",
     .p_plaintext            = "6cf36720872b8513f6eab1a8a44438d5ef11",
     .p_ciphertext           = "0de18fd0fdd91e7af19f1d8ee8733938b1e8",
     .p_key                  = "a4a4782bcffd3ec5e7ef6d8c34a56123",

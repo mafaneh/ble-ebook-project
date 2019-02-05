@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2017 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 
  /**@file
@@ -123,9 +123,9 @@ typedef struct
 {
     uint8_t                  name[BLE_OTS_NAME_MAX_SIZE];    /**< The name of the object. If the name is "", the object will be invalidated on disconnect. */
     uint8_t                  data[BLE_OTS_MAX_OBJ_SIZE];
+    uint32_t                 current_size;
     ble_ots_obj_type_t       type;
     ble_ots_obj_properties_t properties;
-    uint32_t                 current_size;
     uint32_t                 alloc_len;
     bool                     is_valid;                       /**< States if the object will be shown in a list. */
     bool                     is_locked;                      /**< When an object is written or read, the object will be locked. */
@@ -210,9 +210,10 @@ struct ble_ots_l2cap_s
     ble_l2cap_ch_rx_params_t rx_params;
     ble_l2cap_ch_tx_params_t tx_params;
     uint16_t                 remaining_bytes;       /**< The number of remaining bytes in the current transfer. */
-    uint16_t                 transfered_bytes;
+    uint16_t                 transmitted_bytes;
+    uint16_t                 received_bytes;
     uint16_t                 transfer_len;          /**< The total number of bytes in the current transfer. */
-    uint16_t                 local_cid;             /**< Connection id of the current connection. */
+    uint16_t                 local_cid;             /**< Connection ID of the current connection. */
     uint16_t                 conn_mtu;              /**< The maximum transmission unit, that is the number of packets that can be sent or received. */
     uint16_t                 conn_mps;              /**< MPS defines the maximum payload size in bytes. */
 };

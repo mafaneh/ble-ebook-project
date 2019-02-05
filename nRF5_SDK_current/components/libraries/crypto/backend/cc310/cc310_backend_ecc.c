@@ -1,30 +1,30 @@
 /**
- * Copyright (c) 2018 - 2018, Nordic Semiconductor ASA
- * 
+ * Copyright (c) 2018, Nordic Semiconductor ASA
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 
 #include "sdk_config.h"
@@ -55,6 +55,10 @@
 #include "crys_ecpki_build.h"
 #include "crys_ecpki_error.h"
 #include "crys_rnd_error.h"
+#include "crys_ec_mont_api.h"
+#include "crys_ec_edw_api.h"
+#include "crys_ec_mont_edw_error.h"
+#include "nrf_crypto_shared.h"
 
 
 #define CC310_UNCOMPRESSED_PUBLIC_KEY_ID_BYTE 0x04 /**< @brief @internal Byte value used by CC310 library to prefix uncompressed public key. */
@@ -68,6 +72,7 @@ ret_code_t nrf_crypto_backend_cc310_ecc_error_convert(uint32_t crys_error)
             return NRF_SUCCESS;
 
         case CRYS_ECDSA_VERIFY_INCONSISTENT_VERIFY_ERROR:
+        case CRYS_ECEDW_SIGN_VERIFY_FAILED_ERROR:
             return NRF_ERROR_CRYPTO_ECDSA_INVALID_SIGNATURE;
 
         case CRYS_RND_INSTANTIATION_NOT_DONE_ERROR:
@@ -318,6 +323,238 @@ ret_code_t nrf_crypto_backend_cc310_public_key_to_raw(
 }
 
 
+#if NRF_MODULE_ENABLED(NRF_CRYPTO_BACKEND_CC310_ECC_CURVE25519)
+
+ret_code_t nrf_crypto_backend_cc310_curve25519_key_pair_generate(
+    void * p_context,
+    void * p_private_key,
+    void * p_public_key)
+{
+    ret_code_t  result;
+    CRYSError_t crys_error;
+    bool        mutex_locked;
+
+    nrf_crypto_backend_cc310_curve25519_context_t * p_ctx =
+        (nrf_crypto_backend_cc310_curve25519_context_t *)p_context;
+
+    nrf_crypto_backend_curve25519_private_key_t * p_prv =
+        (nrf_crypto_backend_curve25519_private_key_t *)p_private_key;
+
+    nrf_crypto_backend_curve25519_public_key_t  * p_pub =
+        (nrf_crypto_backend_curve25519_public_key_t *)p_public_key;
+
+    size_t  pub_key_size = sizeof(p_pub->key);
+    size_t  prv_key_size = sizeof(p_prv->key);
+
+    mutex_locked = cc310_backend_mutex_trylock();
+    VERIFY_TRUE(mutex_locked, NRF_ERROR_CRYPTO_BUSY);
+
+    cc310_backend_enable();
+
+    crys_error = CRYS_ECMONT_KeyPair(p_pub->key,
+                                     &pub_key_size,
+                                     p_prv->key,
+                                     &prv_key_size,
+                                     p_context,
+                                     nrf_crypto_backend_cc310_rng,
+                                     &p_ctx->temp_data);
+
+    cc310_backend_disable();
+
+    cc310_backend_mutex_unlock();
+
+    result = nrf_crypto_backend_cc310_ecc_error_convert(crys_error);
+    return result;
+}
+
+
+ret_code_t nrf_crypto_backend_cc310_curve25519_key_from_raw(
+    void          * p_key,
+    uint8_t const * p_raw_data)
+{
+    nrf_crypto_backend_curve25519_key_t * p_internal_key =
+        (nrf_crypto_backend_curve25519_key_t *)p_key;
+
+#if NRF_MODULE_ENABLED(NRF_CRYPTO_CURVE25519_BIG_ENDIAN)
+    nrf_crypto_internal_swap_endian(p_internal_key->key, p_raw_data, sizeof(p_internal_key->key));
+#else
+    memcpy(p_internal_key->key, p_raw_data, sizeof(p_internal_key->key));
+#endif
+
+    return NRF_SUCCESS;
+}
+
+
+ret_code_t nrf_crypto_backend_cc310_curve25519_key_to_raw(
+    void const * p_key,
+    uint8_t    * p_raw_data)
+{
+    nrf_crypto_backend_curve25519_key_t * p_internal_key =
+        (nrf_crypto_backend_curve25519_key_t *)p_key;
+
+#if NRF_MODULE_ENABLED(NRF_CRYPTO_CURVE25519_BIG_ENDIAN)
+    nrf_crypto_internal_swap_endian(p_raw_data, p_internal_key->key, sizeof(p_internal_key->key));
+#else
+    memcpy(p_raw_data, p_internal_key->key, sizeof(p_internal_key->key));
+#endif
+
+    return NRF_SUCCESS;
+}
+
+#endif // NRF_MODULE_ENABLED(NRF_CRYPTO_BACKEND_CC310_ECC_CURVE25519)
+
+
+#if NRF_MODULE_ENABLED(NRF_CRYPTO_BACKEND_CC310_ECC_ED25519)
+
+ret_code_t nrf_crypto_backend_cc310_ed25519_key_pair_generate(
+    void * p_context,
+    void * p_private_key,
+    void * p_public_key)
+{
+    ret_code_t                   result;
+    CRYSError_t                  crys_error;
+    bool                         mutex_locked;
+
+    nrf_crypto_backend_cc310_ed25519_context_t * p_ctx =
+        (nrf_crypto_backend_cc310_ed25519_context_t *)p_context;
+
+    nrf_crypto_backend_ed25519_private_key_t * p_prv =
+        (nrf_crypto_backend_ed25519_private_key_t *)p_private_key;
+
+    nrf_crypto_backend_ed25519_public_key_t  * p_pub =
+        (nrf_crypto_backend_ed25519_public_key_t *)p_public_key;
+
+    size_t                       pub_key_size = sizeof(p_pub->key);
+    size_t                       prv_key_size = sizeof(p_prv->key);
+
+    mutex_locked = cc310_backend_mutex_trylock();
+    VERIFY_TRUE(mutex_locked, NRF_ERROR_CRYPTO_BUSY);
+
+    cc310_backend_enable();
+
+    crys_error = CRYS_ECEDW_KeyPair(p_prv->key,
+                                    &prv_key_size,
+                                    p_pub->key,
+                                    &pub_key_size,
+                                    p_context,
+                                    nrf_crypto_backend_cc310_rng,
+                                    &p_ctx->temp_data);
+
+    cc310_backend_disable();
+
+    cc310_backend_mutex_unlock();
+
+    result = nrf_crypto_backend_cc310_ecc_error_convert(crys_error);
+    return result;
+}
+
+
+ret_code_t nrf_crypto_backend_cc310_ed25519_private_key_from_raw(
+    void          * p_key,
+    uint8_t const * p_raw_data)
+{
+    uint8_t                 pub_key_dummy[CRYS_ECEDW_ORD_SIZE_IN_BYTES]; // Throw away buffer
+    CRYSError_t             crys_error;
+    bool                    mutex_locked;
+    ret_code_t              result;
+    CRYS_ECEDW_TempBuff_t * p_temp_data = NULL;
+
+    nrf_crypto_backend_ed25519_private_key_t * p_internal_prv_key =
+        (nrf_crypto_backend_ed25519_private_key_t *)p_key;
+
+    size_t                  prv_key_size = sizeof(p_internal_prv_key->key);
+    size_t                  pub_key_size = sizeof(pub_key_dummy);
+ 
+    // Generate public key using CRYS_ECEDW_SeedKeyPair
+    mutex_locked = cc310_backend_mutex_trylock();
+    VERIFY_TRUE(mutex_locked, NRF_ERROR_CRYPTO_BUSY);
+
+    // Use memory allocation (instead of stack) for the temporary data, as it is ~700 bytes.
+    p_temp_data = NRF_CRYPTO_ALLOC(sizeof(CRYS_ECEDW_TempBuff_t));
+    if (p_temp_data == NULL)
+    {
+        return NRF_ERROR_CRYPTO_ALLOC_FAILED;
+    }
+
+    cc310_backend_enable();
+
+    crys_error = CRYS_ECEDW_SeedKeyPair(p_raw_data,
+                                        CRYS_ECEDW_ORD_SIZE_IN_BYTES,
+                                        p_internal_prv_key->key,
+                                        &prv_key_size,
+                                        pub_key_dummy,
+                                        &pub_key_size,
+                                        p_temp_data);
+
+    cc310_backend_disable();
+
+    cc310_backend_mutex_unlock();
+
+    NRF_CRYPTO_FREE(p_temp_data);
+
+    result = nrf_crypto_backend_cc310_ecc_error_convert(crys_error);
+    return result;
+}
+
+
+ret_code_t nrf_crypto_backend_cc310_ed25519_private_key_to_raw(
+    void const * p_key,
+    uint8_t    * p_raw_data)
+{
+    nrf_crypto_backend_ed25519_private_key_t * p_internal_key =
+        (nrf_crypto_backend_ed25519_private_key_t *)p_key;
+
+    memcpy(p_raw_data, p_internal_key->key, CRYS_ECEDW_ORD_SIZE_IN_BYTES);
+
+    return NRF_SUCCESS;
+}
+
+
+ret_code_t nrf_crypto_backend_cc310_ed25519_public_key_from_raw(
+    void          * p_key,
+    uint8_t const * p_raw_data)
+{
+    nrf_crypto_backend_ed25519_public_key_t * p_internal_key =
+        (nrf_crypto_backend_ed25519_public_key_t *)p_key;
+
+    memcpy(p_internal_key->key, p_raw_data, sizeof(p_internal_key->key));
+
+    return NRF_SUCCESS;
+}
+
+
+ret_code_t nrf_crypto_backend_cc310_ed25519_public_key_to_raw(
+    void const * p_key,
+    uint8_t    * p_raw_data)
+{
+    nrf_crypto_backend_ed25519_public_key_t * p_internal_key =
+        (nrf_crypto_backend_ed25519_public_key_t *)p_key;
+
+    memcpy(p_raw_data, p_internal_key->key, sizeof(p_internal_key->key));
+
+    return NRF_SUCCESS;
+}
+
+
+ret_code_t nrf_crypto_backend_ed25519_public_key_calculate(
+    void       * p_context,
+    void const * p_private_key,
+    void       * p_public_key)
+{
+    nrf_crypto_backend_ed25519_private_key_t * p_prv =
+        (nrf_crypto_backend_ed25519_private_key_t *)p_private_key;
+
+    nrf_crypto_backend_ed25519_public_key_t * p_pub =
+        (nrf_crypto_backend_ed25519_public_key_t *)p_public_key;
+
+    memcpy(p_pub->key, p_prv->key+CRYS_ECEDW_ORD_SIZE_IN_BYTES, CRYS_ECEDW_ORD_SIZE_IN_BYTES);
+
+    return NRF_SUCCESS;
+}
+
+#endif // NRF_MODULE_ENABLED(NRF_CRYPTO_BACKEND_CC310_ECC_ED25519)
+
+
 #if NRF_MODULE_ENABLED(NRF_CRYPTO_BACKEND_CC310_ECC_SECP160R1)
 const nrf_crypto_ecc_curve_info_t g_nrf_crypto_ecc_secp160r1_curve_info =
 {
@@ -457,6 +694,32 @@ const nrf_crypto_ecc_curve_info_t g_nrf_crypto_ecc_secp256k1_curve_info =
     .raw_private_key_size = NRF_CRYPTO_ECC_SECP256K1_RAW_PRIVATE_KEY_SIZE,
     .raw_public_key_size  = NRF_CRYPTO_ECC_SECP256K1_RAW_PUBLIC_KEY_SIZE,
     .p_backend_data       = (void *)CRYS_ECPKI_DomainID_secp256k1,
+};
+#endif
+
+
+#if NRF_MODULE_ENABLED(NRF_CRYPTO_BACKEND_CC310_ECC_CURVE25519)
+const nrf_crypto_ecc_curve_info_t g_nrf_crypto_ecc_curve25519_curve_info =
+{
+    .public_key_size      = sizeof(nrf_crypto_backend_curve25519_public_key_t),
+    .private_key_size     = sizeof(nrf_crypto_backend_curve25519_private_key_t),
+    .curve_type           = NRF_CRYPTO_ECC_CURVE25519_CURVE_TYPE,
+    .raw_private_key_size = NRF_CRYPTO_ECC_CURVE25519_RAW_PRIVATE_KEY_SIZE,
+    .raw_public_key_size  = NRF_CRYPTO_ECC_CURVE25519_RAW_PUBLIC_KEY_SIZE,
+    .p_backend_data       = (void *)CRYS_ECMONT_DOMAIN_CURVE_25519,
+};
+#endif
+
+
+#if NRF_MODULE_ENABLED(NRF_CRYPTO_BACKEND_CC310_ECC_ED25519)
+const nrf_crypto_ecc_curve_info_t g_nrf_crypto_ecc_ed25519_curve_info =
+{
+    .public_key_size      = sizeof(nrf_crypto_backend_ed25519_public_key_t),
+    .private_key_size     = sizeof(nrf_crypto_backend_ed25519_private_key_t),
+    .curve_type           = NRF_CRYPTO_ECC_ED25519_CURVE_TYPE,
+    .raw_private_key_size = NRF_CRYPTO_ECC_ED25519_RAW_PRIVATE_KEY_SIZE,
+    .raw_public_key_size  = NRF_CRYPTO_ECC_ED25519_RAW_PUBLIC_KEY_SIZE,
+    .p_backend_data       = NULL,
 };
 #endif
 

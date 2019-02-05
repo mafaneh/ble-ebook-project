@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2014 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 /**
  * @brief BLE Running Speed and Cadence Collector application main file.
@@ -64,21 +64,22 @@
 #include "app_timer.h"
 #include "bsp_btn_ble.h"
 #include "peer_manager.h"
+#include "peer_manager_handler.h"
 #include "fds.h"
 #include "nrf_fstorage.h"
 #include "ble_conn_state.h"
 #include "nrf_ble_gatt.h"
-#include "ble_advdata.h"
 #include "nrf_pwr_mgmt.h"
+#include "nrf_ble_scan.h"
 
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
 
 
-#define APP_BLE_CONN_CFG_TAG        1                                   /**< A tag identifying the SoftDevice BLE configuration. */
-#define APP_BLE_OBSERVER_PRIO       3                                   /**< Application's BLE observer priority. You shouldn't need to modify this value. */
-#define APP_SOC_OBSERVER_PRIO       1                                   /**< Applications' SoC observer priority. You shoulnd't need to modify this value. */
+#define APP_BLE_CONN_CFG_TAG        1                                   /**< Tag that identifies the BLE configuration of the SoftDevice. */
+#define APP_BLE_OBSERVER_PRIO       3                                   /**< BLE observer priority of the application. There is no need to modify this value. */
+#define APP_SOC_OBSERVER_PRIO       1                                   /**< SoC observer priority of the application. There is no need to modify this value. */
 
 #define SEC_PARAM_BOND              1                                   /**< Perform bonding. */
 #define SEC_PARAM_MITM              0                                   /**< Man In The Middle protection not required. */
@@ -92,17 +93,17 @@
 #define SCAN_INTERVAL               0x00A0                              /**< Determines scan interval in units of 0.625 millisecond. */
 #define SCAN_WINDOW                 0x0050                              /**< Determines scan window in units of 0.625 millisecond. */
 
-#define SCAN_DURATION           0x0000                              /**< Duration of the scanning in units of 10 milliseconds. If set to 0x0000, scanning will continue until it is explicitly disabled. */
+#define SCAN_DURATION           0x0000                              /**< Duration of the scanning in units of 10 milliseconds. If set to 0x0000, scanning continues until it is explicitly disabled. */
 #define SCAN_DURATION_WITELIST  3000                                /**< Duration of the scanning in units of 10 milliseconds. */
 
-#define MIN_CONNECTION_INTERVAL     MSEC_TO_UNITS(7.5, UNIT_1_25_MS)    /**< Determines minimum connection interval in millisecond. */
-#define MAX_CONNECTION_INTERVAL     MSEC_TO_UNITS(30, UNIT_1_25_MS)     /**< Determines maximum connection interval in millisecond. */
+#define MIN_CONNECTION_INTERVAL     MSEC_TO_UNITS(7.5, UNIT_1_25_MS)    /**< Determines minimum connection interval in milliseconds. */
+#define MAX_CONNECTION_INTERVAL     MSEC_TO_UNITS(30, UNIT_1_25_MS)     /**< Determines maximum connection interval in milliseconds. */
 #define SLAVE_LATENCY               0                                   /**< Determines slave latency in counts of connection events. */
-#define SUPERVISION_TIMEOUT         MSEC_TO_UNITS(4000, UNIT_10_MS)     /**< Determines supervision time-out in units of 10 millisecond. */
+#define SUPERVISION_TIMEOUT         MSEC_TO_UNITS(4000, UNIT_10_MS)     /**< Determines supervision timeout in units of 10 millisecond. */
 
 #define TARGET_UUID                 BLE_UUID_RUNNING_SPEED_AND_CADENCE  /**< Target UUID that the application looks for. */
 
-/**@brief Variable length data encapsulation in terms of length and pointer to data */
+/**@brief Variable length data encapsulation in terms of length and pointer to data. */
 typedef struct
 {
     uint8_t * p_data;   /**< Pointer to data. */
@@ -110,7 +111,7 @@ typedef struct
 } data_t;
 
 
-/**@brief Strings to display data retrieved by Device Information service client module */
+/**@brief Strings to display data retrieved by Device Information Service client module. */
 static char const * const m_dis_char_names[] =
 {
     "Manufacturer Name String",
@@ -125,48 +126,41 @@ static char const * const m_dis_char_names[] =
 };
 
 
-BLE_DIS_C_DEF(m_ble_dis_c);                                 /**< Device Information service client instance. */
-BLE_RSCS_C_DEF(m_rscs_c);                                   /**< Running speed and cadence service client instance. */
+BLE_DIS_C_DEF(m_ble_dis_c);                                 /**< Device Information Service client instance. */
+BLE_RSCS_C_DEF(m_rscs_c);                                   /**< Running Speed and Cadence Service client instance. */
 NRF_BLE_GATT_DEF(m_gatt);                                   /**< GATT module instance. */
-BLE_DB_DISCOVERY_DEF(m_db_disc);                            /**< DB discovery module instance. */
+BLE_DB_DISCOVERY_DEF(m_db_disc);                            /**< Database discovery module instance. */
+NRF_BLE_SCAN_DEF(m_scan);                                   /**< Scanning Module instance. */
 
 static uint16_t              m_conn_handle;                 /**< Current connection handle. */
-static bool                  m_whitelist_disabled;          /**< True if whitelist has been temporarily disabled. */
+static bool                  m_whitelist_disabled;          /**< True if the whitelist is temporarily disabled. */
 static bool                  m_memory_access_in_progress;   /**< Flag to keep track of ongoing operations on persistent memory. */
 static bool                  m_rscs_log_enabled;            /**< Flag to enable logs related with RSCS measurements. */
 
-static ble_gap_scan_params_t m_scan_param;                                         /**< Scan parameters requested for scanning and connection. */
-static uint8_t               m_scan_buffer_data[BLE_GAP_SCAN_BUFFER_EXTENDED_MIN]; /**< buffer where advertising reports will be stored by the SoftDevice. */
-
-/**@brief Pointer to the buffer where advertising reports will be stored by the SoftDevice. */
-static ble_data_t m_scan_buffer =
+static ble_gap_scan_params_t m_scan_param =                 /**< Scan parameters requested for scanning and connection. */
 {
-    m_scan_buffer_data,
-    BLE_GAP_SCAN_BUFFER_EXTENDED_MIN
-};
-
-/**@brief Connection parameters requested for connection. */
-static ble_gap_conn_params_t const m_connection_param =
-{
-    (uint16_t)MIN_CONNECTION_INTERVAL, // Minimum connection.
-    (uint16_t)MAX_CONNECTION_INTERVAL, // Maximum connection.
-    (uint16_t)SLAVE_LATENCY,           // Slave latency.
-    (uint16_t)SUPERVISION_TIMEOUT      // Supervision time-out.
+    .active        = 0x01,
+    .interval      = NRF_BLE_SCAN_SCAN_INTERVAL,
+    .window        = NRF_BLE_SCAN_SCAN_WINDOW,
+    .filter_policy = BLE_GAP_SCAN_FP_WHITELIST,
+    .timeout       = SCAN_DURATION_WITELIST,
+    .scan_phys     = BLE_GAP_PHY_1MBPS,
+    .extended      = 1,
 };
 
 static void scan_start(void);
 
 
-/**@brief Function for asserts in the SoftDevice.
+/**@brief Function for handling asserts in the SoftDevice.
  *
- * @details This function will be called in case of an assert in the SoftDevice.
+ * @details This function is called in case of an assert in the SoftDevice.
  *
- * @warning This handler is an example only and does not fit a final product. You need to analyze
- *          how your product is supposed to react in case of Assert.
+ * @warning This handler is only an example and is not meant for the final product. You need to analyze
+ *          how your product is supposed to react in case of an assert.
  * @warning On assert from the SoftDevice, the system can only recover on reset.
  *
- * @param[in] line_num     Line number of the failing ASSERT call.
- * @param[in] p_file_name  File name of the failing ASSERT call.
+ * @param[in] line_num     Line number of the failing assert call.
+ * @param[in] p_file_name  File name of the failing assert call.
  */
 void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
 {
@@ -176,8 +170,8 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
 
 /**@brief Function for handling database discovery events.
  *
- * @details This function is callback function to handle events from the database discovery module.
- *          Depending on the UUIDs that are discovered, this function should forward the events
+ * @details This function is a callback function to handle events from the database discovery module.
+ *          Depending on the UUIDs that are discovered, this function forwards the events
  *          to their respective services.
  *
  * @param[in] p_event  Pointer to the database discovery event.
@@ -196,117 +190,16 @@ static void db_disc_handler(ble_db_discovery_evt_t * p_evt)
  */
 static void pm_evt_handler(pm_evt_t const * p_evt)
 {
-    ret_code_t err_code;
+    pm_handler_on_pm_evt(p_evt);
+    pm_handler_disconnect_on_sec_failure(p_evt);
+    pm_handler_flash_clean(p_evt);
 
     switch (p_evt->evt_id)
     {
-        case PM_EVT_BONDED_PEER_CONNECTED:
-        {
-            NRF_LOG_INFO("Connected to a previously bonded device.");
-        } break;
-
-        case PM_EVT_CONN_SEC_SUCCEEDED:
-        {
-            NRF_LOG_INFO("Connection secured: role: %d, conn_handle: 0x%x, procedure: %d.",
-                         ble_conn_state_role(p_evt->conn_handle),
-                         p_evt->conn_handle,
-                         p_evt->params.conn_sec_succeeded.procedure);
-        } break;
-
-        case PM_EVT_CONN_SEC_FAILED:
-        {
-            /* Often, when securing fails, it shouldn't be restarted, for security reasons.
-             * Other times, it can be restarted directly.
-             * Sometimes it can be restarted, but only after changing some Security Parameters.
-             * Sometimes, it cannot be restarted until the link is disconnected and reconnected.
-             * Sometimes it is impossible, to secure the link, or the peer device does not support it.
-             * How to handle this error is highly application dependent. */
-        } break;
-
-        case PM_EVT_CONN_SEC_CONFIG_REQ:
-        {
-            // Reject pairing request from an already bonded peer.
-            pm_conn_sec_config_t conn_sec_config = {.allow_repairing = false};
-            pm_conn_sec_config_reply(p_evt->conn_handle, &conn_sec_config);
-        } break;
-
-        case PM_EVT_CONN_SEC_PARAMS_REQ:
-        {
-            ble_gap_sec_params_t sec_param;
-
-            memset(&sec_param, 0, sizeof(ble_gap_sec_params_t));
-
-            // Security parameters to be used for all security procedures.
-            sec_param.bond           = SEC_PARAM_BOND;
-            sec_param.mitm           = SEC_PARAM_MITM;
-            sec_param.lesc           = SEC_PARAM_LESC;
-            sec_param.keypress       = SEC_PARAM_KEYPRESS;
-            sec_param.io_caps        = SEC_PARAM_IO_CAPABILITIES;
-            sec_param.oob            = SEC_PARAM_OOB;
-            sec_param.min_key_size   = SEC_PARAM_MIN_KEY_SIZE;
-            sec_param.max_key_size   = SEC_PARAM_MAX_KEY_SIZE;
-            sec_param.kdist_own.enc  = 1;
-            sec_param.kdist_own.id   = 1;
-            sec_param.kdist_peer.enc = 1;
-            sec_param.kdist_peer.id  = 1;
-
-            err_code = pm_conn_sec_params_reply(p_evt->conn_handle,
-                                               &sec_param,
-                                                p_evt->params.conn_sec_params_req.p_context);
-            APP_ERROR_CHECK(err_code);
-        } break;
-
-        case PM_EVT_STORAGE_FULL:
-        {
-            // Run garbage collection on the flash.
-            err_code = fds_gc();
-            if (err_code == FDS_ERR_NO_SPACE_IN_QUEUES)
-            {
-                // Retry.
-            }
-            else
-            {
-                APP_ERROR_CHECK(err_code);
-            }
-        } break;
-
         case PM_EVT_PEERS_DELETE_SUCCEEDED:
-        {
             scan_start();
-        } break;
+            break;
 
-        case PM_EVT_PEER_DATA_UPDATE_FAILED:
-        {
-            // Assert.
-            APP_ERROR_CHECK(p_evt->params.peer_data_update_failed.error);
-        } break;
-
-        case PM_EVT_PEER_DELETE_FAILED:
-        {
-            // Assert.
-            APP_ERROR_CHECK(p_evt->params.peer_delete_failed.error);
-        } break;
-
-        case PM_EVT_PEERS_DELETE_FAILED:
-        {
-            // Assert.
-            APP_ERROR_CHECK(p_evt->params.peers_delete_failed_evt.error);
-        } break;
-
-        case PM_EVT_ERROR_UNEXPECTED:
-        {
-            // Assert.
-            APP_ERROR_CHECK(p_evt->params.error_unexpected.error);
-        } break;
-
-        case PM_EVT_CONN_SEC_START:
-        case PM_EVT_PEER_DATA_UPDATE_SUCCEEDED:
-        case PM_EVT_PEER_DELETE_SUCCEEDED:
-        case PM_EVT_LOCAL_DB_CACHE_APPLIED:
-        case PM_EVT_LOCAL_DB_CACHE_APPLY_FAILED:
-            // This can happen when the local DB has changed.
-        case PM_EVT_SERVICE_CHANGED_IND_SENT:
-        case PM_EVT_SERVICE_CHANGED_IND_CONFIRMED:
         default:
             break;
     }
@@ -314,7 +207,7 @@ static void pm_evt_handler(pm_evt_t const * p_evt)
 
 
 /**
- * @brief Function for shutdown events.
+ * @brief Function for handling shutdown events.
  *
  * @param[in]   event       Shutdown type.
  */
@@ -342,47 +235,6 @@ static bool shutdown_handler(nrf_pwr_mgmt_evt_t event)
 
 NRF_PWR_MGMT_HANDLER_REGISTER(shutdown_handler, APP_SHUTDOWN_HANDLER_PRIORITY);
 
-
-/**@brief Function for handling the advertising report BLE event.
- *
- * @param[in] p_adv_report  Advertising report from the SoftDevice.
- */
-static void on_adv_report(ble_gap_evt_adv_report_t const * p_adv_report)
-{
-    ret_code_t err_code;
-    ble_uuid_t target_uuid = {.uuid = TARGET_UUID, .type = BLE_UUID_TYPE_BLE};
-
-    if (ble_advdata_uuid_find(p_adv_report->data.p_data, p_adv_report->data.len, &target_uuid))
-    {
-        // Stop scanning.
-        (void) sd_ble_gap_scan_stop();
-
-        err_code = bsp_indication_set(BSP_INDICATE_IDLE);
-        APP_ERROR_CHECK(err_code);
-
-        // Initiate connection.
-        m_scan_param.filter_policy = BLE_GAP_SCAN_FP_ACCEPT_ALL,
-
-        err_code = sd_ble_gap_connect(&p_adv_report->peer_addr,
-                                      &m_scan_param,
-                                      &m_connection_param,
-                                      APP_BLE_CONN_CFG_TAG);
-
-        m_whitelist_disabled = false;
-
-        if (err_code != NRF_SUCCESS)
-        {
-            NRF_LOG_DEBUG("Connection Request Failed, reason 0x%x", err_code);
-        }
-    }
-    else
-    {
-        err_code = sd_ble_gap_scan_start(NULL, &m_scan_buffer);
-        APP_ERROR_CHECK(err_code);
-    }
-}
-
-
 /**@brief Function for handling BLE events.
  *
  * @param[in]   p_ble_evt   Bluetooth stack event.
@@ -397,7 +249,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
     {
         case BLE_GAP_EVT_CONNECTED:
         {
-            // Discover peer's services.
+            // Discover the peer's services.
             err_code = ble_db_discovery_start(&m_db_disc, p_ble_evt->evt.gap_evt.conn_handle);
             APP_ERROR_CHECK(err_code);
 
@@ -410,19 +262,9 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             }
         } break;
 
-        case BLE_GAP_EVT_ADV_REPORT:
-        {
-            on_adv_report(&p_gap_evt->params.adv_report);
-        } break; // BLE_GAP_EVT_ADV_REPORT
-
         case BLE_GAP_EVT_TIMEOUT:
         {
-            if (p_gap_evt->params.timeout.src == BLE_GAP_TIMEOUT_SRC_SCAN)
-            {
-                NRF_LOG_INFO("Scan timed out.");
-                scan_start();
-            }
-            else if (p_gap_evt->params.timeout.src == BLE_GAP_TIMEOUT_SRC_CONN)
+            if (p_gap_evt->params.timeout.src == BLE_GAP_TIMEOUT_SRC_CONN)
             {
                 NRF_LOG_DEBUG("Connection Request timed out.");
             }
@@ -438,6 +280,10 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
 
         case BLE_GAP_EVT_DISCONNECTED:
         {
+            NRF_LOG_INFO("Disconnected. conn_handle: 0x%x, reason: 0x%x",
+                         p_gap_evt->conn_handle,
+                         p_gap_evt->params.disconnected.reason);
+
             if (ble_conn_state_central_conn_count() < NRF_SDH_BLE_CENTRAL_LINK_COUNT)
             {
                 scan_start();
@@ -534,7 +380,7 @@ static void ble_stack_init(void)
     NRF_SDH_SOC_OBSERVER(m_soc_observer, APP_SOC_OBSERVER_PRIO, soc_evt_handler, NULL);
 }
 
-/**@brief Function for disabling the use of whitelist for scanning.
+/**@brief Function for disabling the use of the whitelist for scanning.
  */
 static void whitelist_disable(void)
 {
@@ -542,7 +388,7 @@ static void whitelist_disable(void)
     {
         NRF_LOG_INFO("Whitelist temporarily disabled.");
         m_whitelist_disabled = true;
-        (void) sd_ble_gap_scan_stop();
+        nrf_ble_scan_stop();
         scan_start();
     }
 }
@@ -581,7 +427,7 @@ void bsp_event_handler(bsp_event_t event)
 }
 
 
-/**@brief Running Speed and Cadence Collector Handler.
+/**@brief Running Speed and Cadence collector handler.
  */
 static void rscs_c_evt_handler(ble_rscs_c_t * p_rsc_c, ble_rscs_c_evt_t * p_rsc_c_evt)
 {
@@ -597,13 +443,16 @@ static void rscs_c_evt_handler(ble_rscs_c_t * p_rsc_c, ble_rscs_c_evt_t * p_rsc_
             APP_ERROR_CHECK(err_code);
 
             err_code = pm_conn_secure(p_rsc_c_evt->conn_handle, false);
-            APP_ERROR_CHECK(err_code);
+            if (err_code != NRF_ERROR_BUSY)
+            {
+                APP_ERROR_CHECK(err_code);
+            }
 
-            // Running Speed and Cadence service discovered. Enable Running Speed and Cadence notifications.
+            // Running Speed and Cadence Service discovered. Enable Running Speed and Cadence notifications.
             err_code = ble_rscs_c_rsc_notif_enable(p_rsc_c);
             APP_ERROR_CHECK(err_code);
 
-            NRF_LOG_INFO("Running Speed and Cadence service discovered.");
+            NRF_LOG_INFO("Running Speed and Cadence Service discovered.");
             break;
 
         case BLE_RSCS_C_EVT_RSC_NOTIFICATION:
@@ -669,7 +518,7 @@ static uint32_t ble_dis_c_all_chars_read(void)
 }
 
 
-/**@brief Function for logging string characteristics that can be present in DIS.
+/**@brief Function for logging string characteristics that can be present in Device Information Service.
  *
  * @param[in] char_type Type of string characteristic.
  * @param[in] p_string  Response data of the characteristic that has been read.
@@ -693,9 +542,9 @@ static void ble_dis_c_string_char_log(ble_dis_c_char_type_t            char_type
 }
 
 
-/**@brief Function for logging System ID characteristic data that can be present in DIS.
+/**@brief Function for logging System ID characteristic data that can be present in Device Information Service.
  *
- * @param[in] p_sys_id Pointer to structure describing the content of System ID characteristic.
+ * @param[in] p_sys_id Pointer to structure that describes the content of the System ID characteristic.
  */
 static void ble_dis_c_system_id_log(ble_dis_sys_id_t const * const p_sys_id)
 {
@@ -708,7 +557,7 @@ static void ble_dis_c_system_id_log(ble_dis_sys_id_t const * const p_sys_id)
 /**@brief Function for logging IEEE 11073-20601 Regulatory Certification Data List characteristic
  *        data that can be present in DIS.
  *
- * @param[in] p_cert_list  Pointer to structure describing the content of Certification Data List
+ * @param[in] p_cert_list  Pointer to structure that describes the content of Certification Data List
  *                         characteristic.
  */
 static void ble_dis_c_cert_list_log(ble_dis_reg_cert_data_list_t const * const p_cert_list)
@@ -718,9 +567,9 @@ static void ble_dis_c_cert_list_log(ble_dis_reg_cert_data_list_t const * const p
 }
 
 
-/**@brief Function for logging PnP ID characteristic data that can be present in DIS.
+/**@brief Function for logging PnP ID characteristic data that can be present in Device Information Service.
  *
- * @param[in] p_pnp_id Pointer to structure describing the content of PnP ID characteristic.
+ * @param[in] p_pnp_id Pointer to structure that describes the content of PnP ID characteristic.
  */
 static void ble_dis_c_pnp_id_log(ble_dis_pnp_id_t const * const p_pnp_id)
 {
@@ -732,7 +581,7 @@ static void ble_dis_c_pnp_id_log(ble_dis_pnp_id_t const * const p_pnp_id)
 }
 
 
-/**@brief Device Information service client Handler.
+/**@brief Device Information Service client handler.
  */
 static void ble_dis_c_evt_handler(ble_dis_c_t * p_ble_dis_c, ble_dis_c_evt_t const * p_ble_dis_evt)
 {
@@ -750,7 +599,7 @@ static void ble_dis_c_evt_handler(ble_dis_c_t * p_ble_dis_c, ble_dis_c_evt_t con
 
             disc_chars_num     = ble_dis_c_all_chars_read();
             disc_chars_handled = 0;
-            NRF_LOG_INFO("Device Information service discovered.");
+            NRF_LOG_INFO("Device Information Service discovered.");
             break;
 
         case BLE_DIS_C_EVT_DIS_C_READ_RSP:
@@ -828,7 +677,7 @@ static void rscs_c_init(void)
 }
 
 
-/**@brief Function for initializing the DIS Client. */
+/**@brief Function for initializing the Device Information Service client. */
 static void dis_c_init(void)
 {
     ret_code_t       err_code;
@@ -842,24 +691,43 @@ static void dis_c_init(void)
 }
 
 
-/**@brief Function for the Peer Manager initialization.
+/**@brief Function for initializing the Peer Manager.
  *
- * @param[in] erase_bonds  Indicates whether bonding information should be cleared from
- *                         persistent storage during initialization of the Peer Manager.
+ * @param[in] erase_bonds  Indicates whether the bonding information must be cleared from
+ *                         persistent storage during the initialization of the Peer Manager.
  */
 static void peer_manager_init()
 {
-    ret_code_t err_code;
+    ret_code_t           err_code;
+    ble_gap_sec_params_t sec_param;
 
     err_code = pm_init();
     APP_ERROR_CHECK(err_code);
 
     err_code = pm_register(pm_evt_handler);
     APP_ERROR_CHECK(err_code);
+
+    memset(&sec_param, 0, sizeof(ble_gap_sec_params_t));
+    // Security parameters to be used for all security procedures.
+    sec_param.bond           = SEC_PARAM_BOND;
+    sec_param.mitm           = SEC_PARAM_MITM;
+    sec_param.lesc           = SEC_PARAM_LESC;
+    sec_param.keypress       = SEC_PARAM_KEYPRESS;
+    sec_param.io_caps        = SEC_PARAM_IO_CAPABILITIES;
+    sec_param.oob            = SEC_PARAM_OOB;
+    sec_param.min_key_size   = SEC_PARAM_MIN_KEY_SIZE;
+    sec_param.max_key_size   = SEC_PARAM_MAX_KEY_SIZE;
+    sec_param.kdist_own.enc  = 1;
+    sec_param.kdist_own.id   = 1;
+    sec_param.kdist_peer.enc = 1;
+    sec_param.kdist_peer.id  = 1;
+
+    err_code = pm_sec_params_set(&sec_param);
+    APP_ERROR_CHECK(err_code);
 }
 
 
-/**@brief Clear bond information from persistent storage.
+/**@brief Clear bonding information from the persistent storage.
  */
 static void delete_bonds(void){
     ret_code_t err_code;
@@ -915,13 +783,13 @@ static void whitelist_load()
     memset(peers, PM_PEER_ID_INVALID, sizeof(peers));
     peer_cnt = (sizeof(peers) / sizeof(pm_peer_id_t));
 
-    // Load all peers from flash and whitelist them.
+    // Load all peers from the flash and whitelist them.
     peer_list_get(peers, &peer_cnt);
 
     ret = pm_whitelist_set(peers, peer_cnt);
     APP_ERROR_CHECK(ret);
 
-    // Setup the device identies list.
+    // Setup the list of device identities.
     // Some SoftDevices do not support this feature.
     ret = pm_device_identities_list_set(peers, peer_cnt);
     if (ret != NRF_ERROR_NOT_SUPPORTED)
@@ -931,17 +799,8 @@ static void whitelist_load()
 }
 
 
-/**@brief Function to start scanning.
- */
-static void scan_start(void)
+static void on_whitelist_req(void)
 {
-    // If there is any pending write to flash, defer scanning until it completes.
-    if (nrf_fstorage_is_busy(NULL))
-    {
-        m_memory_access_in_progress = true;
-        return;
-    }
-
     // Whitelist buffers.
     ble_gap_addr_t whitelist_addrs[8];
     ble_gap_irk_t  whitelist_irks[8];
@@ -957,43 +816,118 @@ static void scan_start(void)
 
     ret_code_t ret;
 
-    // Get the whitelist previously set using pm_whitelist_set().
+    // Get the whitelist previously set with pm_whitelist_set().
     ret = pm_whitelist_get(whitelist_addrs, &addr_cnt,
                            whitelist_irks,  &irk_cnt);
-
-    m_scan_param.active    = 0;
-    m_scan_param.interval  = SCAN_INTERVAL;
-    m_scan_param.window    = SCAN_WINDOW;
-    m_scan_param.extended  = true;
-    m_scan_param.scan_phys = BLE_GAP_PHY_1MBPS;
 
     if (((addr_cnt == 0) && (irk_cnt == 0)) ||
         (m_whitelist_disabled))
     {
-        // Don't use whitelist.
-        m_scan_param.timeout           = SCAN_DURATION;
-        m_scan_param.filter_policy     = BLE_GAP_SCAN_FP_ACCEPT_ALL;
+        m_scan_param.filter_policy = BLE_GAP_SCAN_FP_ACCEPT_ALL;
+
+        ret = nrf_ble_scan_params_set(&m_scan, &m_scan_param);
+        APP_ERROR_CHECK(ret);
     }
-    else
+}
+
+
+/**@brief Function for handling Scanning Module events.
+ */
+static void scan_evt_handler(scan_evt_t const * p_scan_evt)
+{
+    ret_code_t err_code;
+    switch(p_scan_evt->scan_evt_id)
     {
-        // Use whitelist.
-        m_scan_param.filter_policy    = BLE_GAP_SCAN_FP_WHITELIST;
-        m_scan_param.timeout          = SCAN_DURATION_WITELIST;
+        case NRF_BLE_SCAN_EVT_WHITELIST_REQUEST:
+        {
+            on_whitelist_req();
+            m_whitelist_disabled = false;
+        } break;
+
+        case NRF_BLE_SCAN_EVT_CONNECTING_ERROR:
+        {
+            err_code = p_scan_evt->params.connecting_err.err_code;
+            APP_ERROR_CHECK(err_code);
+        } break;
+
+        case NRF_BLE_SCAN_EVT_SCAN_TIMEOUT:
+        {
+            NRF_LOG_INFO("Scan timed out.");
+            scan_start();
+        } break;
+
+        case NRF_BLE_SCAN_EVT_FILTER_MATCH:
+            break;
+        case NRF_BLE_SCAN_EVT_WHITELIST_ADV_REPORT:
+            break;
+
+        default:
+          break;
+    }
+}
+
+
+/**@brief Function for initializing the scanning and setting the filters.
+ */
+static void scan_init(void)
+{
+    ret_code_t          err_code;
+    nrf_ble_scan_init_t init_scan;
+
+    ble_uuid_t uuid =
+    {
+        .type = BLE_UUID_TYPE_BLE,
+        .uuid = TARGET_UUID,
+    };
+
+    memset(&init_scan, 0, sizeof(init_scan));
+
+    init_scan.connect_if_match = true;
+    init_scan.conn_cfg_tag     = APP_BLE_CONN_CFG_TAG;
+    init_scan.p_scan_param     = &m_scan_param;
+
+    err_code = nrf_ble_scan_init(&m_scan, &init_scan, scan_evt_handler);
+    APP_ERROR_CHECK(err_code);
+
+    err_code = nrf_ble_scan_filter_set(&m_scan, SCAN_UUID_FILTER, &uuid);
+    APP_ERROR_CHECK(err_code);
+
+    err_code = nrf_ble_scan_filters_enable(&m_scan, NRF_BLE_SCAN_UUID_FILTER, false);
+    APP_ERROR_CHECK(err_code);
+}
+
+
+/**@brief Function for starting scanning.
+ */
+static void scan_start(void)
+{
+    ret_code_t err_code;
+
+    // If there is any pending write to flash, defer scanning until it completes.
+    if (nrf_fstorage_is_busy(NULL))
+    {
+        m_memory_access_in_progress = true;
+        return;
     }
 
     NRF_LOG_INFO("Starting scan.");
 
-    ret = sd_ble_gap_scan_start(&m_scan_param, &m_scan_buffer);
-    APP_ERROR_CHECK(ret);
+    m_scan_param.filter_policy = BLE_GAP_SCAN_FP_WHITELIST;
 
-    ret = bsp_indication_set(BSP_INDICATE_SCANNING);
-    APP_ERROR_CHECK(ret);
+    err_code = nrf_ble_scan_params_set(&m_scan, &m_scan_param);
+    APP_ERROR_CHECK(err_code);
+
+    err_code = nrf_ble_scan_start(&m_scan);
+    APP_ERROR_CHECK(err_code);
+
+    err_code = bsp_indication_set(BSP_INDICATE_SCANNING);
+    APP_ERROR_CHECK(err_code);
 }
 
 
-/**@brief Function for initializing buttons and leds.
+/**@brief Function for initializing buttons and LEDs.
  *
- * @param[out] p_erase_bonds  Will be true if the clear bonding button was pressed to wake the application up.
+ * @param[out] p_erase_bonds  True if the clear bonding button was pressed to wake the application up.
  */
 static void buttons_leds_init(bool * p_erase_bonds)
 {
@@ -1048,7 +982,7 @@ static void power_management_init(void)
 
 /**@brief Function for handling the idle state (main loop).
  *
- * @details Handle any pending log operation(s), then sleep until the next event occurs.
+ * @details Handles any pending log operations, then sleeps until the next event occurs.
  */
 static void idle_state_handle(void)
 {
@@ -1059,10 +993,10 @@ static void idle_state_handle(void)
 }
 
 
-/**@brief Function for starting a scan, or instead trigger it from peer manager (after
+/**@brief Function for starting a scan, or instead triggering it from the peer manager (after
  *        deleting bonds).
  *
- * @param[in] p_erase_bonds Pointer to a bool to determine if bonds will be deleted before scanning.
+ * @param[in] p_erase_bonds Pointer to a bool to determine whether bonds are to be deleted before scanning.
  */
 void scanning_start(bool * p_erase_bonds)
 {
@@ -1095,6 +1029,7 @@ int main(void)
     db_discovery_init();
     rscs_c_init();
     dis_c_init();
+    scan_init();
 
     whitelist_load();
 

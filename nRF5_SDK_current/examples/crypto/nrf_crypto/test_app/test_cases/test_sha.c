@@ -1,30 +1,30 @@
 /**
- * Copyright (c) 2018 - 2018, Nordic Semiconductor ASA
- * 
+ * Copyright (c) 2018, Nordic Semiconductor ASA
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 
 #include <stdio.h>
@@ -59,21 +59,33 @@
 NRF_SECTION_DEF(test_vector_hash_data, test_vector_hash_t);
 NRF_SECTION_DEF(test_vector_hash_long_data, test_vector_hash_t);
 
-#define CONTEXT_SIZE                240                                                                         /**< Temporary context size define. */
-#define INPUT_BUF_SIZE              4125                                                                        /**< Input buffer size for SHA. */
-#define TEST_VECTOR_SHA_GET(i)      NRF_SECTION_ITEM_GET(test_vector_hash_data, test_vector_hash_t, (i))        /**< Get number of SHA test vectors. */
-#define TEST_VECTOR_SHA_COUNT       NRF_SECTION_ITEM_COUNT(test_vector_hash_data, test_vector_hash_t)           /**< Get test vector reference from array of test vectors. */
-#define TEST_VECTOR_LONG_SHA_GET(i) NRF_SECTION_ITEM_GET(test_vector_hash_long_data, test_vector_hash_t, (i))   /**< Get number of long SHA test vectors. */
-#define TEST_VECTOR_LONG_SHA_COUNT  NRF_SECTION_ITEM_COUNT(test_vector_hash_long_data, test_vector_hash_t)      /**< Get test vector reference from array of long test vectors. */
+#define CONTEXT_SIZE                (240)                                      /**< Temporary context size define. */
+#define INPUT_BUF_SIZE              (4125)                                     /**< Input buffer size for SHA. */
 
-nrf_crypto_hash_context_t hash_context;                                                                         /**< Hash context. */
+/**< Get number of the SHA test vectors. */
+#define TEST_VECTOR_SHA_GET(i)      \
+    NRF_SECTION_ITEM_GET(test_vector_hash_data, test_vector_hash_t, (i))
 
-static uint8_t m_sha_input_buf[INPUT_BUF_SIZE];                                                                 /**< Buffer for storing unhexified m_sha_input_buf data. */
-static uint8_t m_sha_output_buf[NRF_CRYPTO_HASH_SIZE_SHA512];                                                   /**< Buffer for holding the calculated hash. */
-static uint8_t m_sha_expected_output_buf[NRF_CRYPTO_HASH_SIZE_SHA512];                                          /**< Buffer for storing unhexified expected ouput data. */
+/**< Get the test vector reference from the array of test vectors. */
+#define TEST_VECTOR_SHA_COUNT       \
+    NRF_SECTION_ITEM_COUNT(test_vector_hash_data, test_vector_hash_t)
+
+/**< Get the number of long SHA test vectors. */
+#define TEST_VECTOR_LONG_SHA_GET(i) \
+    NRF_SECTION_ITEM_GET(test_vector_hash_long_data, test_vector_hash_t, (i))
+
+/**< Get the test vector reference from the array of long test vectors. */
+#define TEST_VECTOR_LONG_SHA_COUNT  \
+    NRF_SECTION_ITEM_COUNT(test_vector_hash_long_data, test_vector_hash_t)
+
+static nrf_crypto_hash_context_t hash_context;                                 /**< Hash context. */
+
+static uint8_t m_sha_input_buf[INPUT_BUF_SIZE];                                /**< Buffer for storing the unhexified m_sha_input_buf data. */
+static uint8_t m_sha_output_buf[NRF_CRYPTO_HASH_SIZE_SHA512];                  /**< Buffer for holding the calculated hash. */
+static uint8_t m_sha_expected_output_buf[NRF_CRYPTO_HASH_SIZE_SHA512];         /**< Buffer for storing the unhexified expected ouput data. */
 
 
-/**@brief Function for running test setup.
+/**@brief Function for running the test setup.
  */
 ret_code_t setup_test_case_sha(void)
 {
@@ -81,7 +93,7 @@ ret_code_t setup_test_case_sha(void)
 }
 
 
-/**@brief Function for test execution.
+/**@brief Function for the test execution.
  */
 ret_code_t exec_test_case_sha(test_info_t * p_test_info)
 {
@@ -106,21 +118,21 @@ ret_code_t exec_test_case_sha(test_info_t * p_test_info)
         expected_out_len = unhexify(m_sha_expected_output_buf, p_test_vector->p_expected_output);
         out_len          = expected_out_len;
 
-        // Initialize hash.
+        // Initialize the hash.
         start_time_measurement();
         err_code = nrf_crypto_hash_init(&hash_context, p_test_vector->p_hash_info);
         TEST_VECTOR_ASSERT_ERR_CODE((err_code == NRF_SUCCESS), "nrf_crypto_hash_init");
 
-        // Update hash.
+        // Update the hash.
         err_code = nrf_crypto_hash_update(&hash_context, m_sha_input_buf, in_len);
         TEST_VECTOR_ASSERT_ERR_CODE((err_code == p_test_vector->expected_err_code),
                                     "nrf_crypto_hash_update");
 
-        // Finalize hash.
+        // Finalize the hash.
         err_code = nrf_crypto_hash_finalize(&hash_context, m_sha_output_buf, &out_len);
         stop_time_measurement();
 
-        // Verify nrf_crypto_hash_finalize err_code.
+        // Verify the nrf_crypto_hash_finalize err_code.
         TEST_VECTOR_ASSERT_ERR_CODE((err_code == p_test_vector->expected_err_code),
                                     "nrf_crypto_hash_finalize");
 
@@ -147,7 +159,7 @@ exit_test_vector:
     return NRF_SUCCESS;
 }
 
-/**@brief Function for test execution.
+/**@brief Function for the test execution.
  */
 ret_code_t exec_test_case_sha_combined(test_info_t * p_test_info)
 {
@@ -167,12 +179,12 @@ ret_code_t exec_test_case_sha_combined(test_info_t * p_test_info)
         memset(m_sha_output_buf, 0x00, sizeof(m_sha_output_buf));
         memset(m_sha_expected_output_buf, 0x00, sizeof(m_sha_expected_output_buf));
 
-        // Fetch message to hash.
+        // Fetch message to the hash.
         in_len           = unhexify(m_sha_input_buf, p_test_vector->p_input);
         expected_out_len = unhexify(m_sha_expected_output_buf, p_test_vector->p_expected_output);
         out_len          = expected_out_len;
 
-        // Execute hash method.
+        // Execute the hash method.
         start_time_measurement();
         err_code = nrf_crypto_hash_calculate(&hash_context,
                                              p_test_vector->p_hash_info,
@@ -182,7 +194,7 @@ ret_code_t exec_test_case_sha_combined(test_info_t * p_test_info)
                                              &out_len);
         stop_time_measurement();
 
-        // Verify nrf_crypto_hash_calculate err_code.
+        // Verify the nrf_crypto_hash_calculate err_code.
         TEST_VECTOR_ASSERT_ERR_CODE((err_code == p_test_vector->expected_err_code),
                                     "nrf_crypto_hash_calculate");
 
@@ -210,7 +222,7 @@ exit_test_vector:
 }
 
 
-/**@brief Function for verifying SHA digest of long messages.
+/**@brief Function for verifying the SHA digest of long messages.
  */
 ret_code_t exec_test_case_sha_long(test_info_t * p_test_info)
 {
@@ -238,16 +250,16 @@ ret_code_t exec_test_case_sha_long(test_info_t * p_test_info)
 
         memcpy(m_sha_input_buf, p_test_vector->p_input, in_len);
 
-        // Initialize hash.
+        // Initialize the hash.
         start_time_measurement();
         err_code = nrf_crypto_hash_init(&hash_context, p_test_vector->p_hash_info);
         TEST_VECTOR_ASSERT_ERR_CODE((err_code == p_test_vector->expected_err_code),
                                     "nrf_crypto_hash_init");
 
-        // Update hash until all input data is processed.
+        // Update the hash until all input data is processed.
         for (j = 0; j < p_test_vector->update_iterations; j++)
         {
-            // Test mode for measuring memcpy from flash in SHA.
+            // Test mode for measuring the memcpy from the flash in SHA.
             if (p_test_vector->mode == DO_MEMCPY)
             {
                 memcpy(m_sha_input_buf, p_test_vector->p_input, 4096);
@@ -258,11 +270,11 @@ ret_code_t exec_test_case_sha_long(test_info_t * p_test_info)
                                         "nrf_crypto_hash_update");
         }
 
-        // Finalize hash.
+        // Finalize the hash.
         err_code = nrf_crypto_hash_finalize(&hash_context, m_sha_output_buf, &out_len);
         stop_time_measurement();
 
-        // Verify nrf_crypto_hash_finalize err_code.
+        // Verify the nrf_crypto_hash_finalize err_code.
         TEST_VECTOR_ASSERT_ERR_CODE((err_code == p_test_vector->expected_err_code),
                                     "nrf_crypto_hash_finalize");
 
@@ -290,7 +302,7 @@ exit_test_vector:
 }
 
 
-/**@brief Function for running test teardown.
+/**@brief Function for running the test teardown.
  */
 ret_code_t teardown_test_case_sha(void)
 {

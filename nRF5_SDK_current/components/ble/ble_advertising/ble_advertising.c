@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2015 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #include  "sdk_common.h"
 #if NRF_MODULE_ENABLED(BLE_ADVERTISING)
@@ -43,7 +43,6 @@
 #include "ble_advertising.h"
 #include "nrf_soc.h"
 #include "nrf_log.h"
-#include "nrf_fstorage.h"
 #include "sdk_errors.h"
 #include "nrf_sdh_ble.h"
 #include "nrf_sdh_soc.h"
@@ -150,16 +149,6 @@ static void on_terminated(ble_advertising_t * const p_advertising, ble_evt_t con
             p_advertising->error_handler(ret);
         }
     }
-}
-
-
-/** @brief Function to determine if a flash write operation in in progress.
- *
- * @return true if a flash operation is in progress, false if not.
- */
-static bool flash_access_in_progress()
-{
-    return nrf_fstorage_is_busy(NULL);
 }
 
 
@@ -468,7 +457,19 @@ uint32_t ble_advertising_init(ble_advertising_t            * const p_advertising
         p_advertising->adv_handle = BLE_GAP_ADV_SET_HANDLE_NOT_SET;
     }
     p_advertising->adv_data.adv_data.p_data = p_advertising->enc_advdata;
-    p_advertising->adv_data.adv_data.len    = BLE_GAP_ADV_SET_DATA_SIZE_MAX;
+
+    if (p_advertising->adv_modes_config.ble_adv_extended_enabled == true)
+    {
+#ifdef BLE_GAP_ADV_SET_DATA_SIZE_EXTENDED_CONNECTABLE_MAX_SUPPORTED
+        p_advertising->adv_data.adv_data.len = BLE_GAP_ADV_SET_DATA_SIZE_EXTENDED_CONNECTABLE_MAX_SUPPORTED;
+#else
+    p_advertising->adv_data.adv_data.len = BLE_GAP_ADV_SET_DATA_SIZE_MAX;
+#endif // BLE_GAP_ADV_SET_DATA_SIZE_EXTENDED_CONNECTABLE_MAX_SUPPORTED
+    }
+    else
+    {
+        p_advertising->adv_data.adv_data.len = BLE_GAP_ADV_SET_DATA_SIZE_MAX;
+    }
 
     ret = ble_advdata_encode(&p_init->advdata, p_advertising->enc_advdata, &p_advertising->adv_data.adv_data.len);
     VERIFY_SUCCESS(ret);
@@ -476,8 +477,18 @@ uint32_t ble_advertising_init(ble_advertising_t            * const p_advertising
     if (&p_init->srdata != NULL)
     {
         p_advertising->adv_data.scan_rsp_data.p_data = p_advertising->enc_scan_rsp_data;
-        p_advertising->adv_data.scan_rsp_data.len    = BLE_GAP_ADV_SET_DATA_SIZE_MAX;
-
+        if (p_advertising->adv_modes_config.ble_adv_extended_enabled == true)
+        {
+#ifdef BLE_GAP_ADV_SET_DATA_SIZE_EXTENDED_CONNECTABLE_MAX_SUPPORTED
+            p_advertising->adv_data.scan_rsp_data.len = BLE_GAP_ADV_SET_DATA_SIZE_EXTENDED_CONNECTABLE_MAX_SUPPORTED;
+#else
+            p_advertising->adv_data.scan_rsp_data.len = BLE_GAP_ADV_SET_DATA_SIZE_MAX;
+#endif // BLE_GAP_ADV_SET_DATA_SIZE_EXTENDED_CONNECTABLE_MAX_SUPPORTED
+        }
+        else
+        {
+            p_advertising->adv_data.scan_rsp_data.len = BLE_GAP_ADV_SET_DATA_SIZE_MAX;
+        }
         ret = ble_advdata_encode(&p_init->srdata,
                                   p_advertising->adv_data.scan_rsp_data.p_data,
                                  &p_advertising->adv_data.scan_rsp_data.len);
@@ -544,14 +555,7 @@ uint32_t ble_advertising_start(ble_advertising_t * const p_advertising,
 
     p_advertising->adv_mode_current = advertising_mode;
 
-    // Delay starting advertising until the flash operations are complete.
-    if (flash_access_in_progress())
-    {
-        p_advertising->advertising_start_pending = true;
-        return NRF_SUCCESS;
-    }
-
-   memset(&p_advertising->peer_address, 0, sizeof(p_advertising->peer_address));
+    memset(&p_advertising->peer_address, 0, sizeof(p_advertising->peer_address));
 
     if (  ((p_advertising->adv_modes_config.ble_adv_directed_high_duty_enabled) && (p_advertising->adv_mode_current == BLE_ADV_MODE_DIRECTED_HIGH_DUTY))
         ||((p_advertising->adv_modes_config.ble_adv_directed_enabled)           && (p_advertising->adv_mode_current == BLE_ADV_MODE_DIRECTED_HIGH_DUTY))
@@ -695,31 +699,8 @@ void ble_advertising_on_ble_evt(ble_evt_t const * p_ble_evt, void * p_context)
 
 void ble_advertising_on_sys_evt(uint32_t evt_id, void * p_context)
 {
-    ble_advertising_t * p_advertising = (ble_advertising_t *)p_context;
-
-    switch (evt_id)
-    {
-        //When a flash operation finishes, re-attempt to start advertising operations.
-        case NRF_EVT_FLASH_OPERATION_SUCCESS:
-        case NRF_EVT_FLASH_OPERATION_ERROR:
-        {
-            if (p_advertising->advertising_start_pending)
-            {
-                p_advertising->advertising_start_pending = false;
-                ret_code_t ret = ble_advertising_start(p_advertising,
-                                                       p_advertising->adv_mode_current);
-
-                if ((ret != NRF_SUCCESS) && (p_advertising->error_handler != NULL))
-                {
-                    p_advertising->error_handler(ret);
-                }
-            }
-        } break;
-
-        default:
-            // No implementation needed.
-            break;
-    }
+    // Changes to advertising and fds components have made this function obsolete.
+    // This function will be removed in a future major release.
 }
 
 
@@ -784,6 +765,26 @@ void ble_advertising_modes_config_set(ble_advertising_t            * const p_adv
                                       ble_adv_modes_config_t const * const p_adv_modes_config)
 {
     p_advertising->adv_modes_config = *p_adv_modes_config;
+}
+
+
+ret_code_t ble_advertising_advdata_update(ble_advertising_t  * const p_advertising,
+                                          ble_gap_adv_data_t * const p_new_advdata_buf,
+                                          bool                       permanent)
+{
+    if (permanent)
+    {
+        memcpy(&p_advertising->adv_data, p_new_advdata_buf, sizeof(p_advertising->adv_data));
+        p_advertising->p_adv_data = &p_advertising->adv_data;
+    }
+    else
+    {
+        p_advertising->p_adv_data = p_new_advdata_buf;
+    }
+
+    return sd_ble_gap_adv_set_configure(&p_advertising->adv_handle,
+                                        p_advertising->p_adv_data,
+                                        NULL);
 }
 
 

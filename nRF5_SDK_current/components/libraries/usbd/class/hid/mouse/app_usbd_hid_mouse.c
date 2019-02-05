@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2016 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #include "sdk_common.h"
 #if NRF_MODULE_ENABLED(APP_USBD_HID_MOUSE)
@@ -43,7 +43,6 @@
 #include <string.h>
 #include "app_usbd_hid_mouse.h"
 #include "app_util_platform.h"
-
 
 /**
  * @defgroup app_usbd_hid_mouse_internal USBD HID Mouse internals
@@ -465,6 +464,39 @@ static ret_code_t hid_mouse_event_handler(app_usbd_class_inst_t const  * p_inst,
 }
 
 
+ret_code_t hid_mouse_clear_buffer(app_usbd_class_inst_t const * p_inst)
+{
+    ASSERT(p_inst != NULL);
+
+    app_usbd_hid_mouse_t const *              p_mouse        = hid_mouse_get(p_inst);
+    app_usbd_hid_mouse_ctx_t *                p_mouse_ctx    = hid_mouse_ctx_get(p_mouse);
+    app_usbd_hid_report_buffer_t const *      p_rep_buffer   = hid_mouse_rep_buffer_get(p_mouse);
+
+    memset(p_rep_buffer->p_buff, 0, p_rep_buffer->size);
+    memset(p_mouse_ctx->report_buff, 0, p_rep_buffer->size);
+    memset(&p_mouse_ctx->acc_x_axis, 0, sizeof(p_mouse_ctx->acc_x_axis));
+    memset(&p_mouse_ctx->acc_y_axis, 0, sizeof(p_mouse_ctx->acc_y_axis));
+    memset(&p_mouse_ctx->acc_scroll, 0, sizeof(p_mouse_ctx->acc_scroll));
+    memset(&p_mouse_ctx->button_state, 0, sizeof(p_mouse_ctx->button_state));
+    
+    CRITICAL_REGION_ENTER();
+    
+    nrf_drv_usbd_ep_t ep_addr = app_usbd_hid_epin_addr_get(p_inst);
+
+    ASSERT(!NRF_USBD_EPISO_CHECK(ep_addr));
+
+    if (NRF_USBD_EPIN_CHECK(ep_addr))
+    {
+        nrf_drv_usbd_ep_abort(ep_addr);
+    }
+
+    app_usbd_hid_state_flag_clr(&p_mouse_ctx->hid_ctx, APP_USBD_HID_STATE_FLAG_TRANS_IN_PROGRESS);
+    CRITICAL_REGION_EXIT();
+    
+    return NRF_SUCCESS;
+}
+
+
 static uint8_t hid_mouse_get_class_descriptors_count(app_usbd_class_inst_t const * p_inst)
 {
     app_usbd_hid_mouse_t const * p_mouse = hid_mouse_get(p_inst);
@@ -495,14 +527,15 @@ static size_t hid_mouse_get_class_descriptors_length(app_usbd_class_inst_t const
 }
 
 
-static uint8_t hid_mouse_get_class_descriptors_data(app_usbd_class_inst_t const * p_inst,
-                                                    uint8_t                       desc_num,
-                                                    uint32_t                      cur_byte)
+static const uint8_t * hid_mouse_get_class_descriptors_data(app_usbd_class_inst_t const * p_inst,
+                                                            uint8_t                       desc_num,
+                                                            uint32_t                      cur_byte)
 {
     app_usbd_hid_mouse_t const * p_mouse = hid_mouse_get(p_inst);
     app_usbd_hid_inst_t const  * p_hinst = &p_mouse->specific.inst.hid_inst;
+    const uint8_t * p_byte = &p_hinst->p_subclass_desc[desc_num]->p_data[cur_byte];
 
-    return p_hinst->p_subclass_desc[desc_num]->p_data[cur_byte];
+    return p_byte;
 }
 
 
@@ -565,51 +598,87 @@ static bool hid_mouse_feed_descriptors(app_usbd_class_descriptor_ctx_t  * p_ctx,
         for (j = 0; j < endpoints; j++)
         {
             /* ENDPOINT DESCRIPTOR */
-            APP_USBD_CLASS_DESCRIPTOR_WRITE(0x07); // bLengths
+            APP_USBD_CLASS_DESCRIPTOR_WRITE(0x07); // bLength
             APP_USBD_CLASS_DESCRIPTOR_WRITE(APP_USBD_DESCRIPTOR_ENDPOINT); // bDescriptorType = Endpoint
 
             static app_usbd_class_ep_conf_t const * p_cur_ep = NULL;
-            p_cur_ep = app_usbd_class_iface_ep_get(p_cur_iface, i);
+            p_cur_ep = app_usbd_class_iface_ep_get(p_cur_iface, j);
             APP_USBD_CLASS_DESCRIPTOR_WRITE(app_usbd_class_ep_address_get(p_cur_ep)); // bEndpointAddress
             APP_USBD_CLASS_DESCRIPTOR_WRITE(APP_USBD_DESCRIPTOR_EP_ATTR_TYPE_INTERRUPT); // bmAttributes
             APP_USBD_CLASS_DESCRIPTOR_WRITE(LSB_16(NRF_DRV_USBD_EPSIZE)); // wMaxPacketSize LSB
             APP_USBD_CLASS_DESCRIPTOR_WRITE(MSB_16(NRF_DRV_USBD_EPSIZE)); // wMaxPacketSize MSB
-            APP_USBD_CLASS_DESCRIPTOR_WRITE(0x01); // bInterval
+            APP_USBD_CLASS_DESCRIPTOR_WRITE(p_mouse->specific.inst.hid_inst.p_ep_interval[j]); // bInterval
         }
     }
 
     APP_USBD_CLASS_DESCRIPTOR_END();
 }
 
-static bool hid_mouse_feed_subclass_descriptor(app_usbd_class_descriptor_ctx_t  * p_ctx,
-                                               app_usbd_class_inst_t const      * p_inst,
-                                               uint8_t                          * p_buff,
-                                               size_t                             max_size,
-                                               uint8_t                            index)
+
+ret_code_t hid_mouse_on_set_protocol(app_usbd_hid_mouse_t const * p_mouse, app_usbd_hid_user_event_t ev)
 {
-    APP_USBD_CLASS_DESCRIPTOR_BEGIN(p_ctx, p_buff, max_size);
-
-    /* PHYSICAL AND REPORT DESCRIPTORS */
-    static uint32_t cur_byte      = 0;
-    static size_t   sub_desc_size = 0;
-    sub_desc_size = hid_mouse_get_class_descriptors_length(p_inst, index);
-
-    for (cur_byte = 0; cur_byte <= sub_desc_size; cur_byte++)
+    app_usbd_hid_mouse_ctx_t * p_mouse_ctx = hid_mouse_ctx_get(p_mouse);
+    if (ev == APP_USBD_HID_USER_EVT_SET_BOOT_PROTO)
     {
-        APP_USBD_CLASS_DESCRIPTOR_WRITE(hid_mouse_get_class_descriptors_data(p_inst, index, cur_byte));
+        p_mouse_ctx->hid_ctx.selected_protocol = APP_USBD_HID_PROTO_BOOT;
     }
+    else if (ev == APP_USBD_HID_USER_EVT_SET_REPORT_PROTO)
+    {
+        p_mouse_ctx->hid_ctx.selected_protocol = APP_USBD_HID_PROTO_REPORT;
+    }
+    else
+    {
+        return NRF_ERROR_NOT_SUPPORTED;
+    }
+    return NRF_SUCCESS;
+}
 
-    APP_USBD_CLASS_DESCRIPTOR_END();
+
+static ret_code_t hid_mouse_on_idle(app_usbd_class_inst_t const * p_inst, uint8_t report_id)
+{
+    UNUSED_PARAMETER(report_id);
+    app_usbd_hid_mouse_t const * p_mouse = (app_usbd_hid_mouse_t const *)p_inst;
+    nrf_drv_usbd_ep_t ep_addr = app_usbd_hid_epin_addr_get(p_inst);
+    app_usbd_hid_mouse_ctx_t    * p_mouse_ctx = hid_mouse_ctx_get(p_mouse);
+    app_usbd_hid_state_flag_clr(&p_mouse_ctx->hid_ctx, APP_USBD_HID_STATE_FLAG_TRANS_IN_PROGRESS);
+
+    app_usbd_hid_report_buffer_t const * p_rep_buffer = hid_mouse_rep_buffer_get(p_mouse);
+
+    uint8_t * p_buff = p_rep_buffer->p_buff;
+
+    /* Button state */
+    p_buff[0] = p_mouse_ctx->button_state;
+
+    /* Axis movement is skipped in idle report */
+    p_buff[1] = 0;
+    p_buff[2] = 0;
+    p_buff[3] = 0;
+
+    NRF_DRV_USBD_TRANSFER_IN(transfer, p_rep_buffer->p_buff, p_rep_buffer->size);
+
+    ret_code_t ret;
+    CRITICAL_REGION_ENTER();
+    ret = app_usbd_ep_transfer(ep_addr, &transfer);
+    if (ret == NRF_SUCCESS)
+    {
+        app_usbd_hid_state_flag_set(&p_mouse_ctx->hid_ctx,
+                                    APP_USBD_HID_STATE_FLAG_TRANS_IN_PROGRESS);
+    }
+    CRITICAL_REGION_EXIT();
+    
+    return NRF_SUCCESS;
 }
 
 /** @} */
 
 const app_usbd_hid_methods_t app_usbd_hid_mouse_methods = {
-    .on_get_report   = hid_mouse_on_get_report,
-    .on_set_report   = hid_mouse_on_set_report,
-    .ep_transfer_in  = hid_mouse_ep_transfer_in,
-    .ep_transfer_out = NULL,
-    .feed_subclass_descriptor = hid_mouse_feed_subclass_descriptor,
+    .on_get_report              = hid_mouse_on_get_report,
+    .on_set_report              = hid_mouse_on_set_report,
+    .ep_transfer_in             = hid_mouse_ep_transfer_in,
+    .ep_transfer_out            = NULL,
+    .subclass_length            = hid_mouse_get_class_descriptors_length,
+    .subclass_data              = hid_mouse_get_class_descriptors_data,
+    .on_idle                    = hid_mouse_on_idle,
 };
 
 const app_usbd_class_methods_t app_usbd_hid_mouse_class_methods = {

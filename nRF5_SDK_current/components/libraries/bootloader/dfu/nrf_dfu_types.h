@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2016 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 /**@file
  *
@@ -50,6 +50,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include "sdk_common.h"
 #include "nrf.h"
 #include "nrf_mbr.h"
 #include "app_util_platform.h"
@@ -72,7 +73,7 @@ extern "C" {
  */
 #if defined(NRF51)
     #define CODE_PAGE_SIZE            (PAGE_SIZE_IN_WORDS * sizeof(uint32_t))
-#elif defined(NRF52) || defined(NRF52840_XXAA)
+#elif defined(NRF52_SERIES)
     #define CODE_PAGE_SIZE            (MBR_PAGE_SIZE_IN_WORDS * sizeof(uint32_t))
 #else
     #error "Architecture not set."
@@ -92,7 +93,7 @@ extern "C" {
 #if defined  (NRF51)
     #define BOOTLOADER_SETTINGS_ADDRESS     (0x0003FC00UL)
 #elif defined( NRF52810_XXAA )
-    #define BOOTLOADER_SETTINGS_ADDRESS (0x0002F000UL)
+    #define BOOTLOADER_SETTINGS_ADDRESS     (0x0002F000UL)
 #elif defined( NRF52832_XXAA )
     #define BOOTLOADER_SETTINGS_ADDRESS     (0x0007F000UL)
 #elif defined(NRF52840_XXAA)
@@ -120,23 +121,23 @@ extern "C" {
 #elif defined(NRF52832_XXAA)
     #define NRF_MBR_PARAMS_PAGE_ADDRESS         (0x0007E000UL)
 #elif defined(NRF52810_XXAA)
-    #define NRF_MBR_PARAMS_PAGE_ADDRESS (0x0002E000UL)
+    #define NRF_MBR_PARAMS_PAGE_ADDRESS         (0x0002E000UL)
 #endif
 
-/** @brief  Size (in bytes) of the flash area reserved for application data.
- *
- * The area is found at the end of the application area, next to the start of
- * the bootloader. This area will not be erased by the bootloader during a
- * firmware upgrade. The default value is 3 pages which matches the size used
- * in most SDK examples.
- */
-#ifndef DFU_APP_DATA_RESERVED
-#define DFU_APP_DATA_RESERVED               (CODE_PAGE_SIZE * 3)
+#define BOOTLOADER_SETTINGS_BACKUP_ADDRESS NRF_MBR_PARAMS_PAGE_ADDRESS
+
+
+#ifndef NRF_DFU_APP_DATA_AREA_SIZE
+#define NRF_DFU_APP_DATA_AREA_SIZE (CODE_PAGE_SIZE * 3)
 #endif
+
+STATIC_ASSERT((NRF_DFU_APP_DATA_AREA_SIZE % CODE_PAGE_SIZE) == 0, "NRF_DFU_APP_DATA_AREA_SIZE must be a multiple of the flash page size.");
+
+#define DFU_APP_DATA_RESERVED      NRF_DFU_APP_DATA_AREA_SIZE // For backward compatibility with 15.0.0.
 
 /** @brief Total size of the region between the SoftDevice and the bootloader.
  */
-#define DFU_REGION_END(bootloader_start_addr) ((bootloader_start_addr) - (DFU_APP_DATA_RESERVED))
+#define DFU_REGION_END(bootloader_start_addr) ((bootloader_start_addr) - (NRF_DFU_APP_DATA_AREA_SIZE))
 
 #ifdef BLE_STACK_SUPPORT_REQD
 #define DFU_REGION_START                    (nrf_dfu_bank0_start_addr())

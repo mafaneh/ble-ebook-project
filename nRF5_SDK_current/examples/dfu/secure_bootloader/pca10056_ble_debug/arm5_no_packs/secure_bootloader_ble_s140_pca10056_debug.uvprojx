@@ -12,7 +12,7 @@
       <TargetOption>
         <TargetCommonOption>          <Device>nRF52840_xxAA</Device>
           <Vendor>Nordic Semiconductor</Vendor>
-          <PackID>NordicSemiconductor.nRF_DeviceFamilyPack.8.16.0</PackID>
+          <PackID>NordicSemiconductor.nRF_DeviceFamilyPack.8.17.0</PackID>
           <PackURL>http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_DeviceFamilyPack/</PackURL>          <Cpu>IROM(0x00000000,0x80000) IRAM(0x20000000,0x10000) CPUTYPE("Cortex-M4") FPU2 CLOCK(64000000) ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
           <StartupFile></StartupFile>
@@ -362,9 +362,9 @@
             <vShortWch>0</vShortWch>
             <VariousControls>
               <MiscControls>--reduce_paths</MiscControls>
-              <Define> APP_TIMER_V2 APP_TIMER_V2_RTC1_ENABLED BLE_STACK_SUPPORT_REQD BOARD_PCA10056 CONFIG_GPIO_AS_PINRESET DEBUG_NRF FLOAT_ABI_HARD NRF52840_XXAA NRF_DFU_DEBUG_VERSION NRF_DFU_SETTINGS_VERSION=1 NRF_DFU_SVCI_ENABLED NRF_SD_BLE_API_VERSION=6 S140 SOFTDEVICE_PRESENT SVC_INTERFACE_CALL_AS_NORMAL_FUNCTION __HEAP_SIZE=0</Define>
+              <Define> BLE_STACK_SUPPORT_REQD BOARD_PCA10056 CONFIG_GPIO_AS_PINRESET DEBUG_NRF FLOAT_ABI_HARD NRF52840_XXAA NRF_DFU_DEBUG_VERSION NRF_DFU_SETTINGS_VERSION=1 NRF_DFU_SVCI_ENABLED NRF_SD_BLE_API_VERSION=6 S140 SOFTDEVICE_PRESENT SVC_INTERFACE_CALL_AS_NORMAL_FUNCTION __HEAP_SIZE=0</Define>
               <Undefine></Undefine>
-              <IncludePath>..\..\config\secure_bootloader_ble_s140_pca10056_debug;..\..\config;..\..\..\..\..\components\ble\common;..\..\..\..\..\components\boards;..\..\..\..\..\components\libraries\atomic;..\..\..\..\..\components\libraries\atomic_fifo;..\..\..\..\..\components\libraries\balloc;..\..\..\..\..\components\libraries\bootloader;..\..\..\..\..\components\libraries\bootloader\ble_dfu;..\..\..\..\..\components\libraries\bootloader\dfu;..\..\..\..\..\components\libraries\crc32;..\..\..\..\..\components\libraries\crypto;..\..\..\..\..\components\libraries\crypto\backend\cc310;..\..\..\..\..\components\libraries\crypto\backend\cc310_bl;..\..\..\..\..\components\libraries\crypto\backend\cifra;..\..\..\..\..\components\libraries\crypto\backend\mbedtls;..\..\..\..\..\components\libraries\crypto\backend\micro_ecc;..\..\..\..\..\components\libraries\crypto\backend\nrf_hw;..\..\..\..\..\components\libraries\crypto\backend\nrf_sw;..\..\..\..\..\components\libraries\crypto\backend\oberon;..\..\..\..\..\components\libraries\delay;..\..\..\..\..\components\libraries\experimental_log;..\..\..\..\..\components\libraries\experimental_log\src;..\..\..\..\..\components\libraries\experimental_memobj;..\..\..\..\..\components\libraries\experimental_section_vars;..\..\..\..\..\components\libraries\fstorage;..\..\..\..\..\components\libraries\mem_manager;..\..\..\..\..\components\libraries\mutex;..\..\..\..\..\components\libraries\queue;..\..\..\..\..\components\libraries\scheduler;..\..\..\..\..\components\libraries\sortlist;..\..\..\..\..\components\libraries\stack_info;..\..\..\..\..\components\libraries\strerror;..\..\..\..\..\components\libraries\svc;..\..\..\..\..\components\libraries\timer;..\..\..\..\..\components\libraries\timer\experimental;..\..\..\..\..\components\libraries\util;..\..\..\..\..\components\softdevice\common;..\..\..\..\..\components\softdevice\s140\headers;..\..\..\..\..\components\softdevice\s140\headers\nrf52;..\..;..\..\..\..\..\external\fprintf;..\..\..\..\..\external\nano-pb;..\..\..\..\..\external\nrf_cc310\include;..\..\..\..\..\external\nrf_cc310_bl\include;..\..\..\..\..\external\segger_rtt;..\..\..\..\..\integration\nrfx;..\..\..\..\..\modules\nrfx;..\..\..\..\..\modules\nrfx\hal;..\..\..\..\..\modules\nrfx\mdk;..\config</IncludePath>
+              <IncludePath>..\..\config;..\..\..\..\..\components\ble\common;..\..\..\..\..\components\boards;..\..\..\..\..\components\libraries\atomic;..\..\..\..\..\components\libraries\atomic_fifo;..\..\..\..\..\components\libraries\balloc;..\..\..\..\..\components\libraries\bootloader;..\..\..\..\..\components\libraries\bootloader\ble_dfu;..\..\..\..\..\components\libraries\bootloader\dfu;..\..\..\..\..\components\libraries\crc32;..\..\..\..\..\components\libraries\crypto;..\..\..\..\..\components\libraries\crypto\backend\cc310;..\..\..\..\..\components\libraries\crypto\backend\cc310_bl;..\..\..\..\..\components\libraries\crypto\backend\cifra;..\..\..\..\..\components\libraries\crypto\backend\mbedtls;..\..\..\..\..\components\libraries\crypto\backend\micro_ecc;..\..\..\..\..\components\libraries\crypto\backend\nrf_hw;..\..\..\..\..\components\libraries\crypto\backend\nrf_sw;..\..\..\..\..\components\libraries\crypto\backend\oberon;..\..\..\..\..\components\libraries\delay;..\..\..\..\..\components\libraries\experimental_section_vars;..\..\..\..\..\components\libraries\fstorage;..\..\..\..\..\components\libraries\log;..\..\..\..\..\components\libraries\log\src;..\..\..\..\..\components\libraries\mem_manager;..\..\..\..\..\components\libraries\memobj;..\..\..\..\..\components\libraries\mutex;..\..\..\..\..\components\libraries\queue;..\..\..\..\..\components\libraries\ringbuf;..\..\..\..\..\components\libraries\scheduler;..\..\..\..\..\components\libraries\stack_info;..\..\..\..\..\components\libraries\strerror;..\..\..\..\..\components\libraries\svc;..\..\..\..\..\components\libraries\util;..\..\..\..\..\components\softdevice\common;..\..\..\..\..\components\softdevice\s140\headers;..\..\..\..\..\components\softdevice\s140\headers\nrf52;..\..;..\..\..\..\..\external\fprintf;..\..\..\..\..\external\nano-pb;..\..\..\..\..\external\nrf_cc310\include;..\..\..\..\..\external\nrf_cc310_bl\include;..\..\..\..\..\external\nrf_oberon;..\..\..\..\..\external\nrf_oberon\include;..\..\..\..\..\external\segger_rtt;..\..\..\..\..\integration\nrfx;..\..\..\..\..\modules\nrfx;..\..\..\..\..\modules\nrfx\hal;..\..\..\..\..\modules\nrfx\mdk;..\config</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -378,10 +378,10 @@
             <uSurpInc>0</uSurpInc>
             <useXO>0</useXO>
             <VariousControls>
-              <MiscControls> --cpreproc_opts=-DAPP_TIMER_V2,-DAPP_TIMER_V2_RTC1_ENABLED,-DBLE_STACK_SUPPORT_REQD,-DBOARD_PCA10056,-DCONFIG_GPIO_AS_PINRESET,-DDEBUG_NRF,-DFLOAT_ABI_HARD,-DNRF52840_XXAA,-DNRF_DFU_DEBUG_VERSION,-DNRF_DFU_SETTINGS_VERSION=1,-DNRF_DFU_SVCI_ENABLED,-DNRF_SD_BLE_API_VERSION=6,-DS140,-DSOFTDEVICE_PRESENT,-DSVC_INTERFACE_CALL_AS_NORMAL_FUNCTION,-D__HEAP_SIZE=0</MiscControls>
-              <Define> APP_TIMER_V2 APP_TIMER_V2_RTC1_ENABLED BLE_STACK_SUPPORT_REQD BOARD_PCA10056 CONFIG_GPIO_AS_PINRESET DEBUG_NRF FLOAT_ABI_HARD NRF52840_XXAA NRF_DFU_DEBUG_VERSION NRF_DFU_SETTINGS_VERSION=1 NRF_DFU_SVCI_ENABLED NRF_SD_BLE_API_VERSION=6 S140 SOFTDEVICE_PRESENT SVC_INTERFACE_CALL_AS_NORMAL_FUNCTION __HEAP_SIZE=0</Define>
+              <MiscControls> --cpreproc_opts=-DBLE_STACK_SUPPORT_REQD,-DBOARD_PCA10056,-DCONFIG_GPIO_AS_PINRESET,-DDEBUG_NRF,-DFLOAT_ABI_HARD,-DNRF52840_XXAA,-DNRF_DFU_DEBUG_VERSION,-DNRF_DFU_SETTINGS_VERSION=1,-DNRF_DFU_SVCI_ENABLED,-DNRF_SD_BLE_API_VERSION=6,-DS140,-DSOFTDEVICE_PRESENT,-DSVC_INTERFACE_CALL_AS_NORMAL_FUNCTION,-D__HEAP_SIZE=0</MiscControls>
+              <Define> BLE_STACK_SUPPORT_REQD BOARD_PCA10056 CONFIG_GPIO_AS_PINRESET DEBUG_NRF FLOAT_ABI_HARD NRF52840_XXAA NRF_DFU_DEBUG_VERSION NRF_DFU_SETTINGS_VERSION=1 NRF_DFU_SVCI_ENABLED NRF_SD_BLE_API_VERSION=6 S140 SOFTDEVICE_PRESENT SVC_INTERFACE_CALL_AS_NORMAL_FUNCTION __HEAP_SIZE=0</Define>
               <Undefine></Undefine>
-              <IncludePath>..\..\config\secure_bootloader_ble_s140_pca10056_debug;..\..\config;..\..\..\..\..\components\ble\common;..\..\..\..\..\components\boards;..\..\..\..\..\components\libraries\atomic;..\..\..\..\..\components\libraries\atomic_fifo;..\..\..\..\..\components\libraries\balloc;..\..\..\..\..\components\libraries\bootloader;..\..\..\..\..\components\libraries\bootloader\ble_dfu;..\..\..\..\..\components\libraries\bootloader\dfu;..\..\..\..\..\components\libraries\crc32;..\..\..\..\..\components\libraries\crypto;..\..\..\..\..\components\libraries\crypto\backend\cc310;..\..\..\..\..\components\libraries\crypto\backend\cc310_bl;..\..\..\..\..\components\libraries\crypto\backend\cifra;..\..\..\..\..\components\libraries\crypto\backend\mbedtls;..\..\..\..\..\components\libraries\crypto\backend\micro_ecc;..\..\..\..\..\components\libraries\crypto\backend\nrf_hw;..\..\..\..\..\components\libraries\crypto\backend\nrf_sw;..\..\..\..\..\components\libraries\crypto\backend\oberon;..\..\..\..\..\components\libraries\delay;..\..\..\..\..\components\libraries\experimental_log;..\..\..\..\..\components\libraries\experimental_log\src;..\..\..\..\..\components\libraries\experimental_memobj;..\..\..\..\..\components\libraries\experimental_section_vars;..\..\..\..\..\components\libraries\fstorage;..\..\..\..\..\components\libraries\mem_manager;..\..\..\..\..\components\libraries\mutex;..\..\..\..\..\components\libraries\queue;..\..\..\..\..\components\libraries\scheduler;..\..\..\..\..\components\libraries\sortlist;..\..\..\..\..\components\libraries\stack_info;..\..\..\..\..\components\libraries\strerror;..\..\..\..\..\components\libraries\svc;..\..\..\..\..\components\libraries\timer;..\..\..\..\..\components\libraries\timer\experimental;..\..\..\..\..\components\libraries\util;..\..\..\..\..\components\softdevice\common;..\..\..\..\..\components\softdevice\s140\headers;..\..\..\..\..\components\softdevice\s140\headers\nrf52;..\..;..\..\..\..\..\external\fprintf;..\..\..\..\..\external\nano-pb;..\..\..\..\..\external\nrf_cc310\include;..\..\..\..\..\external\nrf_cc310_bl\include;..\..\..\..\..\external\segger_rtt;..\..\..\..\..\integration\nrfx;..\..\..\..\..\modules\nrfx;..\..\..\..\..\modules\nrfx\hal;..\..\..\..\..\modules\nrfx\mdk;..\config</IncludePath>
+              <IncludePath>..\..\config;..\..\..\..\..\components\ble\common;..\..\..\..\..\components\boards;..\..\..\..\..\components\libraries\atomic;..\..\..\..\..\components\libraries\atomic_fifo;..\..\..\..\..\components\libraries\balloc;..\..\..\..\..\components\libraries\bootloader;..\..\..\..\..\components\libraries\bootloader\ble_dfu;..\..\..\..\..\components\libraries\bootloader\dfu;..\..\..\..\..\components\libraries\crc32;..\..\..\..\..\components\libraries\crypto;..\..\..\..\..\components\libraries\crypto\backend\cc310;..\..\..\..\..\components\libraries\crypto\backend\cc310_bl;..\..\..\..\..\components\libraries\crypto\backend\cifra;..\..\..\..\..\components\libraries\crypto\backend\mbedtls;..\..\..\..\..\components\libraries\crypto\backend\micro_ecc;..\..\..\..\..\components\libraries\crypto\backend\nrf_hw;..\..\..\..\..\components\libraries\crypto\backend\nrf_sw;..\..\..\..\..\components\libraries\crypto\backend\oberon;..\..\..\..\..\components\libraries\delay;..\..\..\..\..\components\libraries\experimental_section_vars;..\..\..\..\..\components\libraries\fstorage;..\..\..\..\..\components\libraries\log;..\..\..\..\..\components\libraries\log\src;..\..\..\..\..\components\libraries\mem_manager;..\..\..\..\..\components\libraries\memobj;..\..\..\..\..\components\libraries\mutex;..\..\..\..\..\components\libraries\queue;..\..\..\..\..\components\libraries\ringbuf;..\..\..\..\..\components\libraries\scheduler;..\..\..\..\..\components\libraries\stack_info;..\..\..\..\..\components\libraries\strerror;..\..\..\..\..\components\libraries\svc;..\..\..\..\..\components\libraries\util;..\..\..\..\..\components\softdevice\common;..\..\..\..\..\components\softdevice\s140\headers;..\..\..\..\..\components\softdevice\s140\headers\nrf52;..\..;..\..\..\..\..\external\fprintf;..\..\..\..\..\external\nano-pb;..\..\..\..\..\external\nrf_cc310\include;..\..\..\..\..\external\nrf_cc310_bl\include;..\..\..\..\..\external\nrf_oberon;..\..\..\..\..\external\nrf_oberon\include;..\..\..\..\..\external\segger_rtt;..\..\..\..\..\integration\nrfx;..\..\..\..\..\modules\nrfx;..\..\..\..\..\modules\nrfx\hal;..\..\..\..\..\modules\nrfx\mdk;..\config</IncludePath>
             </VariousControls>
           </Aads>
           <LDads>
@@ -1248,6 +1248,310 @@
                 </FileArmAds>
               </FileOption>            </File>          </Files>
         </Group>        <Group>
+          <GroupName>nRF_Crypto backend Oberon</GroupName>
+          <Files>            <File>
+              <FileName>oberon_backend_chacha_poly_aead.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\components\libraries\crypto\backend\oberon\oberon_backend_chacha_poly_aead.c</FilePath>              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>0</UseCPPCompiler>
+                  <RVCTCodeConst>0</RVCTCodeConst>
+                  <RVCTZI>0</RVCTZI>
+                  <RVCTOtherData>0</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>1</IncludeInBuild>
+                  <AlwaysBuild>2</AlwaysBuild>
+                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
+                  <PublicsOnly>2</PublicsOnly>
+                  <StopOnExitCode>11</StopOnExitCode>
+                  <CustomArgument></CustomArgument>
+                  <IncludeLibraryModules></IncludeLibraryModules>
+                  <ComprImg>1</ComprImg>
+                </CommonProperty>
+                <FileArmAds>
+                  <Cads>
+                    <interw>2</interw>
+                    <Optim>0</Optim>
+                    <oTime>2</oTime>
+                    <SplitLS>2</SplitLS>
+                    <OneElfS>2</OneElfS>
+                    <Strict>2</Strict>
+                    <EnumInt>2</EnumInt>
+                    <PlainCh>2</PlainCh>
+                    <Ropi>2</Ropi>
+                    <Rwpi>2</Rwpi>
+                    <wLevel>0</wLevel>
+                    <uThumb>2</uThumb>
+                    <uSurpInc>2</uSurpInc>
+                    <VariousControls>
+                      <MiscControls></MiscControls>
+                      <Define></Define>
+                      <Undefine></Undefine>
+                      <IncludePath></IncludePath>
+                    </VariousControls>
+                  </Cads>
+                </FileArmAds>
+              </FileOption>            </File>            <File>
+              <FileName>oberon_backend_ecc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\components\libraries\crypto\backend\oberon\oberon_backend_ecc.c</FilePath>              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>0</UseCPPCompiler>
+                  <RVCTCodeConst>0</RVCTCodeConst>
+                  <RVCTZI>0</RVCTZI>
+                  <RVCTOtherData>0</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>1</IncludeInBuild>
+                  <AlwaysBuild>2</AlwaysBuild>
+                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
+                  <PublicsOnly>2</PublicsOnly>
+                  <StopOnExitCode>11</StopOnExitCode>
+                  <CustomArgument></CustomArgument>
+                  <IncludeLibraryModules></IncludeLibraryModules>
+                  <ComprImg>1</ComprImg>
+                </CommonProperty>
+                <FileArmAds>
+                  <Cads>
+                    <interw>2</interw>
+                    <Optim>0</Optim>
+                    <oTime>2</oTime>
+                    <SplitLS>2</SplitLS>
+                    <OneElfS>2</OneElfS>
+                    <Strict>2</Strict>
+                    <EnumInt>2</EnumInt>
+                    <PlainCh>2</PlainCh>
+                    <Ropi>2</Ropi>
+                    <Rwpi>2</Rwpi>
+                    <wLevel>0</wLevel>
+                    <uThumb>2</uThumb>
+                    <uSurpInc>2</uSurpInc>
+                    <VariousControls>
+                      <MiscControls></MiscControls>
+                      <Define></Define>
+                      <Undefine></Undefine>
+                      <IncludePath></IncludePath>
+                    </VariousControls>
+                  </Cads>
+                </FileArmAds>
+              </FileOption>            </File>            <File>
+              <FileName>oberon_backend_ecdh.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\components\libraries\crypto\backend\oberon\oberon_backend_ecdh.c</FilePath>              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>0</UseCPPCompiler>
+                  <RVCTCodeConst>0</RVCTCodeConst>
+                  <RVCTZI>0</RVCTZI>
+                  <RVCTOtherData>0</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>1</IncludeInBuild>
+                  <AlwaysBuild>2</AlwaysBuild>
+                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
+                  <PublicsOnly>2</PublicsOnly>
+                  <StopOnExitCode>11</StopOnExitCode>
+                  <CustomArgument></CustomArgument>
+                  <IncludeLibraryModules></IncludeLibraryModules>
+                  <ComprImg>1</ComprImg>
+                </CommonProperty>
+                <FileArmAds>
+                  <Cads>
+                    <interw>2</interw>
+                    <Optim>0</Optim>
+                    <oTime>2</oTime>
+                    <SplitLS>2</SplitLS>
+                    <OneElfS>2</OneElfS>
+                    <Strict>2</Strict>
+                    <EnumInt>2</EnumInt>
+                    <PlainCh>2</PlainCh>
+                    <Ropi>2</Ropi>
+                    <Rwpi>2</Rwpi>
+                    <wLevel>0</wLevel>
+                    <uThumb>2</uThumb>
+                    <uSurpInc>2</uSurpInc>
+                    <VariousControls>
+                      <MiscControls></MiscControls>
+                      <Define></Define>
+                      <Undefine></Undefine>
+                      <IncludePath></IncludePath>
+                    </VariousControls>
+                  </Cads>
+                </FileArmAds>
+              </FileOption>            </File>            <File>
+              <FileName>oberon_backend_ecdsa.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\components\libraries\crypto\backend\oberon\oberon_backend_ecdsa.c</FilePath>              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>0</UseCPPCompiler>
+                  <RVCTCodeConst>0</RVCTCodeConst>
+                  <RVCTZI>0</RVCTZI>
+                  <RVCTOtherData>0</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>1</IncludeInBuild>
+                  <AlwaysBuild>2</AlwaysBuild>
+                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
+                  <PublicsOnly>2</PublicsOnly>
+                  <StopOnExitCode>11</StopOnExitCode>
+                  <CustomArgument></CustomArgument>
+                  <IncludeLibraryModules></IncludeLibraryModules>
+                  <ComprImg>1</ComprImg>
+                </CommonProperty>
+                <FileArmAds>
+                  <Cads>
+                    <interw>2</interw>
+                    <Optim>0</Optim>
+                    <oTime>2</oTime>
+                    <SplitLS>2</SplitLS>
+                    <OneElfS>2</OneElfS>
+                    <Strict>2</Strict>
+                    <EnumInt>2</EnumInt>
+                    <PlainCh>2</PlainCh>
+                    <Ropi>2</Ropi>
+                    <Rwpi>2</Rwpi>
+                    <wLevel>0</wLevel>
+                    <uThumb>2</uThumb>
+                    <uSurpInc>2</uSurpInc>
+                    <VariousControls>
+                      <MiscControls></MiscControls>
+                      <Define></Define>
+                      <Undefine></Undefine>
+                      <IncludePath></IncludePath>
+                    </VariousControls>
+                  </Cads>
+                </FileArmAds>
+              </FileOption>            </File>            <File>
+              <FileName>oberon_backend_eddsa.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\components\libraries\crypto\backend\oberon\oberon_backend_eddsa.c</FilePath>              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>0</UseCPPCompiler>
+                  <RVCTCodeConst>0</RVCTCodeConst>
+                  <RVCTZI>0</RVCTZI>
+                  <RVCTOtherData>0</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>1</IncludeInBuild>
+                  <AlwaysBuild>2</AlwaysBuild>
+                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
+                  <PublicsOnly>2</PublicsOnly>
+                  <StopOnExitCode>11</StopOnExitCode>
+                  <CustomArgument></CustomArgument>
+                  <IncludeLibraryModules></IncludeLibraryModules>
+                  <ComprImg>1</ComprImg>
+                </CommonProperty>
+                <FileArmAds>
+                  <Cads>
+                    <interw>2</interw>
+                    <Optim>0</Optim>
+                    <oTime>2</oTime>
+                    <SplitLS>2</SplitLS>
+                    <OneElfS>2</OneElfS>
+                    <Strict>2</Strict>
+                    <EnumInt>2</EnumInt>
+                    <PlainCh>2</PlainCh>
+                    <Ropi>2</Ropi>
+                    <Rwpi>2</Rwpi>
+                    <wLevel>0</wLevel>
+                    <uThumb>2</uThumb>
+                    <uSurpInc>2</uSurpInc>
+                    <VariousControls>
+                      <MiscControls></MiscControls>
+                      <Define></Define>
+                      <Undefine></Undefine>
+                      <IncludePath></IncludePath>
+                    </VariousControls>
+                  </Cads>
+                </FileArmAds>
+              </FileOption>            </File>            <File>
+              <FileName>oberon_backend_hash.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\components\libraries\crypto\backend\oberon\oberon_backend_hash.c</FilePath>              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>0</UseCPPCompiler>
+                  <RVCTCodeConst>0</RVCTCodeConst>
+                  <RVCTZI>0</RVCTZI>
+                  <RVCTOtherData>0</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>1</IncludeInBuild>
+                  <AlwaysBuild>2</AlwaysBuild>
+                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
+                  <PublicsOnly>2</PublicsOnly>
+                  <StopOnExitCode>11</StopOnExitCode>
+                  <CustomArgument></CustomArgument>
+                  <IncludeLibraryModules></IncludeLibraryModules>
+                  <ComprImg>1</ComprImg>
+                </CommonProperty>
+                <FileArmAds>
+                  <Cads>
+                    <interw>2</interw>
+                    <Optim>0</Optim>
+                    <oTime>2</oTime>
+                    <SplitLS>2</SplitLS>
+                    <OneElfS>2</OneElfS>
+                    <Strict>2</Strict>
+                    <EnumInt>2</EnumInt>
+                    <PlainCh>2</PlainCh>
+                    <Ropi>2</Ropi>
+                    <Rwpi>2</Rwpi>
+                    <wLevel>0</wLevel>
+                    <uThumb>2</uThumb>
+                    <uSurpInc>2</uSurpInc>
+                    <VariousControls>
+                      <MiscControls></MiscControls>
+                      <Define></Define>
+                      <Undefine></Undefine>
+                      <IncludePath></IncludePath>
+                    </VariousControls>
+                  </Cads>
+                </FileArmAds>
+              </FileOption>            </File>            <File>
+              <FileName>oberon_backend_hmac.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\components\libraries\crypto\backend\oberon\oberon_backend_hmac.c</FilePath>              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>0</UseCPPCompiler>
+                  <RVCTCodeConst>0</RVCTCodeConst>
+                  <RVCTZI>0</RVCTZI>
+                  <RVCTOtherData>0</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>1</IncludeInBuild>
+                  <AlwaysBuild>2</AlwaysBuild>
+                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
+                  <PublicsOnly>2</PublicsOnly>
+                  <StopOnExitCode>11</StopOnExitCode>
+                  <CustomArgument></CustomArgument>
+                  <IncludeLibraryModules></IncludeLibraryModules>
+                  <ComprImg>1</ComprImg>
+                </CommonProperty>
+                <FileArmAds>
+                  <Cads>
+                    <interw>2</interw>
+                    <Optim>0</Optim>
+                    <oTime>2</oTime>
+                    <SplitLS>2</SplitLS>
+                    <OneElfS>2</OneElfS>
+                    <Strict>2</Strict>
+                    <EnumInt>2</EnumInt>
+                    <PlainCh>2</PlainCh>
+                    <Ropi>2</Ropi>
+                    <Rwpi>2</Rwpi>
+                    <wLevel>0</wLevel>
+                    <uThumb>2</uThumb>
+                    <uSurpInc>2</uSurpInc>
+                    <VariousControls>
+                      <MiscControls></MiscControls>
+                      <Define></Define>
+                      <Undefine></Undefine>
+                      <IncludePath></IncludePath>
+                    </VariousControls>
+                  </Cads>
+                </FileArmAds>
+              </FileOption>            </File>          </Files>
+        </Group>        <Group>
           <GroupName>nRF_DFU</GroupName>
           <Files>            <File>
               <FileName>dfu-cc.pb.c</FileName>
@@ -1944,49 +2248,6 @@
                   </Cads>
                 </FileArmAds>
               </FileOption>            </File>            <File>
-              <FileName>app_timer2.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\components\libraries\timer\experimental\app_timer2.c</FilePath>              <FileOption>
-                <CommonProperty>
-                  <UseCPPCompiler>0</UseCPPCompiler>
-                  <RVCTCodeConst>0</RVCTCodeConst>
-                  <RVCTZI>0</RVCTZI>
-                  <RVCTOtherData>0</RVCTOtherData>
-                  <ModuleSelection>0</ModuleSelection>
-                  <IncludeInBuild>1</IncludeInBuild>
-                  <AlwaysBuild>2</AlwaysBuild>
-                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
-                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
-                  <PublicsOnly>2</PublicsOnly>
-                  <StopOnExitCode>11</StopOnExitCode>
-                  <CustomArgument></CustomArgument>
-                  <IncludeLibraryModules></IncludeLibraryModules>
-                  <ComprImg>1</ComprImg>
-                </CommonProperty>
-                <FileArmAds>
-                  <Cads>
-                    <interw>2</interw>
-                    <Optim>0</Optim>
-                    <oTime>2</oTime>
-                    <SplitLS>2</SplitLS>
-                    <OneElfS>2</OneElfS>
-                    <Strict>2</Strict>
-                    <EnumInt>2</EnumInt>
-                    <PlainCh>2</PlainCh>
-                    <Ropi>2</Ropi>
-                    <Rwpi>2</Rwpi>
-                    <wLevel>0</wLevel>
-                    <uThumb>2</uThumb>
-                    <uSurpInc>2</uSurpInc>
-                    <VariousControls>
-                      <MiscControls></MiscControls>
-                      <Define></Define>
-                      <Undefine></Undefine>
-                      <IncludePath></IncludePath>
-                    </VariousControls>
-                  </Cads>
-                </FileArmAds>
-              </FileOption>            </File>            <File>
               <FileName>app_util_platform.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\components\libraries\util\app_util_platform.c</FilePath>              <FileOption>
@@ -2033,49 +2294,6 @@
               <FileName>crc32.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\components\libraries\crc32\crc32.c</FilePath>              <FileOption>
-                <CommonProperty>
-                  <UseCPPCompiler>0</UseCPPCompiler>
-                  <RVCTCodeConst>0</RVCTCodeConst>
-                  <RVCTZI>0</RVCTZI>
-                  <RVCTOtherData>0</RVCTOtherData>
-                  <ModuleSelection>0</ModuleSelection>
-                  <IncludeInBuild>1</IncludeInBuild>
-                  <AlwaysBuild>2</AlwaysBuild>
-                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
-                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
-                  <PublicsOnly>2</PublicsOnly>
-                  <StopOnExitCode>11</StopOnExitCode>
-                  <CustomArgument></CustomArgument>
-                  <IncludeLibraryModules></IncludeLibraryModules>
-                  <ComprImg>1</ComprImg>
-                </CommonProperty>
-                <FileArmAds>
-                  <Cads>
-                    <interw>2</interw>
-                    <Optim>0</Optim>
-                    <oTime>2</oTime>
-                    <SplitLS>2</SplitLS>
-                    <OneElfS>2</OneElfS>
-                    <Strict>2</Strict>
-                    <EnumInt>2</EnumInt>
-                    <PlainCh>2</PlainCh>
-                    <Ropi>2</Ropi>
-                    <Rwpi>2</Rwpi>
-                    <wLevel>0</wLevel>
-                    <uThumb>2</uThumb>
-                    <uSurpInc>2</uSurpInc>
-                    <VariousControls>
-                      <MiscControls></MiscControls>
-                      <Define></Define>
-                      <Undefine></Undefine>
-                      <IncludePath></IncludePath>
-                    </VariousControls>
-                  </Cads>
-                </FileArmAds>
-              </FileOption>            </File>            <File>
-              <FileName>drv_rtc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\components\libraries\timer\experimental\drv_rtc.c</FilePath>              <FileOption>
                 <CommonProperty>
                   <UseCPPCompiler>0</UseCPPCompiler>
                   <RVCTCodeConst>0</RVCTCodeConst>
@@ -2548,7 +2766,7 @@
               </FileOption>            </File>            <File>
               <FileName>nrf_memobj.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\components\libraries\experimental_memobj\nrf_memobj.c</FilePath>              <FileOption>
+              <FilePath>..\..\..\..\..\components\libraries\memobj\nrf_memobj.c</FilePath>              <FileOption>
                 <CommonProperty>
                   <UseCPPCompiler>0</UseCPPCompiler>
                   <RVCTCodeConst>0</RVCTCodeConst>
@@ -2632,9 +2850,9 @@
                   </Cads>
                 </FileArmAds>
               </FileOption>            </File>            <File>
-              <FileName>nrf_section_iter.c</FileName>
+              <FileName>nrf_ringbuf.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\components\libraries\experimental_section_vars\nrf_section_iter.c</FilePath>              <FileOption>
+              <FilePath>..\..\..\..\..\components\libraries\ringbuf\nrf_ringbuf.c</FilePath>              <FileOption>
                 <CommonProperty>
                   <UseCPPCompiler>0</UseCPPCompiler>
                   <RVCTCodeConst>0</RVCTCodeConst>
@@ -2675,9 +2893,9 @@
                   </Cads>
                 </FileArmAds>
               </FileOption>            </File>            <File>
-              <FileName>nrf_sortlist.c</FileName>
+              <FileName>nrf_section_iter.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\components\libraries\sortlist\nrf_sortlist.c</FilePath>              <FileOption>
+              <FilePath>..\..\..\..\..\components\libraries\experimental_section_vars\nrf_section_iter.c</FilePath>              <FileOption>
                 <CommonProperty>
                   <UseCPPCompiler>0</UseCPPCompiler>
                   <RVCTCodeConst>0</RVCTCodeConst>
@@ -2766,7 +2984,7 @@
           <Files>            <File>
               <FileName>nrf_log_backend_rtt.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\components\libraries\experimental_log\src\nrf_log_backend_rtt.c</FilePath>              <FileOption>
+              <FilePath>..\..\..\..\..\components\libraries\log\src\nrf_log_backend_rtt.c</FilePath>              <FileOption>
                 <CommonProperty>
                   <UseCPPCompiler>0</UseCPPCompiler>
                   <RVCTCodeConst>0</RVCTCodeConst>
@@ -2809,7 +3027,7 @@
               </FileOption>            </File>            <File>
               <FileName>nrf_log_backend_serial.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\components\libraries\experimental_log\src\nrf_log_backend_serial.c</FilePath>              <FileOption>
+              <FilePath>..\..\..\..\..\components\libraries\log\src\nrf_log_backend_serial.c</FilePath>              <FileOption>
                 <CommonProperty>
                   <UseCPPCompiler>0</UseCPPCompiler>
                   <RVCTCodeConst>0</RVCTCodeConst>
@@ -2852,7 +3070,7 @@
               </FileOption>            </File>            <File>
               <FileName>nrf_log_default_backends.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\components\libraries\experimental_log\src\nrf_log_default_backends.c</FilePath>              <FileOption>
+              <FilePath>..\..\..\..\..\components\libraries\log\src\nrf_log_default_backends.c</FilePath>              <FileOption>
                 <CommonProperty>
                   <UseCPPCompiler>0</UseCPPCompiler>
                   <RVCTCodeConst>0</RVCTCodeConst>
@@ -2895,7 +3113,7 @@
               </FileOption>            </File>            <File>
               <FileName>nrf_log_frontend.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\components\libraries\experimental_log\src\nrf_log_frontend.c</FilePath>              <FileOption>
+              <FilePath>..\..\..\..\..\components\libraries\log\src\nrf_log_frontend.c</FilePath>              <FileOption>
                 <CommonProperty>
                   <UseCPPCompiler>0</UseCPPCompiler>
                   <RVCTCodeConst>0</RVCTCodeConst>
@@ -2938,7 +3156,53 @@
               </FileOption>            </File>            <File>
               <FileName>nrf_log_str_formatter.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\components\libraries\experimental_log\src\nrf_log_str_formatter.c</FilePath>              <FileOption>
+              <FilePath>..\..\..\..\..\components\libraries\log\src\nrf_log_str_formatter.c</FilePath>              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>0</UseCPPCompiler>
+                  <RVCTCodeConst>0</RVCTCodeConst>
+                  <RVCTZI>0</RVCTZI>
+                  <RVCTOtherData>0</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>1</IncludeInBuild>
+                  <AlwaysBuild>2</AlwaysBuild>
+                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
+                  <PublicsOnly>2</PublicsOnly>
+                  <StopOnExitCode>11</StopOnExitCode>
+                  <CustomArgument></CustomArgument>
+                  <IncludeLibraryModules></IncludeLibraryModules>
+                  <ComprImg>1</ComprImg>
+                </CommonProperty>
+                <FileArmAds>
+                  <Cads>
+                    <interw>2</interw>
+                    <Optim>0</Optim>
+                    <oTime>2</oTime>
+                    <SplitLS>2</SplitLS>
+                    <OneElfS>2</OneElfS>
+                    <Strict>2</Strict>
+                    <EnumInt>2</EnumInt>
+                    <PlainCh>2</PlainCh>
+                    <Ropi>2</Ropi>
+                    <Rwpi>2</Rwpi>
+                    <wLevel>0</wLevel>
+                    <uThumb>2</uThumb>
+                    <uSurpInc>2</uSurpInc>
+                    <VariousControls>
+                      <MiscControls></MiscControls>
+                      <Define></Define>
+                      <Undefine></Undefine>
+                      <IncludePath></IncludePath>
+                    </VariousControls>
+                  </Cads>
+                </FileArmAds>
+              </FileOption>            </File>          </Files>
+        </Group>        <Group>
+          <GroupName>nRF_Oberon_Crypto</GroupName>
+          <Files>            <File>
+              <FileName>oberon_short_wchar_2.0.5.lib</FileName>
+              <FileType>4</FileType>
+              <FilePath>..\..\..\..\..\external\nrf_oberon\lib\nrf52\oberon_short_wchar_2.0.5.lib</FilePath>              <FileOption>
                 <CommonProperty>
                   <UseCPPCompiler>0</UseCPPCompiler>
                   <RVCTCodeConst>0</RVCTCodeConst>
@@ -2982,49 +3246,6 @@
         </Group>        <Group>
           <GroupName>nRF_SVC</GroupName>
           <Files>            <File>
-              <FileName>nrf_dfu_svci.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\components\libraries\bootloader\dfu\nrf_dfu_svci.c</FilePath>              <FileOption>
-                <CommonProperty>
-                  <UseCPPCompiler>0</UseCPPCompiler>
-                  <RVCTCodeConst>0</RVCTCodeConst>
-                  <RVCTZI>0</RVCTZI>
-                  <RVCTOtherData>0</RVCTOtherData>
-                  <ModuleSelection>0</ModuleSelection>
-                  <IncludeInBuild>1</IncludeInBuild>
-                  <AlwaysBuild>2</AlwaysBuild>
-                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
-                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
-                  <PublicsOnly>2</PublicsOnly>
-                  <StopOnExitCode>11</StopOnExitCode>
-                  <CustomArgument></CustomArgument>
-                  <IncludeLibraryModules></IncludeLibraryModules>
-                  <ComprImg>1</ComprImg>
-                </CommonProperty>
-                <FileArmAds>
-                  <Cads>
-                    <interw>2</interw>
-                    <Optim>0</Optim>
-                    <oTime>2</oTime>
-                    <SplitLS>2</SplitLS>
-                    <OneElfS>2</OneElfS>
-                    <Strict>2</Strict>
-                    <EnumInt>2</EnumInt>
-                    <PlainCh>2</PlainCh>
-                    <Ropi>2</Ropi>
-                    <Rwpi>2</Rwpi>
-                    <wLevel>0</wLevel>
-                    <uThumb>2</uThumb>
-                    <uSurpInc>2</uSurpInc>
-                    <VariousControls>
-                      <MiscControls></MiscControls>
-                      <Define></Define>
-                      <Undefine></Undefine>
-                      <IncludePath></IncludePath>
-                    </VariousControls>
-                  </Cads>
-                </FileArmAds>
-              </FileOption>            </File>            <File>
               <FileName>nrf_dfu_svci_handler.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\components\libraries\bootloader\dfu\nrf_dfu_svci_handler.c</FilePath>              <FileOption>
@@ -3467,9 +3688,9 @@
         </Group>        <Group>
           <GroupName>nrf_cc310_bl</GroupName>
           <Files>            <File>
-              <FileName>nrf_cc310_bl_keil_0.9.9.lib</FileName>
+              <FileName>nrf_cc310_bl_keil_0.9.10.lib</FileName>
               <FileType>4</FileType>
-              <FilePath>..\..\..\..\..\external\nrf_cc310_bl\lib\nrf_cc310_bl_keil_0.9.9.lib</FilePath>              <FileOption>
+              <FilePath>..\..\..\..\..\external\nrf_cc310_bl\lib\nrf_cc310_bl_keil_0.9.10.lib</FilePath>              <FileOption>
                 <CommonProperty>
                   <UseCPPCompiler>0</UseCPPCompiler>
                   <RVCTCodeConst>0</RVCTCodeConst>
@@ -3512,7 +3733,7 @@
               </FileOption>            </File>          </Files>
         </Group>      </Groups>
     </Target>    <Target>
-      <TargetName>flash_s140_nrf52_6.0.0_softdevice</TargetName>
+      <TargetName>flash_s140_nrf52_6.1.0_softdevice</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
       <TargetOption>
@@ -3550,7 +3771,7 @@
             <InvalidFlash>1</InvalidFlash>
           </TargetStatus>
           <OutputDirectory>..\..\..\..\..\components\softdevice\s140\hex\</OutputDirectory>
-          <OutputName>s140_nrf52_6.0.0_softdevice.hex</OutputName>
+          <OutputName>s140_nrf52_6.1.0_softdevice.hex</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
           <CreateHexFile>1</CreateHexFile>
@@ -3870,7 +4091,7 @@
               <MiscControls>--reduce_paths</MiscControls>
               <Define> __HEAP_SIZE=0</Define>
               <Undefine></Undefine>
-              <IncludePath>..\..\config\secure_bootloader_ble_s140_pca10056_debug;..\..\config;..\config</IncludePath>
+              <IncludePath>..\..\config;..\config</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -3887,7 +4108,7 @@
               <MiscControls> --cpreproc_opts=-D__HEAP_SIZE=0</MiscControls>
               <Define> __HEAP_SIZE=0</Define>
               <Undefine></Undefine>
-              <IncludePath>..\..\config\secure_bootloader_ble_s140_pca10056_debug;..\..\config;..\config</IncludePath>
+              <IncludePath>..\..\config;..\config</IncludePath>
             </VariousControls>
           </Aads>
           <LDads>
@@ -4754,6 +4975,310 @@
                 </FileArmAds>
               </FileOption>            </File>          </Files>
         </Group>        <Group>
+          <GroupName>nRF_Crypto backend Oberon</GroupName>
+          <Files>            <File>
+              <FileName>oberon_backend_chacha_poly_aead.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\components\libraries\crypto\backend\oberon\oberon_backend_chacha_poly_aead.c</FilePath>              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>0</UseCPPCompiler>
+                  <RVCTCodeConst>0</RVCTCodeConst>
+                  <RVCTZI>0</RVCTZI>
+                  <RVCTOtherData>0</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>0</IncludeInBuild>
+                  <AlwaysBuild>2</AlwaysBuild>
+                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
+                  <PublicsOnly>2</PublicsOnly>
+                  <StopOnExitCode>11</StopOnExitCode>
+                  <CustomArgument></CustomArgument>
+                  <IncludeLibraryModules></IncludeLibraryModules>
+                  <ComprImg>1</ComprImg>
+                </CommonProperty>
+                <FileArmAds>
+                  <Cads>
+                    <interw>2</interw>
+                    <Optim>0</Optim>
+                    <oTime>2</oTime>
+                    <SplitLS>2</SplitLS>
+                    <OneElfS>2</OneElfS>
+                    <Strict>2</Strict>
+                    <EnumInt>2</EnumInt>
+                    <PlainCh>2</PlainCh>
+                    <Ropi>2</Ropi>
+                    <Rwpi>2</Rwpi>
+                    <wLevel>0</wLevel>
+                    <uThumb>2</uThumb>
+                    <uSurpInc>2</uSurpInc>
+                    <VariousControls>
+                      <MiscControls></MiscControls>
+                      <Define></Define>
+                      <Undefine></Undefine>
+                      <IncludePath></IncludePath>
+                    </VariousControls>
+                  </Cads>
+                </FileArmAds>
+              </FileOption>            </File>            <File>
+              <FileName>oberon_backend_ecc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\components\libraries\crypto\backend\oberon\oberon_backend_ecc.c</FilePath>              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>0</UseCPPCompiler>
+                  <RVCTCodeConst>0</RVCTCodeConst>
+                  <RVCTZI>0</RVCTZI>
+                  <RVCTOtherData>0</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>0</IncludeInBuild>
+                  <AlwaysBuild>2</AlwaysBuild>
+                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
+                  <PublicsOnly>2</PublicsOnly>
+                  <StopOnExitCode>11</StopOnExitCode>
+                  <CustomArgument></CustomArgument>
+                  <IncludeLibraryModules></IncludeLibraryModules>
+                  <ComprImg>1</ComprImg>
+                </CommonProperty>
+                <FileArmAds>
+                  <Cads>
+                    <interw>2</interw>
+                    <Optim>0</Optim>
+                    <oTime>2</oTime>
+                    <SplitLS>2</SplitLS>
+                    <OneElfS>2</OneElfS>
+                    <Strict>2</Strict>
+                    <EnumInt>2</EnumInt>
+                    <PlainCh>2</PlainCh>
+                    <Ropi>2</Ropi>
+                    <Rwpi>2</Rwpi>
+                    <wLevel>0</wLevel>
+                    <uThumb>2</uThumb>
+                    <uSurpInc>2</uSurpInc>
+                    <VariousControls>
+                      <MiscControls></MiscControls>
+                      <Define></Define>
+                      <Undefine></Undefine>
+                      <IncludePath></IncludePath>
+                    </VariousControls>
+                  </Cads>
+                </FileArmAds>
+              </FileOption>            </File>            <File>
+              <FileName>oberon_backend_ecdh.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\components\libraries\crypto\backend\oberon\oberon_backend_ecdh.c</FilePath>              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>0</UseCPPCompiler>
+                  <RVCTCodeConst>0</RVCTCodeConst>
+                  <RVCTZI>0</RVCTZI>
+                  <RVCTOtherData>0</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>0</IncludeInBuild>
+                  <AlwaysBuild>2</AlwaysBuild>
+                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
+                  <PublicsOnly>2</PublicsOnly>
+                  <StopOnExitCode>11</StopOnExitCode>
+                  <CustomArgument></CustomArgument>
+                  <IncludeLibraryModules></IncludeLibraryModules>
+                  <ComprImg>1</ComprImg>
+                </CommonProperty>
+                <FileArmAds>
+                  <Cads>
+                    <interw>2</interw>
+                    <Optim>0</Optim>
+                    <oTime>2</oTime>
+                    <SplitLS>2</SplitLS>
+                    <OneElfS>2</OneElfS>
+                    <Strict>2</Strict>
+                    <EnumInt>2</EnumInt>
+                    <PlainCh>2</PlainCh>
+                    <Ropi>2</Ropi>
+                    <Rwpi>2</Rwpi>
+                    <wLevel>0</wLevel>
+                    <uThumb>2</uThumb>
+                    <uSurpInc>2</uSurpInc>
+                    <VariousControls>
+                      <MiscControls></MiscControls>
+                      <Define></Define>
+                      <Undefine></Undefine>
+                      <IncludePath></IncludePath>
+                    </VariousControls>
+                  </Cads>
+                </FileArmAds>
+              </FileOption>            </File>            <File>
+              <FileName>oberon_backend_ecdsa.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\components\libraries\crypto\backend\oberon\oberon_backend_ecdsa.c</FilePath>              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>0</UseCPPCompiler>
+                  <RVCTCodeConst>0</RVCTCodeConst>
+                  <RVCTZI>0</RVCTZI>
+                  <RVCTOtherData>0</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>0</IncludeInBuild>
+                  <AlwaysBuild>2</AlwaysBuild>
+                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
+                  <PublicsOnly>2</PublicsOnly>
+                  <StopOnExitCode>11</StopOnExitCode>
+                  <CustomArgument></CustomArgument>
+                  <IncludeLibraryModules></IncludeLibraryModules>
+                  <ComprImg>1</ComprImg>
+                </CommonProperty>
+                <FileArmAds>
+                  <Cads>
+                    <interw>2</interw>
+                    <Optim>0</Optim>
+                    <oTime>2</oTime>
+                    <SplitLS>2</SplitLS>
+                    <OneElfS>2</OneElfS>
+                    <Strict>2</Strict>
+                    <EnumInt>2</EnumInt>
+                    <PlainCh>2</PlainCh>
+                    <Ropi>2</Ropi>
+                    <Rwpi>2</Rwpi>
+                    <wLevel>0</wLevel>
+                    <uThumb>2</uThumb>
+                    <uSurpInc>2</uSurpInc>
+                    <VariousControls>
+                      <MiscControls></MiscControls>
+                      <Define></Define>
+                      <Undefine></Undefine>
+                      <IncludePath></IncludePath>
+                    </VariousControls>
+                  </Cads>
+                </FileArmAds>
+              </FileOption>            </File>            <File>
+              <FileName>oberon_backend_eddsa.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\components\libraries\crypto\backend\oberon\oberon_backend_eddsa.c</FilePath>              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>0</UseCPPCompiler>
+                  <RVCTCodeConst>0</RVCTCodeConst>
+                  <RVCTZI>0</RVCTZI>
+                  <RVCTOtherData>0</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>0</IncludeInBuild>
+                  <AlwaysBuild>2</AlwaysBuild>
+                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
+                  <PublicsOnly>2</PublicsOnly>
+                  <StopOnExitCode>11</StopOnExitCode>
+                  <CustomArgument></CustomArgument>
+                  <IncludeLibraryModules></IncludeLibraryModules>
+                  <ComprImg>1</ComprImg>
+                </CommonProperty>
+                <FileArmAds>
+                  <Cads>
+                    <interw>2</interw>
+                    <Optim>0</Optim>
+                    <oTime>2</oTime>
+                    <SplitLS>2</SplitLS>
+                    <OneElfS>2</OneElfS>
+                    <Strict>2</Strict>
+                    <EnumInt>2</EnumInt>
+                    <PlainCh>2</PlainCh>
+                    <Ropi>2</Ropi>
+                    <Rwpi>2</Rwpi>
+                    <wLevel>0</wLevel>
+                    <uThumb>2</uThumb>
+                    <uSurpInc>2</uSurpInc>
+                    <VariousControls>
+                      <MiscControls></MiscControls>
+                      <Define></Define>
+                      <Undefine></Undefine>
+                      <IncludePath></IncludePath>
+                    </VariousControls>
+                  </Cads>
+                </FileArmAds>
+              </FileOption>            </File>            <File>
+              <FileName>oberon_backend_hash.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\components\libraries\crypto\backend\oberon\oberon_backend_hash.c</FilePath>              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>0</UseCPPCompiler>
+                  <RVCTCodeConst>0</RVCTCodeConst>
+                  <RVCTZI>0</RVCTZI>
+                  <RVCTOtherData>0</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>0</IncludeInBuild>
+                  <AlwaysBuild>2</AlwaysBuild>
+                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
+                  <PublicsOnly>2</PublicsOnly>
+                  <StopOnExitCode>11</StopOnExitCode>
+                  <CustomArgument></CustomArgument>
+                  <IncludeLibraryModules></IncludeLibraryModules>
+                  <ComprImg>1</ComprImg>
+                </CommonProperty>
+                <FileArmAds>
+                  <Cads>
+                    <interw>2</interw>
+                    <Optim>0</Optim>
+                    <oTime>2</oTime>
+                    <SplitLS>2</SplitLS>
+                    <OneElfS>2</OneElfS>
+                    <Strict>2</Strict>
+                    <EnumInt>2</EnumInt>
+                    <PlainCh>2</PlainCh>
+                    <Ropi>2</Ropi>
+                    <Rwpi>2</Rwpi>
+                    <wLevel>0</wLevel>
+                    <uThumb>2</uThumb>
+                    <uSurpInc>2</uSurpInc>
+                    <VariousControls>
+                      <MiscControls></MiscControls>
+                      <Define></Define>
+                      <Undefine></Undefine>
+                      <IncludePath></IncludePath>
+                    </VariousControls>
+                  </Cads>
+                </FileArmAds>
+              </FileOption>            </File>            <File>
+              <FileName>oberon_backend_hmac.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\components\libraries\crypto\backend\oberon\oberon_backend_hmac.c</FilePath>              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>0</UseCPPCompiler>
+                  <RVCTCodeConst>0</RVCTCodeConst>
+                  <RVCTZI>0</RVCTZI>
+                  <RVCTOtherData>0</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>0</IncludeInBuild>
+                  <AlwaysBuild>2</AlwaysBuild>
+                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
+                  <PublicsOnly>2</PublicsOnly>
+                  <StopOnExitCode>11</StopOnExitCode>
+                  <CustomArgument></CustomArgument>
+                  <IncludeLibraryModules></IncludeLibraryModules>
+                  <ComprImg>1</ComprImg>
+                </CommonProperty>
+                <FileArmAds>
+                  <Cads>
+                    <interw>2</interw>
+                    <Optim>0</Optim>
+                    <oTime>2</oTime>
+                    <SplitLS>2</SplitLS>
+                    <OneElfS>2</OneElfS>
+                    <Strict>2</Strict>
+                    <EnumInt>2</EnumInt>
+                    <PlainCh>2</PlainCh>
+                    <Ropi>2</Ropi>
+                    <Rwpi>2</Rwpi>
+                    <wLevel>0</wLevel>
+                    <uThumb>2</uThumb>
+                    <uSurpInc>2</uSurpInc>
+                    <VariousControls>
+                      <MiscControls></MiscControls>
+                      <Define></Define>
+                      <Undefine></Undefine>
+                      <IncludePath></IncludePath>
+                    </VariousControls>
+                  </Cads>
+                </FileArmAds>
+              </FileOption>            </File>          </Files>
+        </Group>        <Group>
           <GroupName>nRF_DFU</GroupName>
           <Files>            <File>
               <FileName>dfu-cc.pb.c</FileName>
@@ -5450,49 +5975,6 @@
                   </Cads>
                 </FileArmAds>
               </FileOption>            </File>            <File>
-              <FileName>app_timer2.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\components\libraries\timer\experimental\app_timer2.c</FilePath>              <FileOption>
-                <CommonProperty>
-                  <UseCPPCompiler>0</UseCPPCompiler>
-                  <RVCTCodeConst>0</RVCTCodeConst>
-                  <RVCTZI>0</RVCTZI>
-                  <RVCTOtherData>0</RVCTOtherData>
-                  <ModuleSelection>0</ModuleSelection>
-                  <IncludeInBuild>0</IncludeInBuild>
-                  <AlwaysBuild>2</AlwaysBuild>
-                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
-                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
-                  <PublicsOnly>2</PublicsOnly>
-                  <StopOnExitCode>11</StopOnExitCode>
-                  <CustomArgument></CustomArgument>
-                  <IncludeLibraryModules></IncludeLibraryModules>
-                  <ComprImg>1</ComprImg>
-                </CommonProperty>
-                <FileArmAds>
-                  <Cads>
-                    <interw>2</interw>
-                    <Optim>0</Optim>
-                    <oTime>2</oTime>
-                    <SplitLS>2</SplitLS>
-                    <OneElfS>2</OneElfS>
-                    <Strict>2</Strict>
-                    <EnumInt>2</EnumInt>
-                    <PlainCh>2</PlainCh>
-                    <Ropi>2</Ropi>
-                    <Rwpi>2</Rwpi>
-                    <wLevel>0</wLevel>
-                    <uThumb>2</uThumb>
-                    <uSurpInc>2</uSurpInc>
-                    <VariousControls>
-                      <MiscControls></MiscControls>
-                      <Define></Define>
-                      <Undefine></Undefine>
-                      <IncludePath></IncludePath>
-                    </VariousControls>
-                  </Cads>
-                </FileArmAds>
-              </FileOption>            </File>            <File>
               <FileName>app_util_platform.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\components\libraries\util\app_util_platform.c</FilePath>              <FileOption>
@@ -5539,49 +6021,6 @@
               <FileName>crc32.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\components\libraries\crc32\crc32.c</FilePath>              <FileOption>
-                <CommonProperty>
-                  <UseCPPCompiler>0</UseCPPCompiler>
-                  <RVCTCodeConst>0</RVCTCodeConst>
-                  <RVCTZI>0</RVCTZI>
-                  <RVCTOtherData>0</RVCTOtherData>
-                  <ModuleSelection>0</ModuleSelection>
-                  <IncludeInBuild>0</IncludeInBuild>
-                  <AlwaysBuild>2</AlwaysBuild>
-                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
-                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
-                  <PublicsOnly>2</PublicsOnly>
-                  <StopOnExitCode>11</StopOnExitCode>
-                  <CustomArgument></CustomArgument>
-                  <IncludeLibraryModules></IncludeLibraryModules>
-                  <ComprImg>1</ComprImg>
-                </CommonProperty>
-                <FileArmAds>
-                  <Cads>
-                    <interw>2</interw>
-                    <Optim>0</Optim>
-                    <oTime>2</oTime>
-                    <SplitLS>2</SplitLS>
-                    <OneElfS>2</OneElfS>
-                    <Strict>2</Strict>
-                    <EnumInt>2</EnumInt>
-                    <PlainCh>2</PlainCh>
-                    <Ropi>2</Ropi>
-                    <Rwpi>2</Rwpi>
-                    <wLevel>0</wLevel>
-                    <uThumb>2</uThumb>
-                    <uSurpInc>2</uSurpInc>
-                    <VariousControls>
-                      <MiscControls></MiscControls>
-                      <Define></Define>
-                      <Undefine></Undefine>
-                      <IncludePath></IncludePath>
-                    </VariousControls>
-                  </Cads>
-                </FileArmAds>
-              </FileOption>            </File>            <File>
-              <FileName>drv_rtc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\components\libraries\timer\experimental\drv_rtc.c</FilePath>              <FileOption>
                 <CommonProperty>
                   <UseCPPCompiler>0</UseCPPCompiler>
                   <RVCTCodeConst>0</RVCTCodeConst>
@@ -6054,7 +6493,7 @@
               </FileOption>            </File>            <File>
               <FileName>nrf_memobj.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\components\libraries\experimental_memobj\nrf_memobj.c</FilePath>              <FileOption>
+              <FilePath>..\..\..\..\..\components\libraries\memobj\nrf_memobj.c</FilePath>              <FileOption>
                 <CommonProperty>
                   <UseCPPCompiler>0</UseCPPCompiler>
                   <RVCTCodeConst>0</RVCTCodeConst>
@@ -6138,9 +6577,9 @@
                   </Cads>
                 </FileArmAds>
               </FileOption>            </File>            <File>
-              <FileName>nrf_section_iter.c</FileName>
+              <FileName>nrf_ringbuf.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\components\libraries\experimental_section_vars\nrf_section_iter.c</FilePath>              <FileOption>
+              <FilePath>..\..\..\..\..\components\libraries\ringbuf\nrf_ringbuf.c</FilePath>              <FileOption>
                 <CommonProperty>
                   <UseCPPCompiler>0</UseCPPCompiler>
                   <RVCTCodeConst>0</RVCTCodeConst>
@@ -6181,9 +6620,9 @@
                   </Cads>
                 </FileArmAds>
               </FileOption>            </File>            <File>
-              <FileName>nrf_sortlist.c</FileName>
+              <FileName>nrf_section_iter.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\components\libraries\sortlist\nrf_sortlist.c</FilePath>              <FileOption>
+              <FilePath>..\..\..\..\..\components\libraries\experimental_section_vars\nrf_section_iter.c</FilePath>              <FileOption>
                 <CommonProperty>
                   <UseCPPCompiler>0</UseCPPCompiler>
                   <RVCTCodeConst>0</RVCTCodeConst>
@@ -6272,7 +6711,7 @@
           <Files>            <File>
               <FileName>nrf_log_backend_rtt.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\components\libraries\experimental_log\src\nrf_log_backend_rtt.c</FilePath>              <FileOption>
+              <FilePath>..\..\..\..\..\components\libraries\log\src\nrf_log_backend_rtt.c</FilePath>              <FileOption>
                 <CommonProperty>
                   <UseCPPCompiler>0</UseCPPCompiler>
                   <RVCTCodeConst>0</RVCTCodeConst>
@@ -6315,7 +6754,7 @@
               </FileOption>            </File>            <File>
               <FileName>nrf_log_backend_serial.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\components\libraries\experimental_log\src\nrf_log_backend_serial.c</FilePath>              <FileOption>
+              <FilePath>..\..\..\..\..\components\libraries\log\src\nrf_log_backend_serial.c</FilePath>              <FileOption>
                 <CommonProperty>
                   <UseCPPCompiler>0</UseCPPCompiler>
                   <RVCTCodeConst>0</RVCTCodeConst>
@@ -6358,7 +6797,7 @@
               </FileOption>            </File>            <File>
               <FileName>nrf_log_default_backends.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\components\libraries\experimental_log\src\nrf_log_default_backends.c</FilePath>              <FileOption>
+              <FilePath>..\..\..\..\..\components\libraries\log\src\nrf_log_default_backends.c</FilePath>              <FileOption>
                 <CommonProperty>
                   <UseCPPCompiler>0</UseCPPCompiler>
                   <RVCTCodeConst>0</RVCTCodeConst>
@@ -6401,7 +6840,7 @@
               </FileOption>            </File>            <File>
               <FileName>nrf_log_frontend.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\components\libraries\experimental_log\src\nrf_log_frontend.c</FilePath>              <FileOption>
+              <FilePath>..\..\..\..\..\components\libraries\log\src\nrf_log_frontend.c</FilePath>              <FileOption>
                 <CommonProperty>
                   <UseCPPCompiler>0</UseCPPCompiler>
                   <RVCTCodeConst>0</RVCTCodeConst>
@@ -6444,7 +6883,53 @@
               </FileOption>            </File>            <File>
               <FileName>nrf_log_str_formatter.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\components\libraries\experimental_log\src\nrf_log_str_formatter.c</FilePath>              <FileOption>
+              <FilePath>..\..\..\..\..\components\libraries\log\src\nrf_log_str_formatter.c</FilePath>              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>0</UseCPPCompiler>
+                  <RVCTCodeConst>0</RVCTCodeConst>
+                  <RVCTZI>0</RVCTZI>
+                  <RVCTOtherData>0</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>0</IncludeInBuild>
+                  <AlwaysBuild>2</AlwaysBuild>
+                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
+                  <PublicsOnly>2</PublicsOnly>
+                  <StopOnExitCode>11</StopOnExitCode>
+                  <CustomArgument></CustomArgument>
+                  <IncludeLibraryModules></IncludeLibraryModules>
+                  <ComprImg>1</ComprImg>
+                </CommonProperty>
+                <FileArmAds>
+                  <Cads>
+                    <interw>2</interw>
+                    <Optim>0</Optim>
+                    <oTime>2</oTime>
+                    <SplitLS>2</SplitLS>
+                    <OneElfS>2</OneElfS>
+                    <Strict>2</Strict>
+                    <EnumInt>2</EnumInt>
+                    <PlainCh>2</PlainCh>
+                    <Ropi>2</Ropi>
+                    <Rwpi>2</Rwpi>
+                    <wLevel>0</wLevel>
+                    <uThumb>2</uThumb>
+                    <uSurpInc>2</uSurpInc>
+                    <VariousControls>
+                      <MiscControls></MiscControls>
+                      <Define></Define>
+                      <Undefine></Undefine>
+                      <IncludePath></IncludePath>
+                    </VariousControls>
+                  </Cads>
+                </FileArmAds>
+              </FileOption>            </File>          </Files>
+        </Group>        <Group>
+          <GroupName>nRF_Oberon_Crypto</GroupName>
+          <Files>            <File>
+              <FileName>oberon_short_wchar_2.0.5.lib</FileName>
+              <FileType>4</FileType>
+              <FilePath>..\..\..\..\..\external\nrf_oberon\lib\nrf52\oberon_short_wchar_2.0.5.lib</FilePath>              <FileOption>
                 <CommonProperty>
                   <UseCPPCompiler>0</UseCPPCompiler>
                   <RVCTCodeConst>0</RVCTCodeConst>
@@ -6488,49 +6973,6 @@
         </Group>        <Group>
           <GroupName>nRF_SVC</GroupName>
           <Files>            <File>
-              <FileName>nrf_dfu_svci.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\components\libraries\bootloader\dfu\nrf_dfu_svci.c</FilePath>              <FileOption>
-                <CommonProperty>
-                  <UseCPPCompiler>0</UseCPPCompiler>
-                  <RVCTCodeConst>0</RVCTCodeConst>
-                  <RVCTZI>0</RVCTZI>
-                  <RVCTOtherData>0</RVCTOtherData>
-                  <ModuleSelection>0</ModuleSelection>
-                  <IncludeInBuild>0</IncludeInBuild>
-                  <AlwaysBuild>2</AlwaysBuild>
-                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
-                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
-                  <PublicsOnly>2</PublicsOnly>
-                  <StopOnExitCode>11</StopOnExitCode>
-                  <CustomArgument></CustomArgument>
-                  <IncludeLibraryModules></IncludeLibraryModules>
-                  <ComprImg>1</ComprImg>
-                </CommonProperty>
-                <FileArmAds>
-                  <Cads>
-                    <interw>2</interw>
-                    <Optim>0</Optim>
-                    <oTime>2</oTime>
-                    <SplitLS>2</SplitLS>
-                    <OneElfS>2</OneElfS>
-                    <Strict>2</Strict>
-                    <EnumInt>2</EnumInt>
-                    <PlainCh>2</PlainCh>
-                    <Ropi>2</Ropi>
-                    <Rwpi>2</Rwpi>
-                    <wLevel>0</wLevel>
-                    <uThumb>2</uThumb>
-                    <uSurpInc>2</uSurpInc>
-                    <VariousControls>
-                      <MiscControls></MiscControls>
-                      <Define></Define>
-                      <Undefine></Undefine>
-                      <IncludePath></IncludePath>
-                    </VariousControls>
-                  </Cads>
-                </FileArmAds>
-              </FileOption>            </File>            <File>
               <FileName>nrf_dfu_svci_handler.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\components\libraries\bootloader\dfu\nrf_dfu_svci_handler.c</FilePath>              <FileOption>
@@ -6973,9 +7415,9 @@
         </Group>        <Group>
           <GroupName>nrf_cc310_bl</GroupName>
           <Files>            <File>
-              <FileName>nrf_cc310_bl_keil_0.9.9.lib</FileName>
+              <FileName>nrf_cc310_bl_keil_0.9.10.lib</FileName>
               <FileType>4</FileType>
-              <FilePath>..\..\..\..\..\external\nrf_cc310_bl\lib\nrf_cc310_bl_keil_0.9.9.lib</FilePath>              <FileOption>
+              <FilePath>..\..\..\..\..\external\nrf_cc310_bl\lib\nrf_cc310_bl_keil_0.9.10.lib</FilePath>              <FileOption>
                 <CommonProperty>
                   <UseCPPCompiler>0</UseCPPCompiler>
                   <RVCTCodeConst>0</RVCTCodeConst>
@@ -7022,19 +7464,19 @@
     <filter>
       <targetInfos/>
     </filter>    <package name="CMSIS" url="http://www.keil.com/pack/" vendor="ARM" version="4.5.0">
-      <targetInfos>        <targetInfo name="nrf52840_xxaa_s140" versionMatchMode="fixed"/>        <targetInfo excluded="1" name="flash_s140_nrf52_6.0.0_softdevice"/>      </targetInfos>
+      <targetInfos>        <targetInfo name="nrf52840_xxaa_s140" versionMatchMode="fixed"/>        <targetInfo excluded="1" name="flash_s140_nrf52_6.1.0_softdevice"/>      </targetInfos>
     </package>
-    <package name="nRF_DeviceFamilyPack" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_DeviceFamilyPack/" vendor="NordicSemiconductor" version="8.16.0">
-      <targetInfos>        <targetInfo name="nrf52840_xxaa_s140" versionMatchMode="fixed"/>        <targetInfo excluded="1" name="flash_s140_nrf52_6.0.0_softdevice"/>      </targetInfos>
+    <package name="nRF_DeviceFamilyPack" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_DeviceFamilyPack/" vendor="NordicSemiconductor" version="8.17.0">
+      <targetInfos>        <targetInfo name="nrf52840_xxaa_s140" versionMatchMode="fixed"/>        <targetInfo excluded="1" name="flash_s140_nrf52_6.1.0_softdevice"/>      </targetInfos>
     </package>  </packages>
   <apis/>
   <components>    <component Cclass="CMSIS" Cgroup="CORE" Cvendor="ARM" Cversion="4.3.0" condition="CMSIS Core">
       <package name="CMSIS" url="http://www.keil.com/pack/" vendor="ARM" version="4.5.0"/>
-      <targetInfos>        <targetInfo name="nrf52840_xxaa_s140" versionMatchMode="fixed"/>        <targetInfo excluded="1" name="flash_s140_nrf52_6.0.0_softdevice"/>      </targetInfos>
+      <targetInfos>        <targetInfo name="nrf52840_xxaa_s140" versionMatchMode="fixed"/>        <targetInfo excluded="1" name="flash_s140_nrf52_6.1.0_softdevice"/>      </targetInfos>
     </component>
-    <component Cclass="Device" Cgroup="Startup" Cvendor="NordicSemiconductor" Cversion="8.16.0" condition="nRF5x Series CMSIS Device">
-      <package name="nRF_DeviceFamilyPack" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_DeviceFamilyPack/" vendor="NordicSemiconductor" version="8.16.0"/>
-      <targetInfos>        <targetInfo name="nrf52840_xxaa_s140" versionMatchMode="fixed"/>        <targetInfo excluded="1" name="flash_s140_nrf52_6.0.0_softdevice"/>      </targetInfos>
+    <component Cclass="Device" Cgroup="Startup" Cvendor="NordicSemiconductor" Cversion="8.17.0" condition="nRF5x Series CMSIS Device">
+      <package name="nRF_DeviceFamilyPack" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_DeviceFamilyPack/" vendor="NordicSemiconductor" version="8.17.0"/>
+      <targetInfos>        <targetInfo name="nrf52840_xxaa_s140" versionMatchMode="fixed"/>        <targetInfo excluded="1" name="flash_s140_nrf52_6.1.0_softdevice"/>      </targetInfos>
     </component>  </components>
   <files>  </files>
 </RTE>

@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2016 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #ifndef APP_USBD_MSC_H__
 #define APP_USBD_MSC_H__
@@ -77,7 +77,7 @@ extern "C" {
 
 #ifdef DOXYGEN
 /**
- * @brief Mass storage class instance type
+ * @brief Mass storage class instance type.
  *
  * @ref APP_USBD_CLASS_TYPEDEF
  */
@@ -97,7 +97,7 @@ APP_USBD_CLASS_TYPEDEF(app_usbd_msc,                                            
 /*lint -save -e407 */
 
 /**
- * @brief Events passed to user event handler
+ * @brief Events passed to user event handler.
  *
  * @note Example prototype of user event handler:
  *
@@ -111,10 +111,10 @@ typedef enum app_usbd_msc_user_event_e {
 /*lint -restore*/
 
 /**
- * @brief Helper macro for defining MSC endpoints
+ * @brief Helper macro for defining MSC endpoints.
  *
- * @param in_number     Input endpoint number
- * @param out_number    Output endpoint number
+ * @param in_number     Input endpoint number.
+ * @param out_number    Output endpoint number.
  * */
 #define APP_USBD_MSC_ENDPOINT_LIST(in_number, out_number) (    \
         CONCAT_2(NRF_DRV_USBD_EPIN, in_number),                \
@@ -122,15 +122,15 @@ typedef enum app_usbd_msc_user_event_e {
 )
 
 /**
- * @brief Global definition of app_usbd_msc_t class
+ * @brief Global definition of app_usbd_msc_t class.
  *
- * @param instance_name             Name of global instance
- * @param interface_number          Unique interface number
- * @param user_ev_handler           User event handler (optional)
- * @param endpoint_list             Input endpoint list (@ref nrf_drv_usbd_ep_t)
- * @param blockdev_list             Block device list
+ * @param instance_name             Name of global instance.
+ * @param interface_number          Unique interface number.
+ * @param user_ev_handler           User event handler (optional).
+ * @param endpoint_list             Input endpoint list (@ref nrf_drv_usbd_ep_t).
+ * @param blockdev_list             Block device list.
  * @param workbuffer_size           Work buffer size (need to fit into all block devices from
- *                                  block device list)
+ *                                  block device list).
  *
  * @note This macro is just simplified version of @ref APP_USBD_MSC_GLOBAL_DEF_INTERNAL
  *
@@ -150,11 +150,11 @@ typedef enum app_usbd_msc_user_event_e {
 
 
 /**
- * @@brief Helper function to get class instance from MSC
+ * @@brief Helper function to get class instance from MSC.
  *
- * @param[in] p_msc     MSC instance (declared by @ref APP_USBD_MSC_GLOBAL_DEF)
+ * @param[in] p_msc     MSC instance (declared by @ref APP_USBD_MSC_GLOBAL_DEF).
  *
- * @return Base class instance
+ * @return Base class instance.
  */
 static inline app_usbd_class_inst_t const *
 app_usbd_msc_class_inst_get(app_usbd_msc_t const * p_msc)
@@ -163,11 +163,11 @@ app_usbd_msc_class_inst_get(app_usbd_msc_t const * p_msc)
 }
 
 /**
- * @brief Helper function to get MSC from base class instance
+ * @brief Helper function to get MSC from base class instance.
  *
- * @param[in] p_inst Base class instance
+ * @param[in] p_inst Base class instance.
  *
- * @return MSC class handle
+ * @return MSC class handle.
  */
 static inline app_usbd_msc_t const * app_usbd_msc_class_get(app_usbd_class_inst_t const * p_inst)
 {
@@ -175,12 +175,12 @@ static inline app_usbd_msc_t const * app_usbd_msc_class_get(app_usbd_class_inst_
 }
 
 /**
- * @brief Synchronization of all block devices pined to MSC
+ * @brief Synchronization of all block devices pined to MSC.
  *
- * @param[in] p_msc     MSC instance (declared by @ref APP_USBD_MSC_GLOBAL_DEF)
+ * @param[in] p_msc     MSC instance (declared by @ref APP_USBD_MSC_GLOBAL_DEF).
  *
- * @retval true  All block devices flushed data
- * @retval false At least one block device has not flushed data
+ * @retval true  All block devices flushed data.
+ * @retval false At least one block device has not flushed data.
  */
 bool app_usbd_msc_sync(app_usbd_msc_t const * p_msc);
 

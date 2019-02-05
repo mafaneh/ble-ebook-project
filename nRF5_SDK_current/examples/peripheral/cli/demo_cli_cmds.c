@@ -1,30 +1,30 @@
 /**
- * Copyright (c) 2018 - 2018, Nordic Semiconductor ASA
- * 
+ * Copyright (c) 2018, Nordic Semiconductor ASA
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,14 +35,17 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
-#include  "nrf_cli.h"
-#include "nrf_log.h"
 #include <ctype.h>
+#include "nrf_cli.h"
+#include "nrf_log.h"
+#include "sdk_common.h"
+#include "nrf_stack_guard.h"
 
 #define CLI_EXAMPLE_MAX_CMD_CNT (20u)
 #define CLI_EXAMPLE_MAX_CMD_LEN (33u)
+#define CLI_EXAMPLE_VALUE_BIGGER_THAN_STACK     (20000u)
 
 /* buffer holding dynamicly created user commands */
 static char m_dynamic_cmd_buffer[CLI_EXAMPLE_MAX_CMD_CNT][CLI_EXAMPLE_MAX_CMD_LEN];
@@ -378,6 +381,40 @@ static void cmd_nordic(nrf_cli_t const * p_cli, size_t argc, char **argv)
                     "                Nordic Semiconductor              \r\n\r\n");
 }
 
+/* This function cannot be static otherwise it can be inlined. As a result, variable:
+   tab[CLI_EXAMPLE_VALUE_BIGGER_THAN_STACK] will be always created on stack. This will block
+   possiblity to call functions: nrf_cli_help_requested and nrf_cli_help_print within
+   cmd_stack_overflow, because stack guard will be triggered. */
+void cli_example_stack_overflow_force(void)
+{
+    char tab[CLI_EXAMPLE_VALUE_BIGGER_THAN_STACK];
+    volatile char * p_tab = tab;
+
+    /* This function accesses stack area protected by nrf_stack_guard. As a result
+       MPU (memory protection unit) triggers an exception (hardfault). Hardfault handler will log
+       exception reason.*/
+    for (size_t idx = 0; idx < STACK_SIZE; idx++)
+    {
+        *(p_tab + idx) = (uint8_t)idx;
+    }
+
+}
+
+static void cmd_stack_overflow(nrf_cli_t const * p_cli, size_t argc, char **argv)
+{
+    UNUSED_PARAMETER(argc);
+    UNUSED_PARAMETER(argv);
+
+    if (nrf_cli_help_requested(p_cli))
+    {
+        nrf_cli_help_print(p_cli, NULL, 0);
+        return;
+    }
+
+    cli_example_stack_overflow_force();
+}
+
+
 /**
  * @brief Command set array
  * */
@@ -404,6 +441,14 @@ NRF_CLI_CMD_REGISTER(counter,
                      &m_sub_counter,
                      "Display seconds on terminal screen",
                      cmd_counter);
+
+NRF_CLI_CMD_REGISTER(stack_overflow,
+                     NULL,
+                     "Command tests nrf_stack_guard module. Upon command call stack will be "
+                     "overflowed and microcontroller shall log proper reset reason. \n\rTo observe "
+                     "stack_guard execution, stack shall be set to value lower than 20000 bytes.",
+                     cmd_stack_overflow);
+
 
 /* dynamic command creation */
 static void dynamic_cmd_get(size_t idx, nrf_cli_static_entry_t * p_static)

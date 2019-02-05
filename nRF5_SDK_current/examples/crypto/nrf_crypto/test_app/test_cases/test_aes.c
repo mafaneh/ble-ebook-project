@@ -1,30 +1,30 @@
 /**
- * Copyright (c) 2018 - 2018, Nordic Semiconductor ASA
- * 
+ * Copyright (c) 2018, Nordic Semiconductor ASA
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 
 #include <stdio.h>
@@ -62,39 +62,63 @@ NRF_SECTION_DEF(test_vector_aes_mac_data, test_vector_aes_t);
 NRF_SECTION_DEF(test_vector_aes_func_data, test_vector_aes_t);
 NRF_SECTION_DEF(test_vector_aes_monte_carlo_data, test_vector_aes_t);
 
-#define NUM_BUFFER_OVERFLOW_TEST_BYTES          2                                                                               /**< Number of bytes to be using in overflow test for AES. */
-#define CFB_MONTE_CARLO_CIPHER_ARRAY_LEN        32                                                                              /**< Number of bytes in AES CFB ciphertext array in AES Monte Carlo test. */
-#define AES_IV_MAX_SIZE                         16                                                                              /**< Maximum AES IV size. */
-#define AES_MAC_INPUT_BLOCK_SIZE                16                                                                              /**< Maximum AES MAC input block size. */
-#define AES_PLAINTEXT_BUF_SIZE                  256                                                                             /**< Input buffer size for AES Plaintext. */
-#define AES_PLAINTEXT_BUF_SIZE_PLUS             AES_PLAINTEXT_BUF_SIZE + NUM_BUFFER_OVERFLOW_TEST_BYTES                         /**< Input buffer size for AES Plaintext, including 2 buffer overflow bytes. */
-#define AES_MAX_KEY_SIZE                        NRF_CRYPTO_KEY_SIZE_256 / 8                                                     /**< AES maximum key size. */
-#define AES_MIN_KEY_SIZE                        NRF_CRYPTO_KEY_SIZE_128 / 8                                                     /**< AES minimum key size. */
-#define TEST_VECTOR_AES_GET(i)                  NRF_SECTION_ITEM_GET(test_vector_aes_data, test_vector_aes_t, (i))              /**< Get number of AES test vectors. */
-#define TEST_VECTOR_AES_COUNT                   NRF_SECTION_ITEM_COUNT(test_vector_aes_data, test_vector_aes_t)                 /**< Get test vector reference from array of test vectors. */
-#define TEST_VECTOR_AES_MAC_GET(i)              NRF_SECTION_ITEM_GET(test_vector_aes_mac_data, test_vector_aes_t, (i))          /**< Get number of AES MAC test vectors. */
-#define TEST_VECTOR_AES_MAC_COUNT               NRF_SECTION_ITEM_COUNT(test_vector_aes_mac_data, test_vector_aes_t)             /**< Get test vector reference from array of test vectors. */
-#define TEST_VECTOR_AES_MULTI_GET(i)            NRF_SECTION_ITEM_GET(test_vector_aes_monte_carlo_data, test_vector_aes_t, (i))  /**< Get number of AES multi test vectors. */
-#define TEST_VECTOR_AES_MULTI_COUNT             NRF_SECTION_ITEM_COUNT(test_vector_aes_monte_carlo_data, test_vector_aes_t)     /**< Get test vector reference from array of test vectors. */
-#define TEST_VECTOR_AES_FUNCTIONAL_GET(i)       NRF_SECTION_ITEM_GET(test_vector_aes_func_data, test_vector_aes_t, (i))         /**< Get number of AES funtional test vectors. */
-#define TEST_VECTOR_AES_FUNCTIONAL_COUNT        NRF_SECTION_ITEM_COUNT(test_vector_aes_func_data, test_vector_aes_t)            /**< Get test vector reference from array of test vectors. */
+#define NUM_BUFFER_OVERFLOW_TEST_BYTES      (2)                                                     /**< Number of bytes to be used in overflow test for AES. */
+#define CFB_MONTE_CARLO_CIPHER_ARRAY_LEN    (32)                                                    /**< Number of bytes in the AES CFB ciphertext array in the AES Monte Carlo test. */
+#define AES_IV_MAX_SIZE                     (16)                                                    /**< Maximum AES Initialization Vector size. */
+#define AES_MAC_INPUT_BLOCK_SIZE            (16)                                                    /**< Maximum AES MAC input block size. */
+#define AES_PLAINTEXT_BUF_SIZE              (256)                                                   /**< Input buffer size for the AES plaintext. */
+#define AES_PLAINTEXT_BUF_SIZE_PLUS         AES_PLAINTEXT_BUF_SIZE + NUM_BUFFER_OVERFLOW_TEST_BYTES /**< Input buffer size for AES plaintext, including 2 buffer overflow bytes. */
+#define AES_MAX_KEY_SIZE                    NRF_CRYPTO_KEY_SIZE_256 / (8)                           /**< AES maximum key size. */
+#define AES_MIN_KEY_SIZE                    NRF_CRYPTO_KEY_SIZE_128 / (8)                           /**< AES minimum key size. */
 
-static nrf_crypto_aes_context_t m_aes_context;                                                                                  /**< AES context. */
+/**< Get number of the AES test vectors. */
+#define TEST_VECTOR_AES_GET(i)              \
+    NRF_SECTION_ITEM_GET(test_vector_aes_data, test_vector_aes_t, (i))
 
-static uint8_t                  m_aes_input_buf[AES_PLAINTEXT_BUF_SIZE_PLUS];                                                   /**< Buffer for holding the plaintext. */
-static uint8_t                  m_aes_output_buf[AES_PLAINTEXT_BUF_SIZE_PLUS];                                                  /**< Buffer for holding the generated plaintext or ciphertext. */
-static uint8_t                  m_aes_expected_output_buf[AES_PLAINTEXT_BUF_SIZE_PLUS];                                         /**< Buffer for holding the ciphertext. */
-static uint8_t                  m_prev_aes_output_buf[AES_PLAINTEXT_BUF_SIZE_PLUS];                                             /**< Buffer for holding the previous generated ciphertext or plaintext. */
-static uint8_t                  m_aes_key_buf[AES_MAX_KEY_SIZE];                                                                /**< Buffer for holding the key data. */
-static uint8_t                  m_aes_iv_buf[AES_IV_MAX_SIZE + NUM_BUFFER_OVERFLOW_TEST_BYTES];                                 /**< Buffer for holding the IV data. */
-static uint8_t                  m_aes_temp_buf[AES_MAX_KEY_SIZE];                                                               /**< Buffer for holding the temporary data. */
+/**< Get the test vector reference from array of test vectors. */
+#define TEST_VECTOR_AES_COUNT               \
+    NRF_SECTION_ITEM_COUNT(test_vector_aes_data, test_vector_aes_t)
+
+/**< Get the number of the AES MAC test vectors. */
+#define TEST_VECTOR_AES_MAC_GET(i)          \
+    NRF_SECTION_ITEM_GET(test_vector_aes_mac_data, test_vector_aes_t, (i))
+
+/**< Get the test vector reference from array of test vectors. */
+#define TEST_VECTOR_AES_MAC_COUNT           \
+    NRF_SECTION_ITEM_COUNT(test_vector_aes_mac_data, test_vector_aes_t)
+
+/**< Get the number of AES multi-test vectors. */
+#define TEST_VECTOR_AES_MULTI_GET(i)        \
+    NRF_SECTION_ITEM_GET(test_vector_aes_monte_carlo_data, test_vector_aes_t, (i))
+
+/**< Get the test vector reference from the array of test vectors. */
+#define TEST_VECTOR_AES_MULTI_COUNT         \
+    NRF_SECTION_ITEM_COUNT(test_vector_aes_monte_carlo_data, test_vector_aes_t)
+
+/**< Get the number of AES funtional test vectors. */
+#define TEST_VECTOR_AES_FUNCTIONAL_GET(i)   \
+    NRF_SECTION_ITEM_GET(test_vector_aes_func_data, test_vector_aes_t, (i))
+
+/**< Get the test vector reference from the array of test vectors. */
+#define TEST_VECTOR_AES_FUNCTIONAL_COUNT    \
+    NRF_SECTION_ITEM_COUNT(test_vector_aes_func_data, test_vector_aes_t)
+
+static nrf_crypto_aes_context_t m_aes_context;                                                 /**< AES context. */
+
+static uint8_t m_aes_input_buf[AES_PLAINTEXT_BUF_SIZE_PLUS];                                   /**< Buffer for holding the plaintext. */
+static uint8_t m_aes_output_buf[AES_PLAINTEXT_BUF_SIZE_PLUS];                                  /**< Buffer for holding the generated plaintext or ciphertext. */
+static uint8_t m_aes_expected_output_buf[AES_PLAINTEXT_BUF_SIZE_PLUS];                         /**< Buffer for holding the ciphertext. */
+static uint8_t m_prev_aes_output_buf[AES_PLAINTEXT_BUF_SIZE_PLUS];                             /**< Buffer for holding the previous generated ciphertext or plaintext. */
+static uint8_t m_aes_key_buf[AES_MAX_KEY_SIZE];                                                /**< Buffer for holding the key data. */
+static uint8_t m_aes_iv_buf[AES_IV_MAX_SIZE + NUM_BUFFER_OVERFLOW_TEST_BYTES];                 /**< Buffer for holding the IV data. */
+static uint8_t m_aes_temp_buf[AES_MAX_KEY_SIZE];                                               /**< Buffer for holding the temporary data. */
 
 
 /**@brief Function for updating the AES key buffer based on the algorithms
- *  in NIST Monte Carlo test cases.
+ *  in the NIST Monte Carlo test cases.
  *
- * @param[in]  key_len          Length of AES key in bytes.
- * @param[in]  ciphertext_len   Length of ciphertext in bytes.
+ * @param[in]  key_len          Length of the AES key in bytes.
+ * @param[in]  ciphertext_len   Length of the ciphertext in bytes.
  *
  */
 void ecb_cbc_monte_carlo_update_key(size_t key_len, size_t ciphertext_len)
@@ -115,17 +139,17 @@ void ecb_cbc_monte_carlo_update_key(size_t key_len, size_t ciphertext_len)
     }
 }
 
-/**@brief Function for handling the AES ECB encryption/decryption in NIST Monte Carlo test cases.
+/**@brief Function for handling the AES ECB encryption or decryption in the NIST Monte Carlo test cases.
  *
  * @details Check out NIST The Advanced Encryption Standard Algorithm Validation Suite (AESAVS)
  *  for more information about the Monte Carlo algorithm.
  *
- * @param[in]  p_test_info      Pointer to test case information variable.
- * @param[in]  p_test_vector    Pointer to test vector information variable.
- * @param[in]  p_aes_context    Pointer to aes context variable.
- * @param[in]  key_len          Length of AES key in bytes.
- * @param[in]  input_len        Length of AES input in bytes.
- * @param[in]  output_len       Length of AES output in bytes.
+ * @param[in]  p_test_info      Pointer to the test case information variable.
+ * @param[in]  p_test_vector    Pointer to the test vector information variable.
+ * @param[in]  p_aes_context    Pointer to the AES context variable.
+ * @param[in]  key_len          Length of the AES key in bytes.
+ * @param[in]  input_len        Length of the AES input in bytes.
+ * @param[in]  output_len       Length of the AES output in bytes.
  *
  * @return NRF_SUCCESS on success.
  */
@@ -139,7 +163,7 @@ ret_code_t ecb_monte_carlo(test_info_t *                  p_test_info,
     uint16_t j;
     ret_code_t err_code;
 
-    // Execution encryption/decryption 1000 times with same AES key.
+    // Execution of encryption or decryption 1000 times with same AES key.
     for (j = 0; j < 1000; j++)
     {
         memcpy(m_prev_aes_output_buf, m_aes_output_buf, sizeof(m_prev_aes_output_buf));
@@ -152,7 +176,7 @@ ret_code_t ecb_monte_carlo(test_info_t *                  p_test_info,
         memcpy(m_aes_input_buf, m_aes_output_buf, input_len);
     }
 
-    // Update AES key.
+    // Update the AES key.
     ecb_cbc_monte_carlo_update_key(key_len, output_len);
     err_code = nrf_crypto_aes_key_set(p_aes_context, m_aes_key_buf);
     TEST_VECTOR_ASSERT_ERR_CODE((err_code == p_test_vector->expected_err_code),
@@ -164,18 +188,18 @@ exit_test_vector:
 }
 
 
-/**@brief Function for handling the AES CBC encryption/decryption in NIST Monte Carlo test cases.
+/**@brief Function for handling the AES CBC encryption or decryption in the NIST Monte Carlo test cases.
  *
  * @details Check out NIST The Advanced Encryption Standard Algorithm Validation Suite (AESAVS)
  *  for more information about the Monte Carlo algorithm.
  *
- * @param[in]  p_test_info      Pointer to test case information variable.
- * @param[in]  p_test_vector    Pointer to test vector information variable.
- * @param[in]  p_aes_context    Pointer to aes context variable.
- * @param[in]  key_len          Length of AES key in bytes.
- * @param[in]  input_len        Length of AES input in bytes.
- * @param[in]  output_len       Length of AES output in bytes.
- * @param[in]  iv_len           Length of AES IV in bytes.
+ * @param[in]  p_test_info      Pointer to the test case information variable.
+ * @param[in]  p_test_vector    Pointer to the test vector information variable.
+ * @param[in]  p_aes_context    Pointer to the AES context variable.
+ * @param[in]  key_len          Length of the AES key in bytes.
+ * @param[in]  input_len        Length of the AES input in bytes.
+ * @param[in]  output_len       Length of the AES output in bytes.
+ * @param[in]  iv_len           Length of the AES IV in bytes.
  *
  * @return NRF_SUCCESS on success.
  */
@@ -190,7 +214,7 @@ ret_code_t cbc_monte_carlo(test_info_t *                  p_test_info,
     uint16_t j;
     ret_code_t err_code;
 
-    // Execution encryption/decryption 1000 times with same AES key.
+    // Execution encryption or decryption 1000 times with same AES key.
     for (j = 0; j < 1000; j++)
     {
         memcpy(m_prev_aes_output_buf, m_aes_output_buf, sizeof(m_prev_aes_output_buf));
@@ -211,13 +235,13 @@ ret_code_t cbc_monte_carlo(test_info_t *                  p_test_info,
         }
     }
 
-    // Update AES key.
+    // Update the AES key.
     ecb_cbc_monte_carlo_update_key(key_len, output_len);
     err_code = nrf_crypto_aes_key_set(p_aes_context, m_aes_key_buf);
     TEST_VECTOR_ASSERT_ERR_CODE((err_code == p_test_vector->expected_err_code),
                                 "nrf_crypto_aes_key_set");
 
-    // Update AES IV.
+    // Update the AES IV.
     memcpy(m_aes_iv_buf, m_aes_output_buf, iv_len);
     err_code = nrf_crypto_aes_iv_set(p_aes_context, m_aes_iv_buf);
     TEST_VECTOR_ASSERT_ERR_CODE((err_code == p_test_vector->expected_err_code),
@@ -229,18 +253,18 @@ exit_test_vector:
 }
 
 
-/**@brief Function for handling the AES CFB8 encryption/decryption in NIST Monte Carlo test cases.
+/**@brief Function for handling the AES CFB8 encryption or decryption in the NIST Monte Carlo test cases.
  *
  * @details Check out NIST The Advanced Encryption Standard Algorithm Validation Suite (AESAVS)
  *  for more information about the Monte Carlo algorithm.
  *
- * @param[in]  p_test_info      Pointer to test case information variable.
- * @param[in]  p_test_vector    Pointer to test vector information variable.
- * @param[in]  p_aes_context    Pointer to aes context variable.
- * @param[in]  key_len          Length of AES key in bytes.
- * @param[in]  input_len        Length of AES input in bytes.
- * @param[in]  output_len       Length of AES output in bytes.
- * @param[in]  iv_len           Length of AES IV in bytes.
+ * @param[in]  p_test_info      Pointer to the test case information variable.
+ * @param[in]  p_test_vector    Pointer to the test vector information variable.
+ * @param[in]  p_aes_context    Pointer to the AES context variable.
+ * @param[in]  key_len          Length of the AES key in bytes.
+ * @param[in]  input_len        Length of the AES input in bytes.
+ * @param[in]  output_len       Length of the AES output in bytes.
+ * @param[in]  iv_len           Length of the AES IV in bytes.
  *
  * @return NRF_SUCCESS on success.
  */
@@ -264,7 +288,7 @@ ret_code_t cfb8_monte_carlo(test_info_t *                  p_test_info,
         return NRF_ERROR_CRYPTO_KEY_SIZE;
     }
 
-    // Execution encryption/decryption 1000 times with same AES key.
+    // Execution encryption or decryption 1000 times with same AES key.
     for (j = 0; j < 1000; j++)
     {
         err_code = nrf_crypto_aes_update(p_aes_context,
@@ -286,9 +310,10 @@ ret_code_t cfb8_monte_carlo(test_info_t *                  p_test_info,
         cipher_array[j % CFB_MONTE_CARLO_CIPHER_ARRAY_LEN] = m_aes_output_buf[0];
     }
 
-    // Variables needed for AES key calculation.
+    // Variables needed for the AES key calculation.
     current_cipher_index      = (j - 1) % CFB_MONTE_CARLO_CIPHER_ARRAY_LEN;
-    oldest_cipher_index       = (current_cipher_index - key_len + 1) % CFB_MONTE_CARLO_CIPHER_ARRAY_LEN;
+    oldest_cipher_index       = (current_cipher_index - key_len + 1)
+                                % CFB_MONTE_CARLO_CIPHER_ARRAY_LEN;
     remaining_cipher_elements = CFB_MONTE_CARLO_CIPHER_ARRAY_LEN - oldest_cipher_index;
 
     // Use m_aes_temp_buf as temporary buffer.
@@ -305,12 +330,12 @@ ret_code_t cfb8_monte_carlo(test_info_t *                  p_test_info,
         m_aes_key_buf[xor_start] ^= m_aes_temp_buf[xor_start];
     }
 
-    // Update AES key.
+    // Update the AES key.
     err_code = nrf_crypto_aes_key_set(p_aes_context, m_aes_key_buf);
     TEST_VECTOR_ASSERT_ERR_CODE((err_code == p_test_vector->expected_err_code),
                                 "nrf_crypto_aes_key_set");
 
-    // Update AES IV.
+    // Update the AES IV.
     /*lint -save -e662 */
     memcpy(m_aes_iv_buf, &m_aes_temp_buf[key_len - 16], iv_len);
     err_code = nrf_crypto_aes_iv_set(p_aes_context, m_aes_iv_buf);
@@ -323,7 +348,7 @@ exit_test_vector:
 }
 
 
-/**@brief Function for running test setup.
+/**@brief Function for running the test setup.
  */
 ret_code_t setup_test_case_aes(void)
 {
@@ -331,7 +356,7 @@ ret_code_t setup_test_case_aes(void)
 }
 
 
-/**@brief Function for AES functional test execution.
+/**@brief Function for the AES functional test execution.
  */
 ret_code_t exec_test_case_aes_functional(test_info_t * p_test_info)
 {
@@ -364,12 +389,12 @@ ret_code_t exec_test_case_aes_functional(test_info_t * p_test_info)
         TEST_VECTOR_ASSERT_ERR_CODE((err_code == NRF_SUCCESS),
                                     "nrf_crypto_aes_init on encrypt");
 
-        // Fetch and set AES key.
+        // Fetch and set the AES key.
         memset(m_aes_key_buf, 0x00, sizeof(m_aes_key_buf));
         (void)unhexify(m_aes_key_buf, p_test_vector->p_key);
         err_code = nrf_crypto_aes_key_set(&m_aes_context, m_aes_key_buf);
 
-        // Fetch and set AES IV.
+        // Fetch and set the AES IV.
         memset(m_aes_iv_buf, 0x00, sizeof(m_aes_iv_buf));
         iv_len = unhexify(m_aes_iv_buf, p_test_vector->p_iv);
         if (iv_len != 0)
@@ -386,22 +411,22 @@ ret_code_t exec_test_case_aes_functional(test_info_t * p_test_info)
                                            &output_len);
         stop_time_measurement();
 
-        // Verify nrf_crypto_aes_finalize err_code.
+        // Verify the nrf_crypto_aes_finalize err_code.
         TEST_VECTOR_ASSERT_ERR_CODE((err_code == p_test_vector->expected_err_code),
                                     "nrf_crypto_aes_finalize on encrypt");
 
-        // Verify generated AES ciphertext.
+        // Verify the generated AES ciphertext.
         TEST_VECTOR_MEMCMP_ASSERT(m_aes_expected_output_buf,
                                   m_aes_output_buf,
                                   output_len,
                                   p_test_vector->expected_result,
                                   "Incorrect generated AES ciphertext");
 
-        // Verify that next two bytes in buffers are not overwritten.
+        // Verify that the next two bytes in buffers are not overwritten.
         TEST_VECTOR_OVERFLOW_ASSERT(m_aes_output_buf, output_len, "output buffer overflow");
         TEST_VECTOR_OVERFLOW_ASSERT(m_aes_input_buf, input_len, "input buffer overflow");
 
-        // Reset buffers and re-fetch test vectors.
+        // Reset buffers and re-fetch the test vectors.
         memset(m_aes_input_buf, 0xFF, sizeof(m_aes_input_buf));
         memset(m_aes_output_buf, 0xFF, sizeof(m_aes_output_buf));
         memset(m_aes_expected_output_buf, 0x00, sizeof(m_aes_expected_output_buf));
@@ -418,12 +443,12 @@ ret_code_t exec_test_case_aes_functional(test_info_t * p_test_info)
         TEST_VECTOR_ASSERT_ERR_CODE((err_code == NRF_SUCCESS),
                                     "nrf_crypto_aes_init on decrypt");
 
-        // Fetch and set AES key.
+        // Fetch and set the AES key.
         memset(m_aes_key_buf, 0x00, sizeof(m_aes_key_buf));
         (void)unhexify(m_aes_key_buf, p_test_vector->p_key);
         err_code = nrf_crypto_aes_key_set(&m_aes_context, m_aes_key_buf);
 
-        // Fetch and set AES IV.
+        // Fetch and set the AES IV.
         memset(m_aes_iv_buf, 0x00, sizeof(m_aes_iv_buf));
         iv_len = unhexify(m_aes_iv_buf, p_test_vector->p_iv);
         if (iv_len != 0)
@@ -438,18 +463,18 @@ ret_code_t exec_test_case_aes_functional(test_info_t * p_test_info)
                                            m_aes_output_buf,
                                            &output_len);
 
-        // Verify nrf_crypto_aes_finalize err_code.
+        // Verify the nrf_crypto_aes_finalize err_code.
         TEST_VECTOR_ASSERT_ERR_CODE((err_code == p_test_vector->expected_err_code),
                                     "nrf_crypto_aes_finalize on decrypt");
 
-        // Verify generated AES plaintext.
+        // Verify the generated AES plaintext.
         TEST_VECTOR_MEMCMP_ASSERT(m_aes_expected_output_buf,
                                   m_aes_output_buf,
                                   output_len,
                                   p_test_vector->expected_result,
                                   "Incorrect generated AES plaintext");
 
-        // Verify that next two bytes in buffers are not overwritten.
+        // Verify that the next two bytes in buffers are not overwritten.
         TEST_VECTOR_OVERFLOW_ASSERT(m_aes_output_buf, output_len, "output buffer overflow");
         TEST_VECTOR_OVERFLOW_ASSERT(m_aes_input_buf, input_len, "input buffer overflow");
 
@@ -471,7 +496,7 @@ exit_test_vector:
     return NRF_SUCCESS;
 }
 
-/**@brief Function for AES test execution.
+/**@brief Function for the AES test execution.
  */
 ret_code_t exec_test_case_aes(test_info_t * p_test_info)
 {
@@ -512,12 +537,12 @@ ret_code_t exec_test_case_aes(test_info_t * p_test_info)
                                        p_test_vector->p_aes_info,
                                        p_test_vector->direction);
 
-        // Fetch and set AES key.
+        // Fetch and set the AES key.
         memset(m_aes_key_buf, 0x00, sizeof(m_aes_key_buf));
         (void)unhexify(m_aes_key_buf, p_test_vector->p_key);
         err_code = nrf_crypto_aes_key_set(&m_aes_context, m_aes_key_buf);
 
-        // Fetch and set AES IV.
+        // Fetch and set the AES IV.
         memset(m_aes_iv_buf, 0xFF, sizeof(m_aes_iv_buf));
         iv_len = unhexify(m_aes_iv_buf, p_test_vector->p_iv);
         if (iv_len != 0)
@@ -527,7 +552,7 @@ ret_code_t exec_test_case_aes(test_info_t * p_test_info)
                                         "nrf_crypto_aes_iv_set");
         }
 
-        // Encrypt/Decrypt input.
+        // Encrypt or decrypt input.
         start_time_measurement();
         err_code = nrf_crypto_aes_finalize(&m_aes_context,
                                            m_aes_input_buf,
@@ -536,11 +561,11 @@ ret_code_t exec_test_case_aes(test_info_t * p_test_info)
                                            &output_len);
         stop_time_measurement();
 
-        // Verify nrf_crypto_aes_finalize err_code.
+        // Verify the nrf_crypto_aes_finalize err_code.
         TEST_VECTOR_ASSERT_ERR_CODE((err_code == p_test_vector->expected_err_code),
                                     "nrf_crypto_aes_finalize");
 
-        // Verify generated AES ciphertext.
+        // Verify the generated AES ciphertext.
         TEST_VECTOR_MEMCMP_ASSERT(m_aes_expected_output_buf,
                                   m_aes_output_buf,
                                   input_len,
@@ -549,20 +574,20 @@ ret_code_t exec_test_case_aes(test_info_t * p_test_info)
 
         if (p_test_vector->p_aes_info->mode == NRF_CRYPTO_AES_MODE_CTR)
         {
-            // Read current counter value for AES CTR mode.
+            // Read the current counter value for the AES CTR mode.
             memset(m_aes_temp_buf, 0xFF, sizeof(m_aes_temp_buf));
             ad_len = unhexify(m_aes_temp_buf, p_test_vector->p_ad);
             err_code = nrf_crypto_aes_iv_get(&m_aes_context, m_aes_iv_buf);
             TEST_VECTOR_ASSERT_ERR_CODE((err_code == NRF_SUCCESS), "nrf_crypto_aes_iv_get");
 
-            // Verify that counter value has incremented as expected.
+            // Verify that the counter value has incremented as expected.
             TEST_VECTOR_MEMCMP_ASSERT(m_aes_iv_buf,
                                       m_aes_temp_buf,
                                       ad_len,
                                       NRF_SUCCESS,
                                       "Incorrect incremented counter value.");
 
-            // Verify that next two bytes in buffers are not overwritten.
+            // Verify that the next two bytes in buffers are not overwritten.
             TEST_VECTOR_OVERFLOW_ASSERT(m_aes_iv_buf, iv_len, "IV buffer overflow");
         }
 
@@ -584,7 +609,7 @@ exit_test_vector:
 }
 
 
-/**@brief Function for AES MAC test execution.
+/**@brief Function for the AES MAC test execution.
  */
 ret_code_t exec_test_case_aes_mac(test_info_t * p_test_info)
 {
@@ -617,7 +642,7 @@ ret_code_t exec_test_case_aes_mac(test_info_t * p_test_info)
                                        NRF_CRYPTO_MAC_CALCULATE);
         TEST_VECTOR_ASSERT_ERR_CODE((err_code == NRF_SUCCESS), "nrf_crypto_aes_init");
 
-        // Fetch and set AES key.
+        // Fetch and set the AES key.
         memset(m_aes_key_buf, 0x00, sizeof(m_aes_key_buf));
         (void)unhexify(m_aes_key_buf, p_test_vector->p_key);
         err_code = nrf_crypto_aes_key_set(&m_aes_context, m_aes_key_buf);
@@ -632,11 +657,11 @@ ret_code_t exec_test_case_aes_mac(test_info_t * p_test_info)
                                            &output_len);
         stop_time_measurement();
 
-        // Verify nrf_crypto_aes_mac_calculate err_code.
+        // Verify the nrf_crypto_aes_mac_calculate err_code.
         TEST_VECTOR_ASSERT_ERR_CODE((err_code == p_test_vector->expected_err_code),
                                     "nrf_crypto_aes_finalize");
 
-        // Verify generated AES MAC.
+        // Verify the generated AES MAC.
         TEST_VECTOR_ASSERT((output_len == 16), "output_len is not 16");
         TEST_VECTOR_MEMCMP_ASSERT(m_aes_expected_output_buf,
                                   m_aes_output_buf,
@@ -644,11 +669,11 @@ ret_code_t exec_test_case_aes_mac(test_info_t * p_test_info)
                                   p_test_vector->expected_result,
                                   "Incorrect generated AES MAC");
 
-        // Also perform a multi update MAC calculation.
+        // Also, perform a multi update MAC calculation.
         if (input_len > 0)
         {
             size_t buffer_index;
-            // Execute same test vector again, in blocks of 16 bytes.
+            // Execute the same test vector again, in blocks of 16 bytes.
             input_remaining = input_len;
             memset(m_aes_output_buf, 0x00, sizeof(m_aes_output_buf));
 
@@ -659,7 +684,7 @@ ret_code_t exec_test_case_aes_mac(test_info_t * p_test_info)
             TEST_VECTOR_ASSERT_ERR_CODE((err_code == NRF_SUCCESS),
                                         "nrf_crypto_aes_init multi");
 
-            // Set AES key.
+            // Set the AES key.
             err_code = nrf_crypto_aes_key_set(&m_aes_context, m_aes_key_buf);
             TEST_VECTOR_ASSERT_ERR_CODE((err_code == NRF_SUCCESS),
                                         "nrf_crypto_aes_key_set multi");
@@ -669,7 +694,7 @@ ret_code_t exec_test_case_aes_mac(test_info_t * p_test_info)
                 buffer_index = input_len - input_remaining;
                 if (input_remaining <= AES_MAC_INPUT_BLOCK_SIZE)
                 {
-                    // Update with final input and calculate MAC.
+                    // Update with the final input and calculate MAC.
                     output_len = AES_MAC_INPUT_BLOCK_SIZE;
                     err_code   = nrf_crypto_aes_finalize(&m_aes_context,
                                                          &m_aes_input_buf[buffer_index],
@@ -680,7 +705,7 @@ ret_code_t exec_test_case_aes_mac(test_info_t * p_test_info)
                 }
                 else
                 {
-                    // Update with 16 bytes input.
+                    // Update with the 16-byte input.
                     output_len = 0;
                     err_code   = nrf_crypto_aes_update(&m_aes_context,
                                                        &m_aes_input_buf[buffer_index],
@@ -692,7 +717,7 @@ ret_code_t exec_test_case_aes_mac(test_info_t * p_test_info)
                                             "nrf_crypto_aes_mac_calculate multi");
             }
 
-            // Verify generated AES MAC.
+            // Verify the generated AES MAC.
             TEST_VECTOR_ASSERT((output_len == 16), "output_len is not 16");
             TEST_VECTOR_MEMCMP_ASSERT(m_aes_expected_output_buf,
                                       m_aes_output_buf,
@@ -719,7 +744,7 @@ exit_test_vector:
 }
 
 
-/**@brief Function for AES Monte Carlo test execution.
+/**@brief Function for the AES Monte Carlo test execution.
  */
 ret_code_t exec_test_case_aes_monte_carlo(test_info_t * p_test_info)
 {
@@ -764,12 +789,12 @@ ret_code_t exec_test_case_aes_monte_carlo(test_info_t * p_test_info)
                                        p_test_vector->p_aes_info,
                                        p_test_vector->direction);
 
-        // Fetch and set AES key.
+        // Fetch and set the AES key.
         memset(m_aes_key_buf, 0x00, sizeof(m_aes_key_buf));
-        key_len = unhexify(m_aes_key_buf, p_test_vector->p_key);
+        key_len  = unhexify(m_aes_key_buf, p_test_vector->p_key);
         err_code = nrf_crypto_aes_key_set(&m_aes_context, m_aes_key_buf);
 
-        // Fetch and set AES IV.
+        // Fetch and set the AES IV.
         memset(m_aes_iv_buf, 0x00, sizeof(m_aes_iv_buf));
         iv_len = unhexify(m_aes_iv_buf, p_test_vector->p_iv);
         if (iv_len != 0)
@@ -777,7 +802,7 @@ ret_code_t exec_test_case_aes_monte_carlo(test_info_t * p_test_info)
             err_code = nrf_crypto_aes_iv_set(&m_aes_context, m_aes_iv_buf);
         }
 
-        // Start Monte Carlo test.
+        // Start the Monte Carlo test.
         start_time_measurement();
         for (k = 0; k < 100; k++)
         {
@@ -829,7 +854,7 @@ ret_code_t exec_test_case_aes_monte_carlo(test_info_t * p_test_info)
             }
         }
 
-        // Verify generated AES plaintext/ciphertext.
+        // Verify generated AES plaintext or ciphertext.
         TEST_VECTOR_MEMCMP_ASSERT(m_aes_expected_output_buf,
                                   m_aes_output_buf,
                                   output_len,
@@ -856,7 +881,7 @@ exit_test_vector:
 }
 
 
-/**@brief Function for running test teardown.
+/**@brief Function for running the test teardown.
  */
 ret_code_t teardown_test_case_aes(void)
 {
@@ -864,7 +889,7 @@ ret_code_t teardown_test_case_aes(void)
 }
 
 
-/** @brief  Macro for registering the AES funtional test case by using section variables.
+/** @brief  Macro for registering the the AES funtional test case by using section variables.
  *
  * @details     This macro places a variable in a section named "test_case_data",
  *              which is initialized by main.

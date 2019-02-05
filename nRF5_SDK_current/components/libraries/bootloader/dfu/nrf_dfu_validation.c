@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2017 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #include <stdbool.h>
 #include "nrf_dfu_types.h"
@@ -49,6 +49,7 @@
 #include "dfu-cc.pb.h"
 #include "crc32.h"
 #include "nrf_crypto.h"
+#include "nrf_crypto_shared.h"
 #include "nrf_assert.h"
 #include "nrf_dfu_validation.h"
 #include "nrf_dfu_ver_validation.h"
@@ -58,14 +59,6 @@
 #include "nrf_log_ctrl.h"
 NRF_LOG_MODULE_REGISTER();
 
-
-#ifndef NRF_DFU_DEBUG
-#ifdef NRF_DFU_DEBUG_VERSION
-#define NRF_DFU_DEBUG 1
-#else
-#define NRF_DFU_DEBUG 0
-#endif
-#endif
 
 #ifndef DFU_REQUIRES_SOFTDEVICE
 #ifndef BLE_STACK_SUPPORT_REQD
@@ -90,7 +83,6 @@ static nrf_crypto_ecdsa_verify_context_t        m_verify_context = {0};
 
 static nrf_crypto_hash_context_t                m_hash_context = {0};
 
-
 __ALIGN(4) extern const uint8_t pk[64];
 
 /** @brief Value length structure holding the public key.
@@ -112,21 +104,24 @@ static nrf_crypto_hash_sha256_digest_t              m_init_packet_hash;
 static nrf_crypto_hash_sha256_digest_t              m_fw_hash;
 
 
-static void pb_decoding_callback(pb_istream_t *str, uint32_t tag, pb_wire_type_t wire_type, void *iter)
+static void pb_decoding_callback(pb_istream_t *str,
+                                 uint32_t tag,
+                                 pb_wire_type_t wire_type,
+                                 void *iter)
 {
     pb_field_iter_t* p_iter = (pb_field_iter_t *) iter;
 
-    // match the beginning of the init command
+    // Match the beginning of the init command.
     if (p_iter->pos->ptr == &dfu_init_command_fields[0])
     {
         uint8_t  * ptr  = (uint8_t *)str->state;
         uint32_t   size = str->bytes_left;
 
-        // remove tag byte
+        // Remove tag byte.
         ptr++;
         size--;
 
-        // store the info in init_packet_data
+        // Store the info in init_packet_data.
         m_init_packet_data_ptr = ptr;
         m_init_packet_data_len = size;
 
@@ -144,7 +139,7 @@ static bool stored_init_cmd_decode(void)
     m_pb_stream = pb_istream_from_buffer(s_dfu_settings.init_command,
                                          s_dfu_settings.progress.command_size);
 
-    // Attach our callback to follow the field decoding
+    // Attach our callback to follow the field decoding.
     m_pb_stream.decoding_callback = pb_decoding_callback;
 
     m_init_packet_data_ptr = NULL;
@@ -163,6 +158,7 @@ static bool stored_init_cmd_decode(void)
 void nrf_dfu_validation_init(void)
 {
     ret_code_t err_code;
+    uint8_t    pk_copy[sizeof(pk)];
     
     // If the command is stored to flash, init command was valid.
     if (   (s_dfu_settings.progress.command_size != 0)
@@ -181,9 +177,12 @@ void nrf_dfu_validation_init(void)
     UNUSED_PARAMETER(err_code);
     
     
+    // Convert public key to big-endian format for use in nrf_crypto.
+    nrf_crypto_internal_double_swap_endian(pk_copy, pk, sizeof(pk) / 2);
+
     err_code = nrf_crypto_ecc_public_key_from_raw(&g_nrf_crypto_ecc_secp256r1_curve_info,
                                                   &m_public_key,
-                                                  pk,
+                                                  pk_copy,
                                                   sizeof(pk));
     ASSERT(err_code == NRF_SUCCESS);
     UNUSED_PARAMETER(err_code);
@@ -257,7 +256,7 @@ bool nrf_dfu_validation_init_cmd_present(void)
 }
 
 
-// Function determines if init command signature is obligatory
+// Function determines if init command signature is obligatory.
 static bool signature_required(dfu_fw_type_t fw_type_to_be_updated)
 {
     bool result = true;
@@ -317,8 +316,12 @@ static nrf_dfu_result_t signature_check(dfu_fw_type_t                          f
     // Prepare the signature received over the air.
     memcpy(m_signature, p_signature->bytes, p_signature->size);
 
-    // calculate the signature
+    // Calculate the signature.
     NRF_LOG_INFO("Verify signature");
+
+    // The signature is in little-endian format. Change it to big-endian format for nrf_crypto use.
+    nrf_crypto_internal_double_swap_endian_in_place(m_signature, sizeof(m_signature) / 2);
+
     err_code = nrf_crypto_ecdsa_verify(&m_verify_context,
                                        &m_public_key,
                                        m_init_packet_hash,
@@ -409,14 +412,14 @@ static bool use_single_bank(dfu_fw_type_t new_fw_type)
 }
 
 
-// Function to determine if the new firmware needs a SoftDevice to be present.
+// Function to determine whether the new firmware needs a SoftDevice to be present.
 static bool update_requires_softdevice(dfu_init_command_t const * p_init)
 {
     return ((p_init->sd_req_count > 0) && (p_init->sd_req[0] != SD_REQ_APP_OVERWRITES_SD));
 }
 
 
-// Function to determine if the SoftDevice can be removed during the update or not.
+// Function to determine whether the SoftDevice can be removed during the update or not.
 static bool keep_softdevice(dfu_init_command_t const * p_init)
 {
     UNUSED_PARAMETER(p_init); // It's unused when DFU_REQUIRES_SOFTDEVICE is true.
@@ -466,7 +469,7 @@ nrf_dfu_result_t nrf_dfu_validation_init_cmd_execute(uint32_t * p_dst_data_addr,
 
     if (s_dfu_settings.progress.command_offset != s_dfu_settings.progress.command_size)
     {
-        // The object wasn't the right (requested) size
+        // The object wasn't the right (requested) size.
         NRF_LOG_ERROR("Execute with faulty offset");
         ret_val = NRF_DFU_RES_CODE_OPERATION_NOT_PERMITTED;
     }
@@ -496,7 +499,7 @@ nrf_dfu_result_t nrf_dfu_validation_init_cmd_execute(uint32_t * p_dst_data_addr,
         // Validate signature.
         ret_val = signature_check(p_command->init.type, signature_type, p_signature);
 
-        // Validate versions
+        // Validate versions.
         if (ret_val == NRF_DFU_RES_CODE_SUCCESS)
         {
             ret_val = nrf_dfu_ver_validation_check(&p_command->init);
@@ -506,13 +509,13 @@ nrf_dfu_result_t nrf_dfu_validation_init_cmd_execute(uint32_t * p_dst_data_addr,
             }
         }
 
-        // Get size of binary
+        // Get size of binary.
         if (ret_val == NRF_DFU_RES_CODE_SUCCESS)
         {
             ret_val = update_data_size_get(&p_command->init, p_data_len);
         }
 
-        //Get address where to flash the binary
+        //Get address where to flash the binary.
         if (ret_val == NRF_DFU_RES_CODE_SUCCESS)
         {
             ret_val = update_data_addr_get(&p_command->init, *p_data_len, p_dst_data_addr);
@@ -533,11 +536,20 @@ static bool fw_hash_ok(dfu_init_command_t const * p_init, uint32_t fw_start_addr
 {
     ret_code_t err_code;
     bool       result   = true;
+    uint8_t    hash_be[NRF_CRYPTO_HASH_SIZE_SHA256];
     size_t     hash_len = NRF_CRYPTO_HASH_SIZE_SHA256;
 
     ASSERT(p_init != NULL);
     
-    NRF_LOG_DEBUG("Hash verification. Firmware start address: 0x%x, size: 0x%x", fw_start_addr, fw_size);
+    // Convert to hash to big-endian format for use in nrf_crypto.
+    nrf_crypto_internal_swap_endian(hash_be, 
+                                    (uint8_t *)p_init->hash.hash.bytes,
+                                    NRF_CRYPTO_HASH_SIZE_SHA256);
+
+    NRF_LOG_DEBUG("Hash verification. Firmware start address: 0x%x, size: 0x%x",
+                  fw_start_addr,
+                  fw_size);
+
     err_code = nrf_crypto_hash_calculate(&m_hash_context,
                                          &g_nrf_crypto_hash_sha256_info,
                                          (uint8_t*)fw_start_addr,
@@ -550,7 +562,7 @@ static bool fw_hash_ok(dfu_init_command_t const * p_init, uint32_t fw_start_addr
         NRF_LOG_ERROR("Could not run hash verification (err_code 0x%x).", err_code);
         result = false;
     }
-    else if (memcmp(m_fw_hash, p_init->hash.hash.bytes, NRF_CRYPTO_HASH_SIZE_SHA256) != 0)
+    else if (memcmp(m_fw_hash, hash_be, NRF_CRYPTO_HASH_SIZE_SHA256) != 0)
     {
         NRF_LOG_WARNING("Hash verification failed.");
         NRF_LOG_DEBUG("Expected FW hash:")
@@ -566,7 +578,7 @@ static bool fw_hash_ok(dfu_init_command_t const * p_init, uint32_t fw_start_addr
 }
 
 
-// Function to check if the update contains a SoftDevice and, if so, if it is of a different
+// Function to check whether the update contains a SoftDevice and, if so, if it is of a different
 // major version than the existing SoftDevice.
 static bool is_major_softdevice_update(uint32_t new_sd_addr)
 {
@@ -638,7 +650,7 @@ static void postvalidate_app(dfu_init_command_t * p_init)
 }
 
 
-// Function to check a received SoftDevice and/or Bootloader firmware
+// Function to check a received SoftDevice or Bootloader firmware, or both,
 // before it is copied into place.
 static bool postvalidate_sd_bl(dfu_init_command_t * p_init,
                                bool                 with_sd,
@@ -693,8 +705,8 @@ static bool postvalidate_sd_bl(dfu_init_command_t * p_init,
 nrf_dfu_result_t nrf_dfu_validation_post_data_execute(uint32_t src_addr, uint32_t data_len)
 {
     nrf_dfu_result_t     ret_val = NRF_DFU_RES_CODE_SUCCESS;
-    dfu_init_command_t * p_init  = m_packet.has_signed_command ? &m_packet.signed_command.command.init
-                                                               : &m_packet.command.init;
+    dfu_init_command_t * p_init  = m_packet.has_signed_command ?
+                                     &m_packet.signed_command.command.init : &m_packet.command.init;
 
     if (!fw_hash_ok(p_init, src_addr, data_len))
     {
@@ -725,7 +737,7 @@ nrf_dfu_result_t nrf_dfu_validation_post_data_execute(uint32_t src_addr, uint32_
 
     if (ret_val == NRF_DFU_RES_CODE_SUCCESS)
     {
-        // Store CRC32 for image
+        // Store CRC32 for image.
         s_dfu_settings.bank_1.image_crc = s_dfu_settings.progress.firmware_image_crc;
         s_dfu_settings.bank_1.image_size = data_len;
     }
@@ -734,7 +746,7 @@ nrf_dfu_result_t nrf_dfu_validation_post_data_execute(uint32_t src_addr, uint32_
         nrf_dfu_bank_invalidate(&s_dfu_settings.bank_1);
     }
 
-    // Set the progress to zero and remove the last command
+    // Set the progress to zero and remove the last command.
     memset(&s_dfu_settings.progress, 0, sizeof(dfu_progress_t));
     memset(s_dfu_settings.init_command, 0xFF, DFU_SIGNED_COMMAND_SIZE);
 

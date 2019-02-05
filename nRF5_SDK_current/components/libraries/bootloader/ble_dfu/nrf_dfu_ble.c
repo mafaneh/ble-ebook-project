@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2016 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #include "nrf_dfu_ble.h"
 
@@ -61,12 +61,15 @@
 #include "nrf_log.h"
 NRF_LOG_MODULE_REGISTER();
 
+#ifndef NRF_DFU_BLE_ADV_INTERVAL
+#define NRF_DFU_BLE_ADV_INTERVAL 40 /* 40 * 0,625ms = 25ms */
+#warning "sdk_config.h is not up to date."
+#endif
 
 #define APP_BLE_CONN_CFG_TAG                1                                                       /**< A tag identifying the SoftDevice BLE configuration. */
 
 #define APP_ADV_DATA_HEADER_SIZE            9                                                       /**< Size of encoded advertisement data header (not including device name). */
 #define APP_ADV_DURATION                    BLE_GAP_ADV_TIMEOUT_GENERAL_UNLIMITED                   /**< The advertising duration in units of 10 milliseconds. This is set to @ref BLE_GAP_ADV_TIMEOUT_GENERAL_UNLIMITED so that the advertisement is done as long as there there is a call to @ref dfu_transport_close function.*/
-#define APP_ADV_INTERVAL                    MSEC_TO_UNITS(25, UNIT_0_625_MS)                        /**< The advertising interval (25 ms.). */
 
 #define GATT_HEADER_LEN                     3                                                       /**< GATT header length. */
 #define GATT_PAYLOAD(mtu)                   ((mtu) - GATT_HEADER_LEN)                               /**< Length of the ATT payload for a given ATT MTU. */
@@ -195,7 +198,7 @@ static uint32_t advertising_start(void)
         .properties.type = BLE_GAP_ADV_TYPE_CONNECTABLE_SCANNABLE_UNDIRECTED,
         .p_peer_addr     = NULL,
         .filter_policy   = BLE_GAP_ADV_FP_ANY,
-        .interval        = APP_ADV_INTERVAL,
+        .interval        = NRF_DFU_BLE_ADV_INTERVAL,
         .duration        = APP_ADV_DURATION,
         .primary_phy     = BLE_GAP_PHY_1MBPS,
     };
@@ -720,7 +723,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             err_code = sd_ble_gatts_exchange_mtu_reply(m_conn_handle, mtu_reply);
             APP_ERROR_CHECK(err_code);
         } break;
-
+#ifndef S112
         case BLE_GAP_EVT_DATA_LENGTH_UPDATE_REQUEST:
         {
             NRF_LOG_DEBUG("Received BLE_GAP_EVT_DATA_LENGTH_UPDATE_REQUEST.");
@@ -736,13 +739,13 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             APP_ERROR_CHECK(err_code);
         } break;
 
-
         case BLE_GAP_EVT_DATA_LENGTH_UPDATE:
         {
             NRF_LOG_DEBUG("Received BLE_GAP_EVT_DATA_LENGTH_UPDATE (%u, max_rx_time %u).",
                           p_gap->params.data_length_update.effective_params.max_rx_octets,
                           p_gap->params.data_length_update.effective_params.max_rx_time_us);
         } break;
+#endif
 
         case BLE_GAP_EVT_SEC_PARAMS_REQUEST:
         {
@@ -782,6 +785,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             NRF_LOG_DEBUG("conn_sup_timeout: %d",  p_conn->conn_sup_timeout);
         } break;
 
+#ifndef S112
         case BLE_GAP_EVT_CONN_PARAM_UPDATE_REQUEST:
         {
             NRF_LOG_DEBUG("Received BLE_GAP_EVT_CONN_PARAM_UPDATE_REQUEST");
@@ -796,6 +800,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
 
             APP_ERROR_CHECK(err_code);
         } break;
+#endif
 
         case BLE_GAP_EVT_PHY_UPDATE:
         {

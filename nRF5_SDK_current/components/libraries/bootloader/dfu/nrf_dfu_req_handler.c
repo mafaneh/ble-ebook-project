@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2016 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #include <stdint.h>
 #include <stdbool.h>
@@ -303,7 +303,7 @@ static void on_cmd_obj_execute_request(nrf_dfu_request_t const * p_req, nrf_dfu_
 
     if (p_res->result == NRF_DFU_RES_CODE_SUCCESS)
     {
-        if (nrf_dfu_settings_write(NULL) == NRF_SUCCESS)
+        if (nrf_dfu_settings_write_and_backup(NULL) == NRF_SUCCESS)
         {
             /* Setting DFU to initialized */
             NRF_LOG_DEBUG("Writing valid init command to flash.");
@@ -528,14 +528,13 @@ static void on_data_obj_execute_request_sched(void * p_evt, uint16_t event_lengt
 {
     UNUSED_PARAMETER(event_length);
 
+    ret_code_t          ret;
     nrf_dfu_request_t * p_req = (nrf_dfu_request_t *)(p_evt);
 
     /* Wait for all buffers to be written in flash. */
     if (nrf_fstorage_is_busy(NULL))
     {
-        ret_code_t ret = app_sched_event_put(p_req,
-                                             sizeof(nrf_dfu_request_t),
-                                             on_data_obj_execute_request_sched);
+        ret = app_sched_event_put(p_req, sizeof(nrf_dfu_request_t), on_data_obj_execute_request_sched);
         if (ret != NRF_SUCCESS)
         {
             NRF_LOG_ERROR("Failed to schedule object execute: 0x%x.", ret);
@@ -548,36 +547,32 @@ static void on_data_obj_execute_request_sched(void * p_evt, uint16_t event_lengt
         .request = NRF_DFU_OP_OBJECT_EXECUTE,
     };
 
-    nrf_dfu_flash_callback_t dfu_settings_callback;
-
-    /* Whole firmware image was received, validate it. */
     if (s_dfu_settings.progress.firmware_image_offset == m_firmware_size_req)
     {
-        NRF_LOG_DEBUG("Postvalidation of firmware image.");
+        NRF_LOG_DEBUG("Whole firmware image received. Postvalidating.");
 
         res.result = nrf_dfu_validation_post_data_execute(m_firmware_start_addr, m_firmware_size_req);
         res.result = ext_err_code_handle(res.result);
 
-        /* Callback to on_dfu_complete() after updating the settings. */
-        dfu_settings_callback = (nrf_dfu_flash_callback_t)(on_dfu_complete);
+        /* Provide response to transport */
+        p_req->callback.response(&res, p_req->p_context);
+
+        ret = nrf_dfu_settings_write_and_backup((nrf_dfu_flash_callback_t)on_dfu_complete);
+        UNUSED_RETURN_VALUE(ret);
     }
     else
     {
         res.result = NRF_DFU_RES_CODE_SUCCESS;
-        /* No callback required. */
-        dfu_settings_callback = NULL;
-    }
 
-    /* Provide response to transport */
-    p_req->callback.response(&res, p_req->p_context);
+        /* Provide response to transport */
+        p_req->callback.response(&res, p_req->p_context);
 
-    /* Store settings to flash if the whole image was received or if configured
-     * to save progress information in flash.
-     */
-    if ((dfu_settings_callback != NULL) || NRF_DFU_SAVE_PROGRESS_IN_FLASH)
-    {
-        ret_code_t ret = nrf_dfu_settings_write(dfu_settings_callback);
-        UNUSED_RETURN_VALUE(ret);
+        if (NRF_DFU_SAVE_PROGRESS_IN_FLASH)
+        {
+            /* Allowing skipping settings backup to save time and flash wear. */
+            ret = nrf_dfu_settings_write_and_backup(NULL);
+            UNUSED_RETURN_VALUE(ret);
+        }
     }
 
     NRF_LOG_DEBUG("Request handling complete. Result: 0x%x", res.result);

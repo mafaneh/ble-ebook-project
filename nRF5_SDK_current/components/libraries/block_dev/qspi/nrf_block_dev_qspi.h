@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2016 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #ifndef NRF_BLOCK_DEV_QSPI_H__
 #define NRF_BLOCK_DEV_QSPI_H__
@@ -46,6 +46,7 @@ extern "C" {
 
 #include "nrf_block_dev.h"
 #include "nrf_drv_qspi.h"
+#include "nrf_log_instance.h"
 
 /**@file
  *
@@ -103,6 +104,10 @@ typedef enum {
     NRF_BLOCK_DEV_QSPI_FLAG_CACHE_WRITEBACK = (1u << 0)  //!< Cache write-back mode enable flag
 } nrf_block_dev_qspi_flag_t;
 
+/** @brief Name of the module used for logger messaging.
+ */
+#define NRF_BLOCK_DEV_QSPI_LOG_NAME block_dev_qspi
+
 /**
  * @brief QSPI block device config initializer (@ref nrf_block_dev_qspi_config_t)
  *
@@ -129,10 +134,11 @@ typedef struct {
  * @brief QSPI block device
  * */
 typedef struct {
-    nrf_block_dev_t              block_dev;          //!< Block device
-    nrf_block_dev_info_strings_t info_strings;       //!< Block device information strings
-    nrf_block_dev_qspi_config_t  qspi_bdev_config;   //!< QSPI block device config
-    nrf_block_dev_qspi_work_t *  p_work;             //!< QSPI block device work structure
+    nrf_block_dev_t              block_dev;        //!< Block device
+    nrf_block_dev_info_strings_t info_strings;     //!< Block device information strings
+    nrf_block_dev_qspi_config_t  qspi_bdev_config; //!< QSPI block device config
+    nrf_block_dev_qspi_work_t *  p_work;           //!< QSPI block device work structure
+    NRF_LOG_INSTANCE_PTR_DECLARE(p_log)            //!< Pointer to instance of the logger object (Conditionally compiled).
 } nrf_block_dev_qspi_t;
 
 /**
@@ -142,13 +148,20 @@ typedef struct {
  * @param config  Configuration @ref nrf_block_dev_qspi_config_t
  * @param info    Info strings @ref NFR_BLOCK_DEV_INFO_CONFIG
  * */
-#define NRF_BLOCK_DEV_QSPI_DEFINE(name, config, info)                \
-    static nrf_block_dev_qspi_work_t CONCAT_2(name, _work);          \
-    static const nrf_block_dev_qspi_t name = {                       \
-            .block_dev = { .p_ops = &nrf_block_device_qspi_ops },    \
-            .info_strings = BRACKET_EXTRACT(info),                   \
-            .qspi_bdev_config = config,                              \
-            .p_work = &CONCAT_2(name, _work),                        \
+#define NRF_BLOCK_DEV_QSPI_DEFINE(name, config, info)                                            \
+    static nrf_block_dev_qspi_work_t CONCAT_2(name, _work);                                      \
+    NRF_LOG_INSTANCE_REGISTER(NRF_BLOCK_DEV_QSPI_LOG_NAME, name,                                 \
+                              NRF_BLOCK_DEV_QSPI_CONFIG_INFO_COLOR,                              \
+                              NRF_BLOCK_DEV_QSPI_CONFIG_DEBUG_COLOR,                             \
+                              NRF_BLOCK_DEV_QSPI_CONFIG_LOG_INIT_FILTER_LEVEL,                   \
+                              NRF_BLOCK_DEV_QSPI_CONFIG_LOG_ENABLED ?                            \
+                                   NRF_BLOCK_DEV_QSPI_CONFIG_LOG_LEVEL : NRF_LOG_SEVERITY_NONE); \
+    static const nrf_block_dev_qspi_t name = {                                                   \
+            .block_dev = { .p_ops = &nrf_block_device_qspi_ops },                                \
+            .info_strings = BRACKET_EXTRACT(info),                                               \
+            .qspi_bdev_config = config,                                                          \
+            .p_work = &CONCAT_2(name, _work),                                                    \
+            NRF_LOG_INSTANCE_PTR_INIT(p_log, NRF_BLOCK_DEV_QSPI_LOG_NAME, name)                  \
     }
 
 /**

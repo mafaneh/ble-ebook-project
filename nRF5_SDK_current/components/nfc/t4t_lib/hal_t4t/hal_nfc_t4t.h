@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2016 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 
 #ifndef HAL_NFC_H__
@@ -53,6 +53,7 @@
  */
 
 #include <stdint.h>
+#include <stdbool.h>
 #include <string.h>
 #include <sdk_errors.h>
 
@@ -62,10 +63,11 @@ extern "C" {
 
 /** @brief Events passed to the upper-layer callback function. */
 typedef enum {
-    HAL_NFC_EVENT_FIELD_ON,           ///< Field is detected.
-    HAL_NFC_EVENT_FIELD_OFF,          ///< Field is lost.
-    HAL_NFC_EVENT_DATA_RECEIVED,      ///< Data is received.
-    HAL_NFC_EVENT_DATA_TRANSMITTED    ///< Data is transmitted.
+    HAL_NFC_EVENT_FIELD_ON,          ///< Field is detected.
+    HAL_NFC_EVENT_FIELD_OFF,         ///< Field is lost.
+    HAL_NFC_EVENT_DATA_RECEIVED,     ///< Data is received.
+    HAL_NFC_EVENT_DATA_TRANSMITTED,  ///< Data is transmitted.
+    HAL_NFC_EVENT_DATA_TX_STARTED    ///< Data transmission has started.
 } hal_nfc_event_t;
 
 
@@ -77,7 +79,6 @@ typedef enum {
     HAL_NFC_PARAM_NFCID1,       /**< NFCID1 value, data can be 4, 7, or 10 bytes long (simple, double, or triple size).
                                      To use default NFCID1 of specific length pass one byte containing requested length.
                                      Default 7-byte NFCID1 will be used if this parameter was not set before nfc_t4t_setup(). */
-    HAL_NFC_PARAM_DID,          ///< Parameter for DID field management.
     HAL_NFC_PARAM_ID_UNKNOWN
 } hal_nfc_param_id_t;
 
@@ -168,10 +169,11 @@ ret_code_t hal_nfc_start(void);
   *
   * @param[in] p_data       The data packet to send.
   * @param[in] data_length  Size of the packet in bytes.
+  * @param[in] delayed_mode The data packet transfer is postponed till the end of the FWT window.
   *
   * @retval NRF_SUCCESS If the packet was sent. Otherwise, an error code is returned.
   */
-ret_code_t hal_nfc_send(const uint8_t * p_data, size_t data_length);
+ret_code_t hal_nfc_send(const uint8_t * p_data, size_t data_length, bool delayed_mode);
 
 
 /** @brief Function for stopping the NFC subsystem.

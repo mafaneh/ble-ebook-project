@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2016 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,9 +35,12 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
+#include "sdk_common.h"
+#if NRF_MODULE_ENABLED(NRF_BLOCK_DEV_RAM)
 #include "nrf_block_dev_ram.h"
+#include <inttypes.h>
 
 /**@file
  *
@@ -47,6 +50,15 @@
  * @brief This module implements block device API. It should be used as a reference block device.
  */
 
+#if NRF_BLOCK_DEV_RAM_CONFIG_LOG_ENABLED
+#define NRF_LOG_LEVEL       NRF_BLOCK_DEV_RAM_CONFIG_LOG_LEVEL
+#define NRF_LOG_INFO_COLOR  NRF_BLOCK_DEV_RAM_CONFIG_INFO_COLOR
+#define NRF_LOG_INST_DEBUG_COLOR NRF_BLOCK_DEV_RAM_CONFIG_DEBUG_COLOR
+#else
+#define NRF_LOG_LEVEL       0
+#endif
+#include "nrf_log.h"
+
 static ret_code_t block_dev_ram_init(nrf_block_dev_t const * p_blk_dev,
                                      nrf_block_dev_ev_handler ev_handler,
                                      void const * p_context)
@@ -55,6 +67,7 @@ static ret_code_t block_dev_ram_init(nrf_block_dev_t const * p_blk_dev,
     nrf_block_dev_ram_t const * p_ram_dev = CONTAINER_OF(p_blk_dev, nrf_block_dev_ram_t, block_dev);
     nrf_block_dev_ram_work_t * p_work = p_ram_dev->p_work;
 
+    NRF_LOG_INST_DEBUG(p_ram_dev->p_log, "Init");
     /* Calculate block device geometry.... */
     p_work->geometry.blk_size = p_ram_dev->ram_config.block_size;
     p_work->geometry.blk_count = p_ram_dev->ram_config.size /
@@ -84,6 +97,7 @@ static ret_code_t block_dev_ram_uninit(nrf_block_dev_t const * p_blk_dev)
     nrf_block_dev_ram_t const * p_ram_dev = CONTAINER_OF(p_blk_dev, nrf_block_dev_ram_t, block_dev);
     nrf_block_dev_ram_work_t * p_work = p_ram_dev->p_work;
 
+    NRF_LOG_INST_DEBUG(p_ram_dev->p_log, "Uninit");
     if (p_work->ev_handler)
     {
         /*Asynchronous operation (simulation)*/
@@ -110,6 +124,30 @@ static ret_code_t block_dev_ram_req(nrf_block_dev_t const * p_blk_dev,
     nrf_block_dev_ram_t const * p_ram_dev = CONTAINER_OF(p_blk_dev, nrf_block_dev_ram_t, block_dev);
     nrf_block_dev_ram_config_t const * p_ram_config = &p_ram_dev->ram_config;
     nrf_block_dev_ram_work_t const * p_work = p_ram_dev->p_work;
+
+    NRF_LOG_INST_DEBUG(p_ram_dev->p_log,
+        ((event == NRF_BLOCK_DEV_EVT_BLK_READ_DONE) ?
+            "Read req from block %"PRIu32" size %"PRIu32"(x%"PRIu32") to %"PRIXPTR
+            :
+            "Write req to block %"PRIu32" size %"PRIu32"(x%"PRIu32") from %"PRIXPTR),
+        p_blk->blk_id,
+        p_blk->blk_count,
+        p_blk_dev->p_ops->geometry(p_blk_dev)->blk_size,
+        p_blk->p_buff);
+
+    if ((p_blk->blk_id + p_blk->blk_count) > p_work->geometry.blk_count)
+    {
+        NRF_LOG_INST_ERROR(p_ram_dev->p_log,
+            ((event == NRF_BLOCK_DEV_EVT_BLK_READ_DONE) ?
+                "Out of range read req block %"PRIu32" count %"PRIu32" while max is %"PRIu32
+                :
+                "Out of range write req block %"PRIu32" count %"PRIu32", while max is %"PRIu32),
+            p_blk->blk_id,
+            p_blk->blk_count,
+            p_blk_dev->p_ops->geometry(p_blk_dev)->blk_count);
+        return NRF_ERROR_INVALID_ADDR;
+
+    }
 
     /*Synchronous operation*/
     uint8_t * p_buff = p_ram_config->p_work_buffer;
@@ -158,6 +196,7 @@ static ret_code_t block_dev_ram_ioctl(nrf_block_dev_t const * p_blk_dev,
         case NRF_BLOCK_DEV_IOCTL_REQ_CACHE_FLUSH:
         {
             bool * p_flushing = p_data;
+            NRF_LOG_INST_DEBUG(p_ram_dev->p_log, "IOCtl: Cache flush");
             if (p_flushing)
             {
                 *p_flushing = false;
@@ -201,5 +240,5 @@ const nrf_block_dev_ops_t nrf_block_device_ram_ops = {
         .geometry = block_dev_ram_geometry,
 };
 
-
 /** @} */
+#endif // NRF_MODULE_ENABLED(NRF_BLOCK_DEV_RAM)

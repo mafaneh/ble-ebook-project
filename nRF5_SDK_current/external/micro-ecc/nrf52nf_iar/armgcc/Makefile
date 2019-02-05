@@ -13,12 +13,13 @@ SRC_FILES += \
 # Include folders common to all targets
 INC_FOLDERS += \
   $(SDK_ROOT)/components/toolchain/cmsis/include \
+  $(PROJ_DIR)/micro-ecc \
 
 # Libraries common to all targets
 LIB_FILES += \
 
 # Optimization flags
-OPT = -Os -g2
+OPT = -Os -gdwarf-3
 # Uncomment the line below to enable link time optimization
 #OPT += -flto
 
@@ -42,7 +43,7 @@ CFLAGS += -fno-builtin -fshort-enums -fshort-wchar -Wno-unused-function
 CXXFLAGS += $(OPT)
 
 # Assembler flags common to all targets
-ASMFLAGS += -g2
+ASMFLAGS += -gdwarf-3
 ASMFLAGS += -mcpu=cortex-m4
 ASMFLAGS += -mthumb -mabi=aapcs
 ASMFLAGS += -mfloat-abi=soft

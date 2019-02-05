@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2016 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #include "nrf_bootloader.h"
 
@@ -57,12 +57,12 @@
 #include "nrf_bootloader_fw_activation.h"
 #include "nrf_bootloader_dfu_timers.h"
 #include "app_scheduler.h"
-#include "app_timer.h"
 
 static nrf_dfu_observer_t m_user_observer; //<! Observer callback set by the user.
+static volatile bool m_flash_write_done;
 
 #define SCHED_QUEUE_SIZE      32          /**< Maximum number of events in the scheduler queue. */
-#define SCHED_EVENT_DATA_SIZE MAX(NRF_DFU_SCHED_EVENT_DATA_SIZE, APP_TIMER_SCHED_EVENT_DATA_SIZE) /**< Maximum app_scheduler event size. */
+#define SCHED_EVENT_DATA_SIZE NRF_DFU_SCHED_EVENT_DATA_SIZE /**< Maximum app_scheduler event size. */
 
 #if !(defined(NRF_BL_DFU_ENTER_METHOD_BUTTON)    && \
       defined(NRF_BL_DFU_ENTER_METHOD_PINRESET)  && \
@@ -105,9 +105,16 @@ __WEAK uint32_t nrf_dfu_init_user(void)
 }
 
 
-static void bootloader_reset(void)
+static void flash_write_callback(void * p_context)
 {
-    NRF_LOG_DEBUG("Resetting bootloader.");
+    UNUSED_PARAMETER(p_context);
+    m_flash_write_done = true;
+}
+
+
+static void reset_after_flash_write(void * p_context)
+{
+    UNUSED_PARAMETER(p_context);
 
     NRF_LOG_FINAL_FLUSH();
 
@@ -117,6 +124,15 @@ static void bootloader_reset(void)
 #endif
 
     NVIC_SystemReset();
+}
+
+
+static void bootloader_reset(void)
+{
+    NRF_LOG_DEBUG("Resetting bootloader.");
+
+    m_flash_write_done = false;
+    nrf_dfu_settings_backup(reset_after_flash_write);
 }
 
 
@@ -135,7 +151,9 @@ static void dfu_observer(nrf_dfu_evt_type_t evt_type)
     {
         case NRF_DFU_EVT_DFU_STARTED:
         case NRF_DFU_EVT_OBJECT_RECEIVED:
-            nrf_bootloader_dfu_inactivity_timer_restart(NRF_BL_DFU_INACTIVITY_TIMEOUT_MS, inactivity_timeout);
+            nrf_bootloader_dfu_inactivity_timer_restart(
+                        NRF_BOOTLOADER_MS_TO_TICKS(NRF_BL_DFU_INACTIVITY_TIMEOUT_MS),
+                        inactivity_timeout);
             break;
         case NRF_DFU_EVT_DFU_COMPLETED:
         case NRF_DFU_EVT_DFU_ABORTED:
@@ -305,7 +323,7 @@ ret_code_t nrf_bootloader_init(nrf_dfu_observer_t observer)
 {
     NRF_LOG_DEBUG("In nrf_bootloader_init");
 
-    uint32_t                              ret_val;
+    ret_code_t                            ret_val;
     nrf_bootloader_fw_activation_result_t activation_result;
     uint32_t                              initial_timeout;
     bool                                  dfu_enter = false;
@@ -329,12 +347,12 @@ ret_code_t nrf_bootloader_init(nrf_dfu_observer_t observer)
     switch (activation_result)
     {
         case ACTIVATION_NONE:
-            initial_timeout = NRF_BL_DFU_INACTIVITY_TIMEOUT_MS;
+            initial_timeout = NRF_BOOTLOADER_MS_TO_TICKS(NRF_BL_DFU_INACTIVITY_TIMEOUT_MS);
             dfu_enter       = dfu_enter_check();
             break;
 
         case ACTIVATION_SUCCESS_EXPECT_ADDITIONAL_UPDATE:
-            initial_timeout = NRF_BL_DFU_CONTINUATION_TIMEOUT_MS;
+            initial_timeout = NRF_BOOTLOADER_MS_TO_TICKS(NRF_BL_DFU_CONTINUATION_TIMEOUT_MS);
             dfu_enter       = true;
             break;
 
@@ -384,6 +402,10 @@ ret_code_t nrf_bootloader_init(nrf_dfu_observer_t observer)
         {
             return NRF_ERROR_INTERNAL;
         }
+
+        m_flash_write_done = false;
+        nrf_dfu_settings_backup(flash_write_callback);
+        ASSERT(m_flash_write_done);
 
         nrf_bootloader_app_start();
         NRF_LOG_ERROR("Should never come here: After nrf_bootloader_app_start()");

@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2015 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #include "sdk_common.h"
 #if NRF_MODULE_ENABLED(PEER_MANAGER)
@@ -47,8 +47,21 @@
 #include "peer_manager_types.h"
 #include "peer_manager_internal.h"
 #include "peer_database.h"
+#include "peer_data_storage.h"
 #include "id_manager.h"
 
+#define NRF_LOG_MODULE_NAME peer_manager_gscm
+#if PM_LOG_ENABLED
+    #define NRF_LOG_LEVEL       PM_LOG_LEVEL
+    #define NRF_LOG_INFO_COLOR  PM_LOG_INFO_COLOR
+    #define NRF_LOG_DEBUG_COLOR PM_LOG_DEBUG_COLOR
+#else
+    #define NRF_LOG_LEVEL       0
+#endif // PM_LOG_ENABLED
+#include "nrf_log.h"
+#include "nrf_log_ctrl.h"
+NRF_LOG_MODULE_REGISTER();
+#include "nrf_strerror.h"
 
 // Syntactic sugar, two spoons.
 #define SYS_ATTR_SYS                    (BLE_GATTS_SYS_ATTR_FLAG_SYS_SRVCS)
@@ -95,11 +108,11 @@ static void service_changed_pending_set(void)
     };
     //lint -restore
 
-    err_code = pdb_raw_store(m_current_sc_store_peer_id, &peer_data, NULL);
+    err_code = pds_peer_data_store(m_current_sc_store_peer_id, &peer_data, NULL);
     while ((m_current_sc_store_peer_id != PM_PEER_ID_INVALID) && (err_code != NRF_ERROR_BUSY))
     {
-        m_current_sc_store_peer_id = pdb_next_peer_id_get(m_current_sc_store_peer_id);
-        err_code = pdb_raw_store(m_current_sc_store_peer_id, &peer_data, NULL);
+        m_current_sc_store_peer_id = pds_next_peer_id_get(m_current_sc_store_peer_id);
+        err_code = pds_peer_data_store(m_current_sc_store_peer_id, &peer_data, NULL);
     }
 }
 //lint -restore
@@ -182,6 +195,10 @@ ret_code_t gscm_local_db_cache_update(uint16_t conn_handle)
                     ret_code_t err_code_release = pdb_write_buf_release(peer_id, PM_PEER_DATA_ID_GATT_LOCAL);
                     if (err_code_release != NRF_SUCCESS)
                     {
+                        NRF_LOG_ERROR("Did another thread manipulate PM_PEER_DATA_ID_GATT_LOCAL for "\
+                                      "peer_id %d at the same time? pdb_write_buf_release() returned %s.",
+                                      peer_id,
+                                      nrf_strerror_get(err_code_release));
                         err_code = NRF_ERROR_INTERNAL;
                     }
                 }
@@ -254,6 +271,9 @@ ret_code_t gscm_local_db_cache_apply(uint16_t conn_handle)
             }
             else
             {
+                NRF_LOG_ERROR("sd_ble_gatts_sys_attr_set() returned NRF_ERROR_INVALID_DATA for NULL "\
+                              "pointer which should never happen. conn_handle: %d",
+                              conn_handle);
                 err_code = NRF_ERROR_INTERNAL;
             }
         }
@@ -271,7 +291,7 @@ ret_code_t gscm_local_db_cache_apply(uint16_t conn_handle)
 void gscm_local_database_has_changed(void)
 {
     NRF_PM_DEBUG_CHECK(m_module_initialized);
-    m_current_sc_store_peer_id = pdb_next_peer_id_get(PM_PEER_ID_INVALID);
+    m_current_sc_store_peer_id = pds_next_peer_id_get(PM_PEER_ID_INVALID);
     service_changed_pending_set();
 }
 
@@ -306,6 +326,8 @@ ret_code_t gscm_service_changed_ind_send(uint16_t conn_handle)
 
     if (err_code != NRF_SUCCESS)
     {
+        NRF_LOG_ERROR("sd_ble_gatts_initial_user_handle_get() returned %s which should not happen.",
+                      nrf_strerror_get(err_code));
         return NRF_ERROR_INTERNAL;
     }
 
@@ -340,7 +362,7 @@ void gscm_db_change_notification_done(pm_peer_id_t peer_id)
 
     // Don't need to check return code, because all error conditions can be ignored.
     //lint -save -e550
-    (void) pdb_raw_store(peer_id, &peer_data, NULL);
+    (void) pds_peer_data_store(peer_id, &peer_data, NULL);
     //lint -restore
 }
 #endif

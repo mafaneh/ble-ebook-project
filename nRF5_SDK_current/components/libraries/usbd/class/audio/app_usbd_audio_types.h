@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2016 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #ifndef APP_USBD_AUDIO_TYPES_H__
 #define APP_USBD_AUDIO_TYPES_H__
@@ -53,20 +53,20 @@ extern "C" {
  * @{
  */
 
-/** @brief Audio class definition in interface descriptor
+/** @brief Audio class definition in interface descriptor.
  *
  *  Fixed value, @ref app_usbd_descriptor_iface_t::bInterfaceClass
  * */
 #define  APP_USBD_AUDIO_CLASS                  0x01
 
-/** @brief Audio class protocol definition in interface descriptor
+/** @brief Audio class protocol definition in interface descriptor.
  *
  *  Fixed value, @ref app_usbd_descriptor_iface_t::bInterfaceProtocol
  * */
 #define  APP_USBD_AUDIO_CLASS_PROTOCOL_UNDEFINED  0x00
 
 /**
- * @brief Audio subclass possible values
+ * @brief Audio subclass possible values.
  *
  * @ref app_usbd_descriptor_iface_t::bInterfaceSubClass
  */
@@ -126,7 +126,7 @@ typedef enum {
 } app_usbd_audio_ep_subtype_t;
 
 /**
- * @brief Audio class specific requests
+ * @brief Audio class specific requests.
  *
  * @ref nrf_drv_usbd_setup_t::bmRequestType
  */
@@ -149,7 +149,7 @@ typedef enum {
 } app_usbd_audio_req_type_t;
 
 /**
- * @brief Audio class terminal types
+ * @brief Audio class terminal types.
  * */
 typedef enum {
     /*USB terminals*/
@@ -186,7 +186,7 @@ typedef enum {
 } app_usbd_audio_terminal_type_t;
 
 /**
- * @brief Audio class control interface header descriptor
+ * @brief Audio class control interface header descriptor.
  */
 typedef struct {
     uint8_t bLength;             //!< Length of the descriptor
@@ -200,7 +200,7 @@ typedef struct {
 
 
 /**
- * @brief Possible values of input terminal channel config
+ * @brief Possible values of input terminal channel config.
  *
  * @ref app_usbd_audio_input_terminal_desc_t::wChannelConfig
  * */
@@ -220,7 +220,7 @@ typedef enum {
 } app_usbd_audio_in_term_ch_config_t;
 
 /**
- * @brief Audio class input terminal descriptor
+ * @brief Audio class input terminal descriptor.
  */
 typedef struct {
     uint8_t bLength;             //!< Length of the descriptor
@@ -236,7 +236,7 @@ typedef struct {
 } app_usbd_audio_input_terminal_desc_t;
 
 /**
- * @brief Audio class output terminal descriptor
+ * @brief Audio class output terminal descriptor.
  */
 typedef struct {
     uint8_t bLength;            //!< Length of the descriptor
@@ -250,7 +250,8 @@ typedef struct {
 } app_usbd_audio_output_terminal_desc_t;
 
 /**
- * @brief Possible values of feature unit control field*/
+ * @brief Possible values of feature unit control field.
+ */
 typedef enum {
     APP_USBD_AUDIO_FEATURE_UNIT_CONTROL_MUTE       = (1u << 0), /**< Feature unit control bit MUTE      */
     APP_USBD_AUDIO_FEATURE_UNIT_CONTROL_VOLUME     = (1u << 1), /**< Feature unit control bit VOLUME    */
@@ -265,7 +266,7 @@ typedef enum {
 } app_usbd_audio_feature_unit_control_t;
 
 /**
- * @brief Audio class feature unit descriptor
+ * @brief Audio class feature unit descriptor.
  */
 typedef struct {
     uint8_t bLength;                //!< Length of the descriptor
@@ -278,7 +279,7 @@ typedef struct {
 } app_usbd_audio_feature_unit_desc_t;
 
 /**
- * @brief   Format tag in audio streaming interface descriptor
+ * @brief   Format tag in audio streaming interface descriptor.
  *
  * @ref app_usbd_audio_as_iface_desc_t::wFormatTag
  * */
@@ -304,7 +305,7 @@ typedef enum {
 } app_usbd_audio_as_iface_format_tag_t;
 
 /**
- * @brief Audio class audio streaming interface descriptor
+ * @brief Audio class audio streaming interface descriptor.
  */
 typedef struct {
     uint8_t bLength;                //!< Length of the descriptor
@@ -316,7 +317,7 @@ typedef struct {
 } app_usbd_audio_as_iface_desc_t;
 
 /**
- * @brief Audio class audio streaming format type I descriptor
+ * @brief Audio class audio streaming format type I descriptor.
  */
 typedef struct {
     uint8_t bLength;                //!< Length of the descriptor
@@ -332,7 +333,7 @@ typedef struct {
 
 
 /**
- * @brief Audio class audio streaming format type II descriptor
+ * @brief Audio class audio streaming format type II descriptor.
  */
 typedef struct {
     uint8_t bLength;                //!< Length of the descriptor
@@ -346,7 +347,7 @@ typedef struct {
 } app_usbd_audio_as_format_type_two_desc_t;
 
 /**
- * @brief Audio class audio streaming format type III descriptor
+ * @brief Audio class audio streaming format type III descriptor.
  */
 typedef struct {
     uint8_t bLength;              //!< Length of the descriptor
@@ -361,7 +362,7 @@ typedef struct {
 } app_usbd_audio_as_format_type_three_desc_t;
 
 /**
- * @brief Audio class audio endpoint descriptor
+ * @brief Audio class audio endpoint descriptor.
  */
 typedef struct {
     uint8_t bLength;                //!< Length of the descriptor
@@ -379,4 +380,3 @@ typedef struct {
 #endif
 
 #endif /* APP_USBD_AUDIO_TYPES_H__ */
-

@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2012 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 /** @file
  *
@@ -67,12 +67,12 @@
 #include "ble_advertising.h"
 #include "ble_conn_params.h"
 #include "peer_manager.h"
+#include "peer_manager_handler.h"
 #include "app_timer.h"
 #include "bsp_btn_ble.h"
 #include "fds.h"
 #include "nrf_delay.h"
 #include "app_scheduler.h"
-#include "app_timer.h"
 #include "nrf_sdh.h"
 #include "nrf_sdh_soc.h"
 #include "nrf_sdh_ble.h"
@@ -89,77 +89,81 @@
 #include "nrf_log_default_backends.h"
 
 
-#define ATTR_DATA_SIZE                 BLE_ANCS_ATTR_DATA_MAX                       /**< Allocated size for attribute data. */
+#define ATTR_DATA_SIZE                 BLE_ANCS_ATTR_DATA_MAX                 /**< Allocated size for attribute data. */
 
-#define DISPLAY_MESSAGE_BUTTON_ID      1                                            /**< Button used to request notification attributes. */
+#define DISPLAY_MESSAGE_BUTTON_ID      1                                      /**< Button used to request notification attributes. */
 
-#define DEVICE_NAME                    "ANCS"                                       /**< Name of the device. Will be included in the advertising data. */
-#define APP_BLE_OBSERVER_PRIO          3                                            /**< Application's BLE observer priority. You shouldn't need to modify this value. */
-#define APP_BLE_CONN_CFG_TAG           1                                            /**< A tag identifying the SoftDevice BLE configuration. */
+#define DEVICE_NAME                    "ANCS"                                 /**< Name of the device. Will be included in the advertising data. */
+#define APP_BLE_OBSERVER_PRIO          3                                      /**< Application's BLE observer priority. You shouldn't need to modify this value. */
+#define APP_BLE_CONN_CFG_TAG           1                                      /**< A tag identifying the SoftDevice BLE configuration. */
 
-#define APP_ADV_FAST_INTERVAL          40                                           /**< The advertising interval (in units of 0.625 ms). The default value corresponds to 25 ms. */
-#define APP_ADV_SLOW_INTERVAL          3200                                         /**< Slow advertising interval (in units of 0.625 ms). The default value corresponds to 2 seconds. */
+#define APP_ADV_FAST_INTERVAL          40                                     /**< The advertising interval (in units of 0.625 ms). The default value corresponds to 25 ms. */
+#define APP_ADV_SLOW_INTERVAL          3200                                   /**< Slow advertising interval (in units of 0.625 ms). The default value corresponds to 2 seconds. */
 
-#define APP_ADV_FAST_DURATION          3000                                         /**< The advertising duration of fast advertising in units of 10 milliseconds. */
-#define APP_ADV_SLOW_DURATION          18000                                        /**< The advertising duration of slow advertising in units of 10 milliseconds. */
+#define APP_ADV_FAST_DURATION          3000                                   /**< The advertising duration of fast advertising in units of 10 milliseconds. */
+#define APP_ADV_SLOW_DURATION          18000                                  /**< The advertising duration of slow advertising in units of 10 milliseconds. */
 
-#define MIN_CONN_INTERVAL              MSEC_TO_UNITS(500, UNIT_1_25_MS)             /**< Minimum acceptable connection interval (0.5 seconds). */
-#define MAX_CONN_INTERVAL              MSEC_TO_UNITS(1000, UNIT_1_25_MS)            /**< Maximum acceptable connection interval (1 second). */
-#define SLAVE_LATENCY                  0                                            /**< Slave latency. */
-#define CONN_SUP_TIMEOUT               MSEC_TO_UNITS(4000, UNIT_10_MS)              /**< Connection supervisory time-out (4 seconds). */
+#define MIN_CONN_INTERVAL              MSEC_TO_UNITS(500, UNIT_1_25_MS)       /**< Minimum acceptable connection interval (0.5 seconds). */
+#define MAX_CONN_INTERVAL              MSEC_TO_UNITS(1000, UNIT_1_25_MS)      /**< Maximum acceptable connection interval (1 second). */
+#define SLAVE_LATENCY                  0                                      /**< Slave latency. */
+#define CONN_SUP_TIMEOUT               MSEC_TO_UNITS(4000, UNIT_10_MS)        /**< Connection supervisory time-out (4 seconds). */
 
-#define FIRST_CONN_PARAMS_UPDATE_DELAY APP_TIMER_TICKS(5000)                        /**< Time from initiating an event (connect or start of notification) to the first time sd_ble_gap_conn_param_update is called (5 seconds). */
-#define NEXT_CONN_PARAMS_UPDATE_DELAY  APP_TIMER_TICKS(30000)                       /**< Time between each call to sd_ble_gap_conn_param_update after the first (30 seconds). */
-#define MAX_CONN_PARAMS_UPDATE_COUNT   3                                            /**< Number of attempts before giving up the connection parameter negotiation. */
+#define FIRST_CONN_PARAMS_UPDATE_DELAY APP_TIMER_TICKS(5000)                  /**< Time from initiating an event (connect or start of notification) to the first time sd_ble_gap_conn_param_update is called (5 seconds). */
+#define NEXT_CONN_PARAMS_UPDATE_DELAY  APP_TIMER_TICKS(30000)                 /**< Time between each call to sd_ble_gap_conn_param_update after the first (30 seconds). */
+#define MAX_CONN_PARAMS_UPDATE_COUNT   3                                      /**< Number of attempts before giving up the connection parameter negotiation. */
 
-#define MESSAGE_BUFFER_SIZE            18                                           /**< Size of buffer holding optional messages in notifications. */
+#define MESSAGE_BUFFER_SIZE            18                                     /**< Size of buffer holding optional messages in notifications. */
 
-#define SECURITY_REQUEST_DELAY         APP_TIMER_TICKS(1500)                        /**< Delay after connection until security request is sent, if necessary (ticks). */
+#define SECURITY_REQUEST_DELAY         APP_TIMER_TICKS(1500)                  /**< Delay after connection until security request is sent, if necessary (ticks). */
 
-#define SEC_PARAM_BOND                 1                                            /**< Perform bonding. */
-#define SEC_PARAM_MITM                 0                                            /**< Man In The Middle protection not required. */
-#define SEC_PARAM_LESC                 0                                            /**< LE Secure Connections not enabled. */
-#define SEC_PARAM_KEYPRESS             0                                            /**< Keypress notifications not enabled. */
-#define SEC_PARAM_IO_CAPABILITIES      BLE_GAP_IO_CAPS_NONE                         /**< No I/O capabilities. */
-#define SEC_PARAM_OOB                  0                                            /**< Out Of Band data not available. */
-#define SEC_PARAM_MIN_KEY_SIZE         7                                            /**< Minimum encryption key size. */
-#define SEC_PARAM_MAX_KEY_SIZE         16                                           /**< Maximum encryption key size. */
+#define SEC_PARAM_BOND                 1                                      /**< Perform bonding. */
+#define SEC_PARAM_MITM                 0                                      /**< Man In The Middle protection not required. */
+#define SEC_PARAM_LESC                 0                                      /**< LE Secure Connections not enabled. */
+#define SEC_PARAM_KEYPRESS             0                                      /**< Keypress notifications not enabled. */
+#define SEC_PARAM_IO_CAPABILITIES      BLE_GAP_IO_CAPS_NONE                   /**< No I/O capabilities. */
+#define SEC_PARAM_OOB                  0                                      /**< Out Of Band data not available. */
+#define SEC_PARAM_MIN_KEY_SIZE         7                                      /**< Minimum encryption key size. */
+#define SEC_PARAM_MAX_KEY_SIZE         16                                     /**< Maximum encryption key size. */
 
-#define DEAD_BEEF                      0xDEADBEEF                                   /**< Value used as error code on stack dump. Can be used to identify stack location on stack unwind. */
+#define DEAD_BEEF                      0xDEADBEEF                             /**< Value used as error code on stack dump. Can be used to identify stack location on stack unwind. */
 
-#define SCHED_MAX_EVENT_DATA_SIZE      APP_TIMER_SCHED_EVENT_DATA_SIZE              /**< Maximum size of scheduler events. */
+#define SCHED_MAX_EVENT_DATA_SIZE      APP_TIMER_SCHED_EVENT_DATA_SIZE        /**< Maximum size of scheduler events. */
 #ifdef SVCALL_AS_NORMAL_FUNCTION
-#define SCHED_QUEUE_SIZE               20                                           /**< Maximum number of events in the scheduler queue. More is needed in case of Serialization. */
+#define SCHED_QUEUE_SIZE               20                                     /**< Maximum number of events in the scheduler queue. More is needed in case of Serialization. */
 #else
-#define SCHED_QUEUE_SIZE               10                                           /**< Maximum number of events in the scheduler queue. */
+#define SCHED_QUEUE_SIZE               10                                     /**< Maximum number of events in the scheduler queue. */
 #endif
 
 
-APP_TIMER_DEF(m_sec_req_timer_id);                                                  /**< Security request timer. The timer lets us start pairing request if one does not arrive from the Central. */
-NRF_BLE_GATTS_C_DEF(m_gatts_c);                                                     /**< GATT Service client instance. Handles Service Changed indications from the peer. */
-BLE_ANCS_C_DEF(m_ancs_c);                                                           /**< Apple Notification Service Client instance. */
-NRF_BLE_GATT_DEF(m_gatt);                                                           /**< GATT module instance. */
-NRF_BLE_QWR_DEF(m_qwr);                                                             /**< Context for the Queued Write module.*/
-BLE_ADVERTISING_DEF(m_advertising);                                                 /**< Advertising module instance. */
-BLE_DB_DISCOVERY_DEF(m_db_disc);                                                    /**< DB Discovery module instance. */
+NRF_BLE_GATTS_C_DEF(m_gatts_c);                                               /**< GATT Service client instance. Handles Service Changed indications from the peer. */
+BLE_ANCS_C_DEF(m_ancs_c);                                                     /**< Apple Notification Service Client instance. */
+NRF_BLE_GATT_DEF(m_gatt);                                                     /**< GATT module instance. */
+NRF_BLE_QWR_DEF(m_qwr);                                                       /**< Context for the Queued Write module.*/
+BLE_ADVERTISING_DEF(m_advertising);                                           /**< Advertising module instance. */
+BLE_DB_DISCOVERY_DEF(m_db_disc);                                              /**< DB Discovery module instance. */
 
-static pm_peer_id_t m_whitelist_peers[BLE_GAP_WHITELIST_ADDR_MAX_COUNT];            /**< List of peers currently in the whitelist. */
-static uint32_t     m_whitelist_peer_cnt;                                           /**< Number of peers currently in the whitelist. */
-static uint16_t     m_cur_conn_handle = BLE_CONN_HANDLE_INVALID;                    /**< Handle of the current connection. */
+static pm_peer_id_t      m_whitelist_peers[BLE_GAP_WHITELIST_ADDR_MAX_COUNT]; /**< List of peers currently in the whitelist. */
+static uint32_t          m_whitelist_peer_cnt;                                /**< Number of peers currently in the whitelist. */
+static uint16_t          m_cur_conn_handle = BLE_CONN_HANDLE_INVALID;         /**< Handle of the current connection. */
 
-static ble_ancs_c_evt_notif_t m_notification_latest;                                /**< Local copy to keep track of the newest arriving notifications. */
-static ble_ancs_c_attr_t      m_notif_attr_latest;                                  /**< Local copy of the newest notification attribute. */
-static ble_ancs_c_attr_t      m_notif_attr_app_id_latest;                           /**< Local copy of the newest app attribute. */
+static ble_gatt_db_srv_t m_peer_srv_buf[2] = {0};                             /**< Array of services with room to store both GATT Service and ANCS. */
 
-static uint8_t m_attr_appid[ATTR_DATA_SIZE];                                        /**< Buffer to store attribute data. */
-static uint8_t m_attr_title[ATTR_DATA_SIZE];                                        /**< Buffer to store attribute data. */
-static uint8_t m_attr_subtitle[ATTR_DATA_SIZE];                                     /**< Buffer to store attribute data. */
-static uint8_t m_attr_message[ATTR_DATA_SIZE];                                      /**< Buffer to store attribute data. */
-static uint8_t m_attr_message_size[ATTR_DATA_SIZE];                                 /**< Buffer to store attribute data. */
-static uint8_t m_attr_date[ATTR_DATA_SIZE];                                         /**< Buffer to store attribute data. */
-static uint8_t m_attr_posaction[ATTR_DATA_SIZE];                                    /**< Buffer to store attribute data. */
-static uint8_t m_attr_negaction[ATTR_DATA_SIZE];                                    /**< Buffer to store attribute data. */
-static uint8_t m_attr_disp_name[ATTR_DATA_SIZE];                                    /**< Buffer to store attribute data. */
+static bool              m_ancs_discovered  = false;                          /**< Bool to keep track of when both ancs and gatts have been disovered. Only then do we want to save the peer data. */
+static bool              m_gatts_discovered = false;                          /**< Bool to keep track of when both ancs and gatts have been disovered. Only then do we want to save the peer data. */
+
+static ble_ancs_c_evt_notif_t m_notification_latest;                          /**< Local copy to keep track of the newest arriving notifications. */
+static ble_ancs_c_attr_t      m_notif_attr_latest;                            /**< Local copy of the newest notification attribute. */
+static ble_ancs_c_attr_t      m_notif_attr_app_id_latest;                     /**< Local copy of the newest app attribute. */
+
+static uint8_t m_attr_appid[ATTR_DATA_SIZE];                                  /**< Buffer to store attribute data. */
+static uint8_t m_attr_title[ATTR_DATA_SIZE];                                  /**< Buffer to store attribute data. */
+static uint8_t m_attr_subtitle[ATTR_DATA_SIZE];                               /**< Buffer to store attribute data. */
+static uint8_t m_attr_message[ATTR_DATA_SIZE];                                /**< Buffer to store attribute data. */
+static uint8_t m_attr_message_size[ATTR_DATA_SIZE];                           /**< Buffer to store attribute data. */
+static uint8_t m_attr_date[ATTR_DATA_SIZE];                                   /**< Buffer to store attribute data. */
+static uint8_t m_attr_posaction[ATTR_DATA_SIZE];                              /**< Buffer to store attribute data. */
+static uint8_t m_attr_negaction[ATTR_DATA_SIZE];                              /**< Buffer to store attribute data. */
+static uint8_t m_attr_disp_name[ATTR_DATA_SIZE];                              /**< Buffer to store attribute data. */
 
 /**@brief String literals for the iOS notification categories. used then printing to UART. */
 static char const * lit_catid[BLE_ANCS_NB_OF_CATEGORY_ID] =
@@ -283,7 +287,6 @@ static void advertising_start(bool erase_bonds)
     }
 }
 
-
 /**@brief Function for handling Peer Manager events.
  *
  * @param[in] p_evt  Peer Manager event.
@@ -292,54 +295,83 @@ static void pm_evt_handler(pm_evt_t const * p_evt)
 {
     ret_code_t ret;
 
+    pm_handler_on_pm_evt(p_evt);
+    pm_handler_flash_clean(p_evt);
+
     switch (p_evt->evt_id)
     {
         case PM_EVT_BONDED_PEER_CONNECTED:
         {
-            NRF_LOG_DEBUG("Connected to previously bonded device");
-        } break; // PM_EVT_BONDED_PEER_CONNECTED
+            if (p_evt->peer_id != PM_PEER_ID_INVALID)
+            {
+                uint16_t data_len = sizeof(m_peer_srv_buf);
+                ret = pm_peer_data_remote_db_load(p_evt->peer_id, m_peer_srv_buf, &data_len);
+                if (ret == NRF_ERROR_NOT_FOUND)
+                {
+                    NRF_LOG_DEBUG("Could not find the remote database in flash.");
+                    ret = nrf_ble_gatts_c_handles_assign(&m_gatts_c, p_evt->conn_handle, NULL);
+                    APP_ERROR_CHECK(ret);
+
+                    // Discover peer's services.
+                    m_ancs_discovered  = false;
+                    m_gatts_discovered = false;
+                    memset(&m_db_disc, 0x00, sizeof(m_db_disc));
+                    ret = ble_db_discovery_start(&m_db_disc, p_evt->conn_handle);
+                    APP_ERROR_CHECK(ret);
+                }
+                else
+                {
+                    // Check if the load was successful.
+                    ASSERT(data_len == sizeof(m_peer_srv_buf));
+                    APP_ERROR_CHECK(ret);
+                    NRF_LOG_INFO("Remote Database loaded from flash.");
+
+                    // Assign the loaded handles to the GATT Service client module.
+                    ble_gatt_db_char_t srv_changed_handles = m_peer_srv_buf[0].charateristics[0];
+                    ret = nrf_ble_gatts_c_handles_assign(&m_gatts_c,
+                                                         p_evt->conn_handle,
+                                                         &srv_changed_handles);
+                    APP_ERROR_CHECK(ret);
+
+                    // Enable indications.
+                    ret = nrf_ble_gatts_c_enable_indication(&m_gatts_c, true);
+                    APP_ERROR_CHECK(ret);
+
+                    //Load the relevant handles into a ble_ancs_c_service_t struct that can be
+                    // assigned to the ANCS module.
+                    ble_ancs_c_service_t ancs_handles;
+                    ble_gatt_db_char_t * p_char           = m_peer_srv_buf[1].charateristics;
+                    ancs_handles.control_point_char       = p_char[0].characteristic;
+                    ancs_handles.notif_source_char        = p_char[1].characteristic;
+                    ancs_handles.notif_source_cccd.handle = p_char[1].cccd_handle;
+                    ancs_handles.data_source_char         = p_char[2].characteristic;
+                    ancs_handles.data_source_cccd.handle  = p_char[2].cccd_handle;
+
+                    ret = nrf_ble_ancs_c_handles_assign(&m_ancs_c, p_evt->conn_handle,
+                                                        &ancs_handles);
+                    APP_ERROR_CHECK(ret);
+                }
+            }
+        } break;
 
         case PM_EVT_CONN_SEC_SUCCEEDED:
         {
-            NRF_LOG_INFO("Connection secured: role: %d, conn_handle: 0x%x, procedure: %d.",
-                         ble_conn_state_role(p_evt->conn_handle),
-                         p_evt->conn_handle,
-                         p_evt->params.conn_sec_succeeded.procedure);
-
-            // Discover peer's services.
-            ret  = ble_db_discovery_start(&m_db_disc, p_evt->conn_handle);
-            APP_ERROR_CHECK(ret);
-        } break;
-
-        case PM_EVT_CONN_SEC_FAILED:
-        {
-            /* Often, when securing fails, it shouldn't be restarted, for security reasons.
-             * Other times, it can be restarted directly.
-             * Sometimes it can be restarted, but only after changing some Security Parameters.
-             * Sometimes, it cannot be restarted until the link is disconnected and reconnected.
-             * Sometimes it is impossible, to secure the link, or the peer device does not support it.
-             * How to handle this error is highly application dependent. */
-        } break;
-
-        case PM_EVT_CONN_SEC_CONFIG_REQ:
-        {
-            // Reject pairing request from an already bonded peer.
-            pm_conn_sec_config_t conn_sec_config = {.allow_repairing = false};
-            pm_conn_sec_config_reply(p_evt->conn_handle, &conn_sec_config);
-        } break;
-
-        case PM_EVT_STORAGE_FULL:
-        {
-            // Run garbage collection on the flash.
-            ret = fds_gc();
-            if (ret == FDS_ERR_NO_SPACE_IN_QUEUES)
+            // Check it the Service Changed characteristic handle exists in our client instance.
+            // If it is invalid, we know service discovery is needed.
+            // (No database was loaded during @ref PM_EVT_BONDED_PEER_CONNECTED)
+            if (m_gatts_c.srv_changed_char.characteristic.handle_value == BLE_GATT_HANDLE_INVALID)
             {
-                // Retry.
-            }
-            else
-            {
+                ret = nrf_ble_gatts_c_handles_assign(&m_gatts_c, p_evt->conn_handle, NULL);
+                APP_ERROR_CHECK(ret);
+
+                // Discover peer's services.
+                m_ancs_discovered  = false;
+                m_gatts_discovered = false;
+                memset(&m_db_disc, 0x00, sizeof(m_db_disc));
+                ret = ble_db_discovery_start(&m_db_disc, p_evt->conn_handle);
                 APP_ERROR_CHECK(ret);
             }
+
         } break;
 
         case PM_EVT_PEERS_DELETE_SUCCEEDED:
@@ -376,68 +408,8 @@ static void pm_evt_handler(pm_evt_t const * p_evt)
             }
         } break;
 
-        case PM_EVT_PEER_DATA_UPDATE_FAILED:
-        {
-            // Assert.
-            APP_ERROR_CHECK(p_evt->params.peer_data_update_failed.error);
-        } break;
-
-        case PM_EVT_PEER_DELETE_FAILED:
-        {
-            // Assert.
-            APP_ERROR_CHECK(p_evt->params.peer_delete_failed.error);
-        } break;
-
-        case PM_EVT_PEERS_DELETE_FAILED:
-        {
-            // Assert.
-            APP_ERROR_CHECK(p_evt->params.peers_delete_failed_evt.error);
-        } break;
-
-        case PM_EVT_ERROR_UNEXPECTED:
-        {
-            // Assert.
-            APP_ERROR_CHECK(p_evt->params.error_unexpected.error);
-        } break;
-
-        case PM_EVT_CONN_SEC_START:
-        case PM_EVT_PEER_DELETE_SUCCEEDED:
-        case PM_EVT_LOCAL_DB_CACHE_APPLIED:
-        case PM_EVT_LOCAL_DB_CACHE_APPLY_FAILED:
-        case PM_EVT_SERVICE_CHANGED_IND_SENT:
-        case PM_EVT_SERVICE_CHANGED_IND_CONFIRMED:
         default:
             break;
-    }
-}
-
-
-/**@brief Function for handling the security request timer time-out.
- *
- * @details This function is called each time the security request timer expires.
- *
- * @param[in] p_context  Pointer used for passing context information from the
- *                       app_start_timer() call to the time-out handler.
- */
-static void sec_req_timeout_handler(void * p_context)
-{
-    ret_code_t           ret;
-    pm_conn_sec_status_t status;
-
-    if (m_cur_conn_handle != BLE_CONN_HANDLE_INVALID)
-    {
-        ret = pm_conn_sec_status_get(m_cur_conn_handle, &status);
-        APP_ERROR_CHECK(ret);
-
-        // If the link is still not secured by the peer, initiate security procedure.
-        if (!status.encrypted)
-        {
-            ret = pm_conn_secure(m_cur_conn_handle, false);
-            if (ret != NRF_ERROR_INVALID_STATE)
-            {
-                APP_ERROR_CHECK(ret);
-            }
-        }
     }
 }
 
@@ -506,7 +478,8 @@ static void notif_attr_print(ble_ancs_c_attr_t * p_attr)
 {
     if (p_attr->attr_len != 0)
     {
-        NRF_LOG_INFO("%s: %s", (uint32_t)lit_attrid[p_attr->attr_id], nrf_log_push((char *)p_attr->p_attr_data));
+        NRF_LOG_INFO("%s: %s", (uint32_t)lit_attrid[p_attr->attr_id],
+                     nrf_log_push((char *)p_attr->p_attr_data));
     }
     else if (p_attr->attr_len == 0)
     {
@@ -568,12 +541,6 @@ static void timers_init(void)
 
     ret = app_timer_init();
     APP_ERROR_CHECK(ret);
-
-    // Create security request timer.
-    ret = app_timer_create(&m_sec_req_timer_id,
-                           APP_TIMER_MODE_SINGLE_SHOT,
-                           sec_req_timeout_handler);
-    APP_ERROR_CHECK(ret);
 }
 
 
@@ -583,7 +550,7 @@ static void timers_init(void)
 */
 static void gatts_c_evt_handler(nrf_ble_gatts_c_evt_t * p_evt)
 {
-    ret_code_t ret;
+    ret_code_t ret = NRF_SUCCESS;
 
     switch (p_evt->evt_type)
     {
@@ -596,6 +563,26 @@ static void gatts_c_evt_handler(nrf_ble_gatts_c_evt_t * p_evt)
                                                  &p_evt->params.srv_changed_char);
             APP_ERROR_CHECK(ret);
 
+            pm_peer_id_t peer_id;
+            ret = pm_peer_id_get(p_evt->conn_handle, &peer_id);
+            APP_ERROR_CHECK(ret);
+
+            memset(&m_peer_srv_buf[0], 0, sizeof(m_peer_srv_buf[0]));
+            m_peer_srv_buf[0].charateristics[0] = p_evt->params.srv_changed_char;
+
+            m_gatts_discovered = true;
+            if(m_gatts_discovered && m_ancs_discovered)
+            {
+                ret = pm_peer_data_remote_db_store(peer_id,
+                                                   (ble_gatt_db_srv_t *)m_peer_srv_buf,
+                                                   sizeof(m_peer_srv_buf),
+                                                   NULL);
+                if (ret == NRF_ERROR_STORAGE_FULL)
+                {
+                    ret = fds_gc();
+                }
+                APP_ERROR_CHECK(ret);
+            }
             ret = nrf_ble_gatts_c_enable_indication(&m_gatts_c, true);
             APP_ERROR_CHECK(ret);
         } break;
@@ -605,13 +592,16 @@ static void gatts_c_evt_handler(nrf_ble_gatts_c_evt_t * p_evt)
             break;
 
         case NRF_BLE_GATTS_C_EVT_DISCONN_COMPLETE:
-            NRF_LOG_DEBUG("GATTS Service client disconnected connection handle %i.", p_evt->conn_handle);
+            NRF_LOG_DEBUG("GATTS Service client disconnected connection handle %i.",
+                          p_evt->conn_handle);
             break;
 
         case NRF_BLE_GATTS_C_EVT_SRV_CHANGED:
             NRF_LOG_DEBUG("Service Changed indication received.");
 
             // Discover peer's services.
+            m_ancs_discovered  = false;
+            m_gatts_discovered = false;
             ret = ble_db_discovery_start(&m_db_disc, p_evt->conn_handle);
             APP_ERROR_CHECK(ret);
             break;
@@ -631,16 +621,47 @@ static void gatts_c_evt_handler(nrf_ble_gatts_c_evt_t * p_evt)
  */
 static void ancs_c_evt_handler(ble_ancs_c_evt_t * p_evt)
 {
-    ret_code_t ret = NRF_SUCCESS;
 
     switch (p_evt->evt_type)
     {
         case BLE_ANCS_C_EVT_DISCOVERY_COMPLETE:
+        {
+            ret_code_t ret = NRF_SUCCESS;
             NRF_LOG_DEBUG("Apple Notification Center Service discovered on the server.");
             ret = nrf_ble_ancs_c_handles_assign(&m_ancs_c, p_evt->conn_handle, &p_evt->service);
             APP_ERROR_CHECK(ret);
+
+            pm_peer_id_t peer_id;
+            ret = pm_peer_id_get(p_evt->conn_handle, &peer_id);
+            APP_ERROR_CHECK(ret);
+
+            // Copy the needed ANCS handles into a ble_gatt_db_srv_t struct that will be stored in
+            // flash.
+            ble_gatt_db_char_t * p_char = m_peer_srv_buf[1].charateristics;
+            memset(&m_peer_srv_buf[1], 0, sizeof(m_peer_srv_buf[1]));
+
+            p_char[0].characteristic = p_evt->service.control_point_char;
+            p_char[1].characteristic = p_evt->service.notif_source_char;
+            p_char[1].cccd_handle    = p_evt->service.notif_source_cccd.handle;
+            p_char[2].characteristic = p_evt->service.data_source_char;
+            p_char[2].cccd_handle    = p_evt->service.data_source_cccd.handle;
+
+            m_ancs_discovered = true;
+
+            if (m_gatts_discovered && m_ancs_discovered)
+            {
+                ret = pm_peer_data_remote_db_store(peer_id,
+                                                   (ble_gatt_db_srv_t *)m_peer_srv_buf,
+                                                   sizeof(m_peer_srv_buf),
+                                                   NULL);
+                if (ret == NRF_ERROR_STORAGE_FULL)
+                {
+                    ret = fds_gc();
+                }
+                APP_ERROR_CHECK(ret);
+            }
             apple_notification_setup();
-            break;
+        } break;
 
         case BLE_ANCS_C_EVT_NOTIF:
             m_notification_latest = p_evt->notif;
@@ -754,9 +775,9 @@ static void conn_params_init(void)
 
 /**@brief Function for handling Database Discovery events.
  *
- * @details This function is a callback function to handle events from the database discovery module.
- *          Depending on the UUIDs that are discovered, this function should forward the events
- *          to their respective service instances.
+ * @details This function is a callback function to handle events from the database discovery
+ *          module. Depending on the UUIDs that are discovered, this function should forward the
+ *          events to their respective service instances.
  *
  * @param[in] p_event  Pointer to the database discovery event.
  */
@@ -802,7 +823,7 @@ static void peer_manager_init(void)
 
 
 /**
- * @brief Delete all data stored for all peers
+ * @brief Delete all data stored for all peers.
  */
 static void delete_bonds(void)
 {
@@ -906,6 +927,8 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
 {
     ret_code_t ret = NRF_SUCCESS;
 
+    pm_handler_secure_on_connection(p_ble_evt);
+
     switch (p_ble_evt->header.evt_id)
     {
         case BLE_GAP_EVT_CONNECTED:
@@ -917,16 +940,11 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
 
             ret = nrf_ble_qwr_conn_handle_assign(&m_qwr, m_cur_conn_handle);
             APP_ERROR_CHECK(ret);
-
-            ret = app_timer_start(m_sec_req_timer_id, SECURITY_REQUEST_DELAY, NULL);
-            APP_ERROR_CHECK(ret);
             break;
 
         case BLE_GAP_EVT_DISCONNECTED:
             NRF_LOG_INFO("Disconnected.");
             m_cur_conn_handle = BLE_CONN_HANDLE_INVALID;
-            ret               = app_timer_stop(m_sec_req_timer_id);
-            APP_ERROR_CHECK(ret);
 
             if (p_ble_evt->evt.gap_evt.conn_handle == m_ancs_c.conn_handle)
             {
@@ -966,7 +984,6 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             // No implementation needed.
             break;
     }
-    APP_ERROR_CHECK(ret);
 }
 
 

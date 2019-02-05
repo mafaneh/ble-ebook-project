@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2017 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #ifndef APP_USBD_HID_KBD_H__
 #define APP_USBD_HID_KBD_H__
@@ -169,7 +169,7 @@ typedef enum {
 } app_usbd_hid_kbd_codes_t;
 
 /**
- * @brief HID keyboard modifier
+ * @brief HID keyboard modifier.
  */
 typedef enum {
     APP_USBD_HID_KBD_MODIFIER_NONE          = 0x00,  /**< MODIFIER_NONE        bit*/
@@ -198,7 +198,7 @@ typedef enum {
 
 #ifdef DOXYGEN
 /**
- * @brief HID keyboard class instance type
+ * @brief HID keyboard class instance type.
  *
  * @ref APP_USBD_CLASS_TYPEDEF
  */
@@ -220,7 +220,7 @@ APP_USBD_CLASS_TYPEDEF(app_usbd_hid_kbd,                        \
  * @param interface_number  Unique interface index.
  * @param endpoint          Input endpoint (@ref nrf_drv_usbd_ep_t).
  * @param user_ev_handler   User event handler (optional parameter: NULL might be passed here).
- * @param subclass_boot     Subclass boot. (@ref app_usbd_hid_subclass_t)
+ * @param subclass_boot     Subclass boot (@ref app_usbd_hid_subclass_t).
  *
  * Example class definition:
  * @code
@@ -299,6 +299,27 @@ ret_code_t app_usbd_hid_kbd_key_control(app_usbd_hid_kbd_t const * p_kbd,
  */
 bool app_usbd_hid_kbd_led_state_get(app_usbd_hid_kbd_t const * p_kbd,
                                     app_usbd_hid_kbd_led_t led);
+
+/**
+ * @brief Function handling SET_PROTOCOL command.
+ *
+ *
+ * @param[in] p_kbd         Keyboard instance.
+ * @param[in] ev            User event.
+ *
+ * @return Standard error code.
+ */
+ret_code_t hid_kbd_on_set_protocol(app_usbd_hid_kbd_t const * p_kbd,
+                                   app_usbd_hid_user_event_t ev);
+
+/**
+ * @brief Function that clears HID keyboard buffers and sends an empty report.
+ *
+ * @param[in] p_inst Base class instance.
+ *
+ * @return Standard error code.
+ */
+ret_code_t hid_kbd_clear_buffer(app_usbd_class_inst_t const * p_inst);
 
 /** @} */
 

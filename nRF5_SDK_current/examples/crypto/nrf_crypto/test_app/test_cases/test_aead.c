@@ -1,30 +1,30 @@
 /**
- * Copyright (c) 2018 - 2018, Nordic Semiconductor ASA
- * 
+ * Copyright (c) 2018, Nordic Semiconductor ASA
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 
 #include <stdio.h>
@@ -61,31 +61,43 @@
 NRF_SECTION_DEF(test_vector_aead_data, test_vector_aead_t);
 NRF_SECTION_DEF(test_vector_aead_simple_data, test_vector_aead_t);
 
-#define NUM_BUFFER_OVERFLOW_TEST_BYTES      2                                                                           /**< Number of bytes to be using in overflow test for AEAD. */
-#define AEAD_MAC_SIZE                       16                                                                          /**< Size of AEAD MAC. */
-#define AEAD_MAX_TESTED_NONCE_SIZE          128                                                                         /**< Input buffer size for AEAD Noce. */
-#define AEAD_PLAINTEXT_BUF_SIZE             265                                                                         /**< Input buffer size for AEAD Plaintext. */
-#define AEAD_PLAINTEXT_BUF_SIZE_PLUS        AEAD_PLAINTEXT_BUF_SIZE + NUM_BUFFER_OVERFLOW_TEST_BYTES                    /**< Input buffer size for AEAD Plaintext, including 2 buffer overflow bytes. */
-#define AEAD_MAX_MAC_SIZE_PLUS              AEAD_MAC_SIZE + NUM_BUFFER_OVERFLOW_TEST_BYTES                              /**< Input buffer size for AEAD Mac, including 2 buffer overflow bytes. */
-#define AEAD_KEY_SIZE                       NRF_CRYPTO_KEY_SIZE_256 / 8                                                 /**< Input buffer size for AEAD Key. */
-#define TEST_VECTOR_AEAD_GET(i)             NRF_SECTION_ITEM_GET(test_vector_aead_data, test_vector_aead_t, (i))        /**< Get number of AEAD test vectors. */
-#define TEST_VECTOR_AEAD_COUNT              NRF_SECTION_ITEM_COUNT(test_vector_aead_data, test_vector_aead_t)           /**< Get AEAD test vector reference from array of test vectors. */
-#define TEST_VECTOR_AEAD_INVALID_GET(i)     NRF_SECTION_ITEM_GET(test_vector_aead_simple_data, test_vector_aead_t, (i)) /**< Get number of simple AEAD test vectors. */
-#define TEST_VECTOR_AEAD_INVALID_COUNT      NRF_SECTION_ITEM_COUNT(test_vector_aead_simple_data, test_vector_aead_t)    /**< Get AEAD simple test vector reference from array of test vectors. */
+#define NUM_BUFFER_OVERFLOW_TEST_BYTES (2)                                                      /**< Number of bytes to be used in the overflow test for AEAD. */
+#define AEAD_MAC_SIZE                  (16)                                                     /**< Size of the AEAD MAC. */
+#define AEAD_MAX_TESTED_NONCE_SIZE     (128)                                                    /**< Input buffer size for the AEAD noce. */
+#define AEAD_PLAINTEXT_BUF_SIZE        (265)                                                    /**< Input buffer size for the AEAD plaintext. */
+#define AEAD_PLAINTEXT_BUF_SIZE_PLUS   AEAD_PLAINTEXT_BUF_SIZE + NUM_BUFFER_OVERFLOW_TEST_BYTES /**< Input buffer size for the AEAD plaintext, including 2 buffer overflow bytes. */
+#define AEAD_MAX_MAC_SIZE_PLUS         AEAD_MAC_SIZE + NUM_BUFFER_OVERFLOW_TEST_BYTES           /**< Input buffer size for the AEAD MAC, including 2 buffer overflow bytes. */
+#define AEAD_KEY_SIZE                  NRF_CRYPTO_KEY_SIZE_256 / (8)                            /**< Input buffer size for the AEAD key. */
 
-static nrf_crypto_aead_context_t            m_aead_context;                                                             /**< AEAD context. */
+/**< Get number of the AEAD test vectors. */
+#define TEST_VECTOR_AEAD_GET(i)         \
+    NRF_SECTION_ITEM_GET(test_vector_aead_data, test_vector_aead_t, (i))
 
-static uint8_t                              m_aead_input_buf[AEAD_PLAINTEXT_BUF_SIZE];                                  /**< Buffer for holding the AEAD input plaintext/ciphertext. */
-static uint8_t                              m_aead_output_buf[AEAD_PLAINTEXT_BUF_SIZE_PLUS];                            /**< Buffer for holding the AEAD output plaintext/ciphertext. */
-static uint8_t                              m_aead_expected_output_buf[AEAD_PLAINTEXT_BUF_SIZE];                        /**< Buffer for holding the AEAD expected plaintext/ciphertext. */
-static uint8_t                              m_aead_output_mac_buf[AEAD_MAX_MAC_SIZE_PLUS];                              /**< Buffer for holding the AEAD generated MAC. */
-static uint8_t                              m_aead_expected_mac_buf[AEAD_MAX_MAC_SIZE_PLUS];                            /**< Buffer for holding the AEAD expected MAC. */
-static uint8_t                              m_aead_key_buf[AEAD_KEY_SIZE];                                              /**< Buffer for holding the AEAD key. */
-static uint8_t                              m_aead_ad_buf[AEAD_PLAINTEXT_BUF_SIZE];                                     /**< Buffer for holding the AEAD associated data. */
-static uint8_t                              m_aead_nonce_buf[AEAD_MAX_TESTED_NONCE_SIZE];                               /**< Buffer for holding the AEAD nonce data. */
+/**< Get the AEAD test vector reference from the array of test vectors. */
+#define TEST_VECTOR_AEAD_COUNT          \
+    NRF_SECTION_ITEM_COUNT(test_vector_aead_data, test_vector_aead_t)
+
+/**< Get number of the simple AEAD test vectors. */
+#define TEST_VECTOR_AEAD_INVALID_GET(i) \
+    NRF_SECTION_ITEM_GET(test_vector_aead_simple_data, test_vector_aead_t, (i))
+
+/**< Get the AEAD simple test vector reference from the array of test vectors. */
+#define TEST_VECTOR_AEAD_INVALID_COUNT  \
+    NRF_SECTION_ITEM_COUNT(test_vector_aead_simple_data, test_vector_aead_t)
+
+static nrf_crypto_aead_context_t m_aead_context;                                                /**< AEAD context. */
+
+static uint8_t m_aead_input_buf[AEAD_PLAINTEXT_BUF_SIZE];                                       /**< Buffer for holding the AEAD input plaintext or ciphertext. */
+static uint8_t m_aead_output_buf[AEAD_PLAINTEXT_BUF_SIZE_PLUS];                                 /**< Buffer for holding the AEAD output plaintext or ciphertext. */
+static uint8_t m_aead_expected_output_buf[AEAD_PLAINTEXT_BUF_SIZE];                             /**< Buffer for holding the AEAD expected plaintext or ciphertext. */
+static uint8_t m_aead_output_mac_buf[AEAD_MAX_MAC_SIZE_PLUS];                                   /**< Buffer for holding the AEAD generated MAC. */
+static uint8_t m_aead_expected_mac_buf[AEAD_MAX_MAC_SIZE_PLUS];                                 /**< Buffer for holding the AEAD expected MAC. */
+static uint8_t m_aead_key_buf[AEAD_KEY_SIZE];                                                   /**< Buffer for holding the AEAD key. */
+static uint8_t m_aead_ad_buf[AEAD_PLAINTEXT_BUF_SIZE];                                          /**< Buffer for holding the AEAD associated data. */
+static uint8_t m_aead_nonce_buf[AEAD_MAX_TESTED_NONCE_SIZE];                                    /**< Buffer for holding the AEAD nonce data. */
 
 
-/**@brief Function for running test setup.
+/**@brief Function for running the test setup.
  */
 ret_code_t setup_test_case_aead(void)
 {
@@ -93,7 +105,7 @@ ret_code_t setup_test_case_aead(void)
 }
 
 
-/**@brief Function for AEAD test execution.
+/**@brief Function for the AEAD test execution.
  */
 ret_code_t exec_test_case_aead(test_info_t * p_test_info)
 {
@@ -129,7 +141,7 @@ ret_code_t exec_test_case_aead(test_info_t * p_test_info)
         nonce_len = unhexify(m_aead_nonce_buf, p_test_vector->p_nonce);
 
         // Fetch and unhexify plaintext and ciphertext for encryption.
-        input_len = unhexify(m_aead_input_buf, p_test_vector->p_plaintext);
+        input_len  = unhexify(m_aead_input_buf, p_test_vector->p_plaintext);
         output_len = unhexify(m_aead_expected_output_buf, p_test_vector->p_ciphertext);
 
         // Initialize AEAD.
@@ -153,31 +165,31 @@ ret_code_t exec_test_case_aead(test_info_t * p_test_info)
                                          mac_len);
         stop_time_measurement();
 
-        // Verify nrf_crypto_aead_crypt err_code.
+        // Verify the nrf_crypto_aead_crypt err_code.
         TEST_VECTOR_ASSERT_ERR_CODE((err_code == p_test_vector->expected_err_code),
                                     "nrf_crypto_aead_crypt on encryption");
 
-        // Verify generated AEAD ciphertext.
+        // Verify the generated AEAD ciphertext.
         TEST_VECTOR_MEMCMP_ASSERT(m_aead_expected_output_buf,
                                   m_aead_output_buf,
                                   output_len,
                                   p_test_vector->crypt_expected_result,
                                   "Incorrect generated AEAD ciphertext");
 
-        // Verify generated AEAD MAC.
+        // Verify the generated AEAD MAC.
         TEST_VECTOR_MEMCMP_ASSERT(m_aead_expected_mac_buf,
                                   m_aead_output_mac_buf,
                                   mac_len,
                                   p_test_vector->mac_expected_result,
                                   "Incorrect generated AEAD MAC on encryption");
 
-        // Verify that next two bytes in buffers are not overwritten.
+        // Verify that the next two bytes in buffers are not overwritten.
         TEST_VECTOR_OVERFLOW_ASSERT(m_aead_output_buf, output_len, "output buffer overflow");
         TEST_VECTOR_OVERFLOW_ASSERT(m_aead_output_mac_buf, mac_len, "MAC buffer overflow");
 
         // Fetch and unhexify plaintext and ciphertext for decryption.
         output_len = unhexify(m_aead_expected_output_buf, p_test_vector->p_plaintext);
-        input_len = unhexify(m_aead_input_buf, p_test_vector->p_ciphertext);
+        input_len  = unhexify(m_aead_input_buf, p_test_vector->p_ciphertext);
 
         // Decrypt ciphertext. MAC will be verified in the lib.
         err_code = nrf_crypto_aead_crypt(&m_aead_context,
@@ -192,18 +204,18 @@ ret_code_t exec_test_case_aead(test_info_t * p_test_info)
                                          m_aead_output_mac_buf,
                                          mac_len);
 
-        // Verify nrf_crypto_aead_crypt err_code.
+        // Verify the nrf_crypto_aead_crypt err_code.
         TEST_VECTOR_ASSERT_ERR_CODE((err_code == p_test_vector->expected_err_code),
                                     "nrf_crypto_aead_crypt on decryption");
 
-        // Verify generated AEAD plaintext.
+        // Verify the generated AEAD plaintext.
         TEST_VECTOR_MEMCMP_ASSERT(m_aead_expected_output_buf,
                                   m_aead_output_buf,
                                   output_len,
                                   p_test_vector->crypt_expected_result,
                                   "Incorrect generated AEAD plaintext");
 
-        // Verify that next two bytes in buffers are not overwritten.
+        // Verify that the next two bytes in buffers are not overwritten.
         TEST_VECTOR_OVERFLOW_ASSERT(m_aead_output_buf, output_len, "output buffer overflow");
         TEST_VECTOR_OVERFLOW_ASSERT(m_aead_output_mac_buf, mac_len, "MAC buffer overflow");
 
@@ -225,7 +237,7 @@ exit_test_vector:
 }
 
 
-/**@brief Function for AEAD test execution.
+/**@brief Function for the AEAD test execution.
  */
 ret_code_t exec_test_case_aead_simple(test_info_t * p_test_info)
 {
@@ -260,7 +272,7 @@ ret_code_t exec_test_case_aead_simple(test_info_t * p_test_info)
         if (p_test_vector->direction == NRF_CRYPTO_ENCRYPT)
         {
             // Fetch and unhexify plaintext and ciphertext for encryption.
-            input_len = unhexify(m_aead_input_buf, p_test_vector->p_plaintext);
+            input_len  = unhexify(m_aead_input_buf, p_test_vector->p_plaintext);
             output_len = unhexify(m_aead_expected_output_buf, p_test_vector->p_ciphertext);
             
             memset(m_aead_output_mac_buf, 0xFF, sizeof(m_aead_output_mac_buf));
@@ -270,7 +282,7 @@ ret_code_t exec_test_case_aead_simple(test_info_t * p_test_info)
         else
         {
             // Fetch and unhexify plaintext and ciphertext for decryption.
-            input_len = unhexify(m_aead_input_buf, p_test_vector->p_ciphertext);
+            input_len  = unhexify(m_aead_input_buf, p_test_vector->p_ciphertext);
             output_len = unhexify(m_aead_expected_output_buf, p_test_vector->p_plaintext);
             
             memset(m_aead_output_mac_buf, 0xFF, sizeof(m_aead_output_mac_buf));
@@ -283,7 +295,7 @@ ret_code_t exec_test_case_aead_simple(test_info_t * p_test_info)
                                         m_aead_key_buf);
         TEST_VECTOR_ASSERT_ERR_CODE((err_code == NRF_SUCCESS), "nrf_crypto_aead_init");
 
-        // Encrypt/Decrypt input.
+        // Encrypt or decrypt input.
         start_time_measurement();
         err_code = nrf_crypto_aead_crypt(&m_aead_context,
                                          p_test_vector->direction,
@@ -298,12 +310,12 @@ ret_code_t exec_test_case_aead_simple(test_info_t * p_test_info)
                                          mac_len);
         stop_time_measurement();
 
-        // Verify nrf_crypto_aead_crypt err_code.
+        // Verify the nrf_crypto_aead_crypt err_code.
         TEST_VECTOR_ASSERT_ERR_CODE((err_code == p_test_vector->expected_err_code),
                                     "nrf_crypto_aead_crypt");
         if (input_len != 0)
         {
-            // Verify generated AEAD plaintext/ciphertext.
+            // Verify the generated AEAD plaintext or ciphertext.
             TEST_VECTOR_MEMCMP_ASSERT(m_aead_expected_output_buf,
                                       m_aead_output_buf,
                                       output_len,
@@ -312,7 +324,7 @@ ret_code_t exec_test_case_aead_simple(test_info_t * p_test_info)
         }
         if (p_test_vector->direction == NRF_CRYPTO_ENCRYPT)
         {
-            // Verify generated AEAD MAC.
+            // Verify the generated AEAD MAC.
             TEST_VECTOR_MEMCMP_ASSERT(m_aead_expected_mac_buf,
                                       m_aead_output_mac_buf,
                                       mac_len,
@@ -336,7 +348,7 @@ exit_test_vector:
     return NRF_SUCCESS;
 }
 
-/**@brief Function for running test teardown.
+/**@brief Function for running the test teardown.
  */
 ret_code_t teardown_test_case_aead(void)
 {

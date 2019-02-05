@@ -1,30 +1,30 @@
 /**
- * Copyright (c) 2018 - 2018, Nordic Semiconductor ASA
- * 
+ * Copyright (c) 2018, Nordic Semiconductor ASA
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 
 #ifndef NRF_CRYPTO_ECDH_H__
@@ -62,7 +62,6 @@
  *  @addtogroup nrf_crypto_ecdh_bp384r1     Definitions specific to bp384r1 (Brainpool 384-bit)
  *  @addtogroup nrf_crypto_ecdh_bp512r1     Definitions specific to bp512r1 (Brainpool 512-bit)
  *  @addtogroup nrf_crypto_ecdh_curve25519  Definitions specific to Curve25519
- *  @addtogroup nrf_crypto_ecdh_ed25519     Definitions specific to Ed25519
  */
 
 #include <stdint.h>
@@ -93,7 +92,6 @@ extern "C" {
 #define NRF_CRYPTO_ECDH_BP384R1_SHARED_SECRET_SIZE    (384 / 8)   /**< @brief Number of bytes in a shared secret using bp384r1 (Brainpool 384-bit).  @ingroup nrf_crypto_ecdh_bp384r1 */
 #define NRF_CRYPTO_ECDH_BP512R1_SHARED_SECRET_SIZE    (512 / 8)   /**< @brief Number of bytes in a shared secret using bp512r1 (Brainpool 512-bit).  @ingroup nrf_crypto_ecdh_bp512r1 */
 #define NRF_CRYPTO_ECDH_CURVE25519_SHARED_SECRET_SIZE (256 / 8)   /**< @brief Number of bytes in a shared secret using Curve25519.                   @ingroup nrf_crypto_ecdh_curve25519 */
-#define NRF_CRYPTO_ECDH_ED25519_SHARED_SECRET_SIZE    (256 / 8)   /**< @brief Number of bytes in a shared secret using Ed25519.                      @ingroup nrf_crypto_ecdh_ed25519 */
 #define NRF_CRYPTO_ECDH_SHARED_SECRET_MAX_SIZE        NRF_CRYPTO_ECC_RAW_PRIVATE_KEY_MAX_SIZE  /**< @brief Maximum size of a shared secret in bytes for all enabled curves. */
 
 
@@ -112,7 +110,6 @@ typedef nrf_crypto_backend_bp256r1_ecdh_context_t    nrf_crypto_ecdh_bp256r1_con
 typedef nrf_crypto_backend_bp384r1_ecdh_context_t    nrf_crypto_ecdh_bp384r1_context_t;      /**< @brief Context used to store temporary data during computing ECDH for curve bp384r1 (Brainpool 384-bit).  @ingroup nrf_crypto_ecdh_bp384r1 */
 typedef nrf_crypto_backend_bp512r1_ecdh_context_t    nrf_crypto_ecdh_bp512r1_context_t;      /**< @brief Context used to store temporary data during computing ECDH for curve bp512r1 (Brainpool 512-bit).  @ingroup nrf_crypto_ecdh_bp512r1 */
 typedef nrf_crypto_backend_curve25519_ecdh_context_t nrf_crypto_ecdh_curve25519_context_t;   /**< @brief Context used to store temporary data during computing ECDH for curve Curve25519.                   @ingroup nrf_crypto_ecdh_curve25519 */
-typedef nrf_crypto_backend_ed25519_ecdh_context_t    nrf_crypto_ecdh_ed25519_context_t;      /**< @brief Context used to store temporary data during computing ECDH for curve Ed25519.                      @ingroup nrf_crypto_ecdh_ed25519 */
 
 
 typedef uint8_t nrf_crypto_ecdh_secp160r1_shared_secret_t
@@ -145,8 +142,6 @@ typedef uint8_t nrf_crypto_ecdh_bp512r1_shared_secret_t
     [NRF_CRYPTO_ECDH_BP512R1_SHARED_SECRET_SIZE];          /**< @brief Array type of a shared secret for curve bp512r1 (Brainpool 512-bit).  @ingroup nrf_crypto_ecdh_bp512r1 */
 typedef uint8_t nrf_crypto_ecdh_curve25519_shared_secret_t
     [NRF_CRYPTO_ECDH_CURVE25519_SHARED_SECRET_SIZE];       /**< @brief Array type of a shared secret for curve Curve25519.  @ingroup nrf_crypto_ecdh_curve25519 */
-typedef uint8_t nrf_crypto_ecdh_ed25519_shared_secret_t
-    [NRF_CRYPTO_ECDH_ED25519_SHARED_SECRET_SIZE];          /**< @brief Array type of a shared secret for curve Ed25519.  @ingroup nrf_crypto_ecdh_ed25519 */
 typedef uint8_t nrf_crypto_ecdh_shared_secret_t
     [NRF_CRYPTO_ECDH_SHARED_SECRET_MAX_SIZE];              /**< @brief Array type of a shared secret for any of the enabled curves. */
 
@@ -170,7 +165,6 @@ typedef union
     nrf_crypto_ecdh_bp384r1_context_t    context_bp384r1;     /**< @brief Occupies space for bp384r1 (Brainpool 384-bit). */
     nrf_crypto_ecdh_bp512r1_context_t    context_bp512r1;     /**< @brief Occupies space for bp512r1 (Brainpool 512-bit). */
     nrf_crypto_ecdh_curve25519_context_t context_curve25519;  /**< @brief Occupies space for Curve25519. */
-    nrf_crypto_ecdh_ed25519_context_t    context_ed25519;     /**< @brief Occupies space for Ed25519. */
 } nrf_crypto_ecdh_context_t;
 
 

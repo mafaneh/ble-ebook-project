@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2017 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 
 #include "sdk_common.h"
@@ -137,12 +137,44 @@ ret_code_t nrf_ble_ots_c_obj_size_read(nrf_ble_ots_c_t * const p_ots_c)
     return err_code;
 }
 
+
+ret_code_t nrf_ble_ots_c_obj_properties_read(nrf_ble_ots_c_t * const p_ots_c)
+{
+    VERIFY_MODULE_INITIALIZED();
+    
+    if( p_ots_c->service.object_prop_char.handle_value == BLE_GATT_HANDLE_INVALID)
+    {
+        return NRF_ERROR_INVALID_STATE;
+    }
+    ret_code_t err_code;
+    err_code = sd_ble_gattc_read(p_ots_c->conn_handle,
+                                 p_ots_c->service.object_prop_char.handle_value,
+                                 0);
+    return err_code;
+}
+
+
+static void prop_read_rsp_decode(nrf_ble_ots_c_t * p_ots_c, const ble_evt_t * p_ble_evt)
+{
+    const ble_gattc_evt_read_rsp_t * p_response;
+    p_response = &p_ble_evt->evt.gattc_evt.params.read_rsp;
+
+    uint32_t properties;
+    properties = uint32_decode(&p_response->data[0]);
+
+    nrf_ble_ots_c_evt_t evt;
+    evt.conn_handle     = p_ble_evt->evt.gattc_evt.conn_handle;
+    evt.params.prop.raw = properties;
+    evt.evt_type        = NRF_BLE_OTS_C_EVT_PROP_READ_RESP;
+    p_ots_c->evt_handler(&evt);
+}
+
 /**@brief     Function for handling read response events.
  *
  * @details   This function will validate the read response and raise the appropriate
  *            event to the application.
  *
- * @param[in] p_bas_c   Pointer to the Battery Service Client Structure.
+ * @param[in] p_ots_c   Pointer to the Object Transfer instance.
  * @param[in] p_ble_evt Pointer to the SoftDevice event.
  */
 static void on_read_rsp(nrf_ble_ots_c_t * p_ots_c, const ble_evt_t * p_ble_evt)
@@ -208,6 +240,10 @@ static void on_read_rsp(nrf_ble_ots_c_t * p_ots_c, const ble_evt_t * p_ble_evt)
 
         p_ots_c->evt_handler(&evt);
     }
+    if (p_response->handle == p_ots_c->service.object_prop_char.handle_value)
+    {
+        prop_read_rsp_decode(p_ots_c, p_ble_evt);
+    }
 }
 
 
@@ -226,7 +262,7 @@ void nrf_ble_ots_c_on_db_disc_evt(nrf_ble_ots_c_t const * const p_ots_c,
         (p_evt->params.discovered_db.srv_uuid.uuid == BLE_UUID_OTS_SERVICE) &&
         (p_evt->params.discovered_db.srv_uuid.type == BLE_UUID_TYPE_BLE))
     {
-        // Find the handles of the ANCS characteristic.
+        // Find the handles of the OTS characteristics.
         for (uint32_t i = 0; i < p_evt->params.discovered_db.char_count; i++)
         {
             switch (p_chars[i].characteristic.uuid.uuid)
@@ -337,8 +373,21 @@ void nrf_ble_ots_c_on_ble_evt(ble_evt_t const * const p_ble_evt,
             break;
 
         case BLE_GATTC_EVT_WRITE_RSP:
-            //on_write_rsp()
-            NRF_LOG_DEBUG("error handle write response: %x\r\n", p_ble_evt->evt.gattc_evt.error_handle);
+            if ((p_ble_evt->evt.gattc_evt.error_handle != BLE_GATT_HANDLE_INVALID)
+                && (p_ble_evt->evt.gattc_evt.error_handle ==
+                    p_ots_c->service.object_action_cp_char.handle_value))
+            {
+                if (p_ble_evt->evt.gattc_evt.gatt_status == BLE_GATT_STATUS_ATTERR_CPS_CCCD_CONFIG_ERROR)
+                {
+                    NRF_LOG_INFO("write to OACP failed, CCCD improperly configured, enable indications on OACP and try again");
+                }
+                else
+                {
+                    NRF_LOG_INFO("BLE_GATTC_EVT_WRITE_RSP error handle: %x error response %x\r\n",
+                                 p_ble_evt->evt.gattc_evt.error_handle,
+                                 p_ble_evt->evt.gattc_evt.gatt_status);
+                }
+            }
             break;
 
         default:

@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2012 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #include "sdk_common.h"
 #if NRF_MODULE_ENABLED(BLE_NUS)
@@ -215,119 +215,6 @@ static void on_hvx_tx_complete(ble_nus_t * p_nus, ble_evt_t const * p_ble_evt)
 }
 
 
-/**@brief Function for adding TX characteristic.
- *
- * @param[in] p_nus       Nordic UART Service structure.
- * @param[in] p_nus_init  Information needed to initialize the service.
- *
- * @return NRF_SUCCESS on success, otherwise an error code.
- */
-static uint32_t tx_char_add(ble_nus_t * p_nus, ble_nus_init_t const * p_nus_init)
-{
-    /**@snippet [Adding proprietary characteristic to the SoftDevice] */
-    ble_gatts_char_md_t char_md;
-    ble_gatts_attr_md_t cccd_md;
-    ble_gatts_attr_t    attr_char_value;
-    ble_uuid_t          ble_uuid;
-    ble_gatts_attr_md_t attr_md;
-
-    memset(&cccd_md, 0, sizeof(cccd_md));
-
-    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cccd_md.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cccd_md.write_perm);
-
-    cccd_md.vloc = BLE_GATTS_VLOC_STACK;
-
-    memset(&char_md, 0, sizeof(char_md));
-
-    char_md.char_props.notify = 1;
-    char_md.p_char_user_desc  = NULL;
-    char_md.p_char_pf         = NULL;
-    char_md.p_user_desc_md    = NULL;
-    char_md.p_cccd_md         = &cccd_md;
-    char_md.p_sccd_md         = NULL;
-
-    ble_uuid.type = p_nus->uuid_type;
-    ble_uuid.uuid = BLE_UUID_NUS_TX_CHARACTERISTIC;
-
-    memset(&attr_md, 0, sizeof(attr_md));
-
-    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.write_perm);
-
-    attr_md.vloc    = BLE_GATTS_VLOC_STACK;
-    attr_md.rd_auth = 0;
-    attr_md.wr_auth = 0;
-    attr_md.vlen    = 1;
-
-    memset(&attr_char_value, 0, sizeof(attr_char_value));
-
-    attr_char_value.p_uuid    = &ble_uuid;
-    attr_char_value.p_attr_md = &attr_md;
-    attr_char_value.init_len  = sizeof(uint8_t);
-    attr_char_value.init_offs = 0;
-    attr_char_value.max_len   = BLE_NUS_MAX_TX_CHAR_LEN;
-
-    return sd_ble_gatts_characteristic_add(p_nus->service_handle,
-                                           &char_md,
-                                           &attr_char_value,
-                                           &p_nus->tx_handles);
-    /**@snippet [Adding proprietary characteristic to the SoftDevice] */
-}
-
-
-/**@brief Function for adding RX characteristic.
- *
- * @param[in] p_nus       Nordic UART Service structure.
- * @param[in] p_nus_init  Information needed to initialize the service.
- *
- * @return NRF_SUCCESS on success, otherwise an error code.
- */
-static uint32_t rx_char_add(ble_nus_t * p_nus, const ble_nus_init_t * p_nus_init)
-{
-    ble_gatts_char_md_t char_md;
-    ble_gatts_attr_t    attr_char_value;
-    ble_uuid_t          ble_uuid;
-    ble_gatts_attr_md_t attr_md;
-
-    memset(&char_md, 0, sizeof(char_md));
-
-    char_md.char_props.write         = 1;
-    char_md.char_props.write_wo_resp = 1;
-    char_md.p_char_user_desc         = NULL;
-    char_md.p_char_pf                = NULL;
-    char_md.p_user_desc_md           = NULL;
-    char_md.p_cccd_md                = NULL;
-    char_md.p_sccd_md                = NULL;
-
-    ble_uuid.type = p_nus->uuid_type;
-    ble_uuid.uuid = BLE_UUID_NUS_RX_CHARACTERISTIC;
-
-    memset(&attr_md, 0, sizeof(attr_md));
-
-    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.write_perm);
-
-    attr_md.vloc    = BLE_GATTS_VLOC_STACK;
-    attr_md.rd_auth = 0;
-    attr_md.wr_auth = 0;
-    attr_md.vlen    = 1;
-
-    memset(&attr_char_value, 0, sizeof(attr_char_value));
-
-    attr_char_value.p_uuid    = &ble_uuid;
-    attr_char_value.p_attr_md = &attr_md;
-    attr_char_value.init_len  = 1;
-    attr_char_value.init_offs = 0;
-    attr_char_value.max_len   = BLE_NUS_MAX_RX_CHAR_LEN;
-
-    return sd_ble_gatts_characteristic_add(p_nus->service_handle,
-                                           &char_md,
-                                           &attr_char_value,
-                                           &p_nus->rx_handles);
-}
-
-
 void ble_nus_on_ble_evt(ble_evt_t const * p_ble_evt, void * p_context)
 {
     if ((p_context == NULL) || (p_ble_evt == NULL))
@@ -360,9 +247,10 @@ void ble_nus_on_ble_evt(ble_evt_t const * p_ble_evt, void * p_context)
 
 uint32_t ble_nus_init(ble_nus_t * p_nus, ble_nus_init_t const * p_nus_init)
 {
-    ret_code_t    err_code;
-    ble_uuid_t    ble_uuid;
-    ble_uuid128_t nus_base_uuid = NUS_BASE_UUID;
+    ret_code_t            err_code;
+    ble_uuid_t            ble_uuid;
+    ble_uuid128_t         nus_base_uuid = NUS_BASE_UUID;
+    ble_add_char_params_t add_char_params;
 
     VERIFY_PARAM_NOT_NULL(p_nus);
     VERIFY_PARAM_NOT_NULL(p_nus_init);
@@ -386,14 +274,40 @@ uint32_t ble_nus_init(ble_nus_t * p_nus, ble_nus_init_t const * p_nus_init)
     VERIFY_SUCCESS(err_code);
 
     // Add the RX Characteristic.
-    err_code = rx_char_add(p_nus, p_nus_init);
-    VERIFY_SUCCESS(err_code);
+    memset(&add_char_params, 0, sizeof(add_char_params));
+    add_char_params.uuid                     = BLE_UUID_NUS_RX_CHARACTERISTIC;
+    add_char_params.uuid_type                = p_nus->uuid_type;
+    add_char_params.max_len                  = BLE_NUS_MAX_RX_CHAR_LEN;
+    add_char_params.init_len                 = sizeof(uint8_t);
+    add_char_params.is_var_len               = true;
+    add_char_params.char_props.write         = 1;
+    add_char_params.char_props.write_wo_resp = 1;
+
+    add_char_params.read_access  = SEC_OPEN;
+    add_char_params.write_access = SEC_OPEN;
+
+    err_code = characteristic_add(p_nus->service_handle, &add_char_params, &p_nus->rx_handles);
+    if (err_code != NRF_SUCCESS)
+    {
+        return err_code;
+    }
 
     // Add the TX Characteristic.
-    err_code = tx_char_add(p_nus, p_nus_init);
-    VERIFY_SUCCESS(err_code);
+    /**@snippet [Adding proprietary characteristic to the SoftDevice] */
+    memset(&add_char_params, 0, sizeof(add_char_params));
+    add_char_params.uuid              = BLE_UUID_NUS_TX_CHARACTERISTIC;
+    add_char_params.uuid_type         = p_nus->uuid_type;
+    add_char_params.max_len           = BLE_NUS_MAX_TX_CHAR_LEN;
+    add_char_params.init_len          = sizeof(uint8_t);
+    add_char_params.is_var_len        = true;
+    add_char_params.char_props.notify = 1;
 
-    return NRF_SUCCESS;
+    add_char_params.read_access       = SEC_OPEN;
+    add_char_params.write_access      = SEC_OPEN;
+    add_char_params.cccd_write_access = SEC_OPEN;
+
+    return characteristic_add(p_nus->service_handle, &add_char_params, &p_nus->tx_handles);
+    /**@snippet [Adding proprietary characteristic to the SoftDevice] */
 }
 
 

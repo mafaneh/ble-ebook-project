@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2016 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #include "sdk_common.h"
 #if NRF_MODULE_ENABLED(APP_USBD_CDC_ACM)
@@ -207,10 +207,10 @@ static ret_code_t setup_req_std_in(app_usbd_class_inst_t const * p_inst,
 }
 
 /**
- * @brief Internal SETUP standard OUT request handler
+ * @brief Internal SETUP standard OUT request handler.
  *
- * @param[in] p_inst        Generic class instance
- * @param[in] p_setup_ev    Setup event
+ * @param[in] p_inst        Generic class instance.
+ * @param[in] p_setup_ev    Setup event.
  *
  * @return Standard error code.
  */
@@ -486,7 +486,7 @@ static ret_code_t setup_event_handler(app_usbd_class_inst_t const * p_inst,
 
 
 /**
- * @brief CDC ACM consumer
+ * @brief CDC ACM consumer.
  *
  * @note See @ref nrf_drv_usbd_consumer_t
  */
@@ -521,9 +521,9 @@ static bool cdc_acm_consumer(nrf_drv_usbd_ep_transfer_t * p_next,
 }
 
 /**
- * @brief CDC ACM single transfer consumer
+ * @brief CDC ACM single transfer consumer.
  *
- * This function finalizes transfer after any received block
+ * This function finalizes transfer after any received block.
  *
  * @note See @ref nrf_drv_usbd_consumer_t
  */
@@ -560,7 +560,7 @@ static bool cdc_acm_single_shoot_consumer(nrf_drv_usbd_ep_transfer_t * p_next,
  *
  * @param p_inst  Generic USB class instance.
  *
- * @return Standard error code
+ * @return Standard error code.
  */
 static ret_code_t cdc_acm_rx_block_finished(app_usbd_class_inst_t const *  p_inst)
 {
@@ -902,7 +902,7 @@ static bool cdc_acm_feed_descriptors(app_usbd_class_descriptor_ctx_t * p_ctx,
             if (p_cdc_acm->specific.inst.comm_interface ==
                 app_usbd_class_iface_number_get(p_cur_iface))
             {
-                APP_USBD_CLASS_DESCRIPTOR_WRITE(16); // bInterval
+                APP_USBD_CLASS_DESCRIPTOR_WRITE(p_cdc_acm->specific.inst.p_ep_interval[0]); // bInterval
             }
             else if (p_cdc_acm->specific.inst.data_interface ==
                      app_usbd_class_iface_number_get(p_cur_iface))
@@ -922,7 +922,7 @@ static bool cdc_acm_feed_descriptors(app_usbd_class_descriptor_ctx_t * p_ctx,
 }
 
 /**
- * @brief Public cdc_acm class interface
+ * @brief Public cdc_acm class interface.
  *
  */
 const app_usbd_class_methods_t app_usbd_cdc_acm_class_methods = {
@@ -946,10 +946,19 @@ ret_code_t app_usbd_cdc_acm_write(app_usbd_cdc_acm_t const * p_cdc_acm,
         /*Port is not opened*/
         return NRF_ERROR_INVALID_STATE;
     }
-
+    
     nrf_drv_usbd_ep_t ep = data_ep_in_addr_get(p_inst);
-    NRF_DRV_USBD_TRANSFER_IN(transfer, p_buf, length);
-    return app_usbd_ep_transfer(ep, &transfer);
+    
+    if (APP_USBD_CDC_ACM_ZLP_ON_EPSIZE_WRITE && ((length % NRF_DRV_USBD_EPSIZE) == 0))
+    {
+        NRF_DRV_USBD_TRANSFER_IN_ZLP(transfer, p_buf, length);
+        return app_usbd_ep_transfer(ep, &transfer);
+    }
+    else
+    {
+        NRF_DRV_USBD_TRANSFER_IN(transfer, p_buf, length);
+        return app_usbd_ep_transfer(ep, &transfer);
+    }
 }
 
 size_t app_usbd_cdc_acm_rx_size(app_usbd_cdc_acm_t const * p_cdc_acm)

@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2016 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 
 #include <string.h>
@@ -146,7 +146,7 @@ static void check_and_update_mac_address(bool demand_new_mac)
  */
 static void lock_beacon(void)
 {
-    *(m_ble_ecs.p_lock_state) = NRF_BLE_ESCS_LOCK_STATE_LOCKED;
+    m_ble_ecs.lock_state = NRF_BLE_ESCS_LOCK_STATE_LOCKED;
 }
 
 
@@ -188,7 +188,7 @@ static void on_ble_evt(ble_evt_t const * p_ble_evt)
             err_code = es_flash_access_beacon_config(&beacon_config, ES_FLASH_ACCESS_WRITE);
             APP_ERROR_CHECK(err_code);
 
-            if (*m_ble_ecs.p_lock_state == NRF_BLE_ESCS_LOCK_STATE_UNLOCKED)
+            if (m_ble_ecs.lock_state == NRF_BLE_ESCS_LOCK_STATE_UNLOCKED)
             {
                 lock_beacon();
             }
@@ -223,7 +223,7 @@ static void nrf_ble_escs_security_cb(uint8_t slot_no, es_security_msg_t msg_type
     switch (msg_type)
     {
         case ES_SECURITY_MSG_UNLOCKED:
-            *(m_ble_ecs.p_lock_state) = NRF_BLE_ESCS_LOCK_STATE_UNLOCKED;
+            m_ble_ecs.lock_state = NRF_BLE_ESCS_LOCK_STATE_UNLOCKED;
             break;
 
         case ES_SECURITY_MSG_EID:
@@ -374,7 +374,7 @@ static void adv_slots_init(void)
     uint8_t default_frame_data[DEFAULT_FRAME_LENGTH] = DEFAULT_FRAME_DATA;
 
     es_slot_t default_adv_slot = {.slot_no             = 0,
-                                  .radio_tx_pwr        = 0,
+                                  .radio_tx_pwr        = DEFAULT_FRAME_TX_POWER,
                                   .adv_frame.type      = DEFAULT_FRAME_TYPE,
                                   .adv_frame.length    = DEFAULT_FRAME_LENGTH,
                                   .adv_custom_tx_power = false,

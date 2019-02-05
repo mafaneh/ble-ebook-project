@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2015 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #ifndef PEER_ID_MANAGER_H__
 #define PEER_ID_MANAGER_H__
@@ -60,14 +60,6 @@ extern "C" {
  * @brief An internal module of @ref peer_manager. A module for keeping track of peer identities
  *       (IRK and peer address).
  */
-
-
-/**@brief Function for initializing the Identity manager.
- *
- * @retval NRF_SUCCESS          If initialization was successful.
- * @retval NRF_ERROR_INTERNAL   If an error occurred.
- */
-ret_code_t im_init(void);
 
 
 /**@brief Function for dispatching SoftDevice events to the ID Manager module.
@@ -100,7 +92,7 @@ pm_peer_id_t im_peer_id_get_by_master_id(ble_gap_master_id_t const * p_master_id
  * @param[in] peer_id  The peer ID.
  *
  * @return The corresponding connection handle, or @ref BLE_CONN_HANDLE_INVALID if none could be
- *         resolved.
+ *         resolved. The conn_handle can refer to a recently disconnected connection.
  */
 uint16_t im_conn_handle_get(pm_peer_id_t peer_id);
 
@@ -121,11 +113,10 @@ bool im_master_ids_compare(ble_gap_master_id_t const * p_master_id1,
  *
  * @param[in]  conn_handle  The connection handle.
  * @param[out] p_ble_addr   The BLE address used by the peer when the connection specified by
- *                          conn_handle was established.
+ *                          conn_handle was established. Cannot be NULL.
  *
  * @retval NRF_SUCCESS                   The address was found and copied.
- * @retval BLE_ERROR_CONN_HANDLE_INVALID conn_handle does not refer to an active connection.
- * @retval NRF_ERROR_NULL                p_ble_addr was NULL.
+ * @retval BLE_ERROR_INVALID_CONN_HANDLE conn_handle does not refer to an active connection.
  */
 ret_code_t im_ble_addr_get(uint16_t conn_handle, ble_gap_addr_t * p_ble_addr);
 
@@ -295,7 +286,7 @@ ret_code_t im_whitelist_set(pm_peer_id_t const * p_peers,
  * @param[inout] In: the size of the @p p_irks buffer.
  *               Out: the number of IRKs copied into the buffer.
  *
- * @retval NRF_SUCCESS                      If the whitelist was successfully retreived.
+ * @retval NRF_SUCCESS                      If the whitelist was successfully retrieved.
  * @retval BLE_ERROR_GAP_INVALID_BLE_ADDR   If any peer has an address which can not be used for
  *                                          whitelisting.
  * @retval NRF_ERROR_NOT_FOUND              If the data for any of the cached whitelisted peers

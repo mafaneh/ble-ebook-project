@@ -25,6 +25,12 @@ SECTIONS
     KEEP(*(SORT(.log_dynamic_data*)))
     PROVIDE(__stop_log_dynamic_data = .);
   } > RAM
+  .log_filter_data :
+  {
+    PROVIDE(__start_log_filter_data = .);
+    KEEP(*(SORT(.log_filter_data*)))
+    PROVIDE(__stop_log_filter_data = .);
+  } > RAM
 
 } INSERT AFTER .data;
 
@@ -39,29 +45,11 @@ SECTIONS
     KEEP(*(SORT(.sdh_soc_observers*)))
     PROVIDE(__stop_sdh_soc_observers = .);
   } > FLASH
-  .log_const_data :
-  {
-    PROVIDE(__start_log_const_data = .);
-    KEEP(*(SORT(.log_const_data*)))
-    PROVIDE(__stop_log_const_data = .);
-  } > FLASH
-    .nrf_balloc :
-  {
-    PROVIDE(__start_nrf_balloc = .);
-    KEEP(*(.nrf_balloc))
-    PROVIDE(__stop_nrf_balloc = .);
-  } > FLASH
   .pwr_mgmt_data :
   {
     PROVIDE(__start_pwr_mgmt_data = .);
     KEEP(*(SORT(.pwr_mgmt_data*)))
     PROVIDE(__stop_pwr_mgmt_data = .);
-  } > FLASH
-  .sdh_state_observers :
-  {
-    PROVIDE(__start_sdh_state_observers = .);
-    KEEP(*(SORT(.sdh_state_observers*)))
-    PROVIDE(__stop_sdh_state_observers = .);
   } > FLASH
   .sdh_stack_observers :
   {
@@ -75,11 +63,35 @@ SECTIONS
     KEEP(*(SORT(.sdh_req_observers*)))
     PROVIDE(__stop_sdh_req_observers = .);
   } > FLASH
+  .sdh_state_observers :
+  {
+    PROVIDE(__start_sdh_state_observers = .);
+    KEEP(*(SORT(.sdh_state_observers*)))
+    PROVIDE(__stop_sdh_state_observers = .);
+  } > FLASH
+  .log_const_data :
+  {
+    PROVIDE(__start_log_const_data = .);
+    KEEP(*(SORT(.log_const_data*)))
+    PROVIDE(__stop_log_const_data = .);
+  } > FLASH
   .sdh_ant_observers :
   {
     PROVIDE(__start_sdh_ant_observers = .);
     KEEP(*(SORT(.sdh_ant_observers*)))
     PROVIDE(__stop_sdh_ant_observers = .);
+  } > FLASH
+  .log_backends :
+  {
+    PROVIDE(__start_log_backends = .);
+    KEEP(*(SORT(.log_backends*)))
+    PROVIDE(__stop_log_backends = .);
+  } > FLASH
+    .nrf_balloc :
+  {
+    PROVIDE(__start_nrf_balloc = .);
+    KEEP(*(.nrf_balloc))
+    PROVIDE(__stop_nrf_balloc = .);
   } > FLASH
 
 } INSERT AFTER .text

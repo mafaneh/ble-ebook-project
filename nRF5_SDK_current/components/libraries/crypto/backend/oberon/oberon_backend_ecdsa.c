@@ -1,30 +1,30 @@
 /**
- * Copyright (c) 2018 - 2018, Nordic Semiconductor ASA
- * 
+ * Copyright (c) 2018, Nordic Semiconductor ASA
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,13 +35,15 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 
 #include "sdk_config.h"
 #include "nordic_common.h"
 
-#if NRF_MODULE_ENABLED(NRF_CRYPTO) && NRF_MODULE_ENABLED(NRF_CRYPTO_BACKEND_OBERON)
+#if NRF_MODULE_ENABLED(NRF_CRYPTO) && \
+    NRF_MODULE_ENABLED(NRF_CRYPTO_BACKEND_OBERON) && \
+    NRF_MODULE_ENABLED(NRF_CRYPTO_BACKEND_OBERON_ECC_SECP256R1)
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -50,9 +52,8 @@
 #include "nrf_crypto_ecc.h"
 #include "nrf_crypto_rng.h"
 #include "nrf_crypto_ecdsa.h"
-
-#if NRF_MODULE_ENABLED(NRF_CRYPTO_BACKEND_OBERON_ECC_SECP256R1)
-
+#include "oberon_backend_eddsa.h"
+#include "nrf_crypto_eddsa_shared.h"
 #include "occ_ecdsa_p256.h"
 
 
@@ -116,51 +117,4 @@ ret_code_t nrf_crypto_backend_secp256r1_verify(
 }
 
 
-#endif // NRF_MODULE_ENABLED(NRF_CRYPTO_BACKEND_OBERON_ECC_SECP256R1)
-
-
-#if NRF_MODULE_ENABLED(NRF_CRYPTO_BACKEND_OBERON_ECC_ED25519)
-
-#include "occ_ed25519.h"
-
-
-ret_code_t nrf_crypto_backend_ed25519_sign(
-    void          * p_context,
-    void    const * p_private_key,
-    uint8_t const * p_data,
-    size_t          data_size,
-    uint8_t       * p_signature)
-{
-    nrf_crypto_backend_ed25519_private_key_t const * p_prv =
-        (nrf_crypto_backend_ed25519_private_key_t const *)p_private_key;
-
-    occ_ed25519_sign(p_signature, p_data, data_size, p_prv->private_part, p_prv->public_part);
-
-    return NRF_SUCCESS;
-}
-
-ret_code_t nrf_crypto_backend_ed25519_verify(
-    void          * p_context,
-    void    const * p_public_key,
-    uint8_t const * p_data,
-    size_t          data_size,
-    uint8_t const * p_signature)
-{
-    int result;
-
-    nrf_crypto_backend_ed25519_public_key_t const * p_pub =
-        (nrf_crypto_backend_ed25519_public_key_t const *)p_public_key;
-
-    result = occ_ed25519_verify(p_signature, p_data, data_size, p_pub->key);
-
-    if (result != 0)
-    {
-        return NRF_ERROR_CRYPTO_ECDSA_INVALID_SIGNATURE;
-    }
-    return NRF_SUCCESS;
-}
-
-#endif // NRF_MODULE_ENABLED(NRF_CRYPTO_BACKEND_OBERON_ECC_ED25519)
-
-#endif // NRF_MODULE_ENABLED(NRF_CRYPTO) && NRF_MODULE_ENABLED(NRF_CRYPTO_BACKEND_OBERON)
-
+#endif // NRF_MODULE_ENABLED(NRF_CRYPTO) && NRF_MODULE_ENABLED(NRF_CRYPTO_BACKEND_OBERON) && NRF_MODULE_ENABLED(NRF_CRYPTO_BACKEND_OBERON_ECC_SECP256R1)

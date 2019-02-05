@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2016 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 /** @file
  *
@@ -64,6 +64,7 @@
 #include "nrf_sdh_ble.h"
 #include "app_timer.h"
 #include "peer_manager.h"
+#include "peer_manager_handler.h"
 #include "bsp_btn_ble.h"
 #include "fds.h"
 #include "ble_conn_state.h"
@@ -82,8 +83,6 @@
 
 #define APP_BLE_OBSERVER_PRIO           3                                       //!< Application's BLE observer priority. You shouldn't need to modify this value.
 #define APP_BLE_CONN_CFG_TAG            1                                       //!< A tag identifying the SoftDevice BLE configuration.
-
-#define SECURITY_REQUEST_DELAY          APP_TIMER_TICKS(4000)                   //!< Delay after connection until Security Request is sent, if necessary (ticks).
 
 #define SECOND_10_MS_UNITS              100                                     //!< Definition of 1 second, when 1 unit is 10 ms.
 #define MIN_CONN_INTERVAL               7                                       //!< Minimum acceptable connection interval (0.25 seconds), Connection interval uses 1.25 ms units.
@@ -111,7 +110,6 @@
 #define DEAD_BEEF                       0xDEADBEEF                              //!< Value used as error code on stack dump, can be used to identify stack location on stack unwind.
 
 
-APP_TIMER_DEF(m_sec_req_timer_id);                                              //!< Security request timer. The timer lets us start pairing request if one does not arrive from the Central.
 NRF_BLE_QWR_DEF(m_qwr);                                                         //!< Context for the Queued Write module.
 NRF_BLE_BMS_DEF(m_bms);                                                         //!< Structure used to identify the Bond Management service.
 NRF_BLE_GATT_DEF(m_gatt);                                                       //!< GATT module instance.
@@ -214,33 +212,6 @@ static void advertising_start(bool erase_bonds)
 }
 
 
-/**@brief Function for handling the Security Request timer timeout.
- *
- * @details This function will be called each time the Security Request timer expires.
- *
- * @param[in]   p_context   Pointer used for passing some arbitrary information (context) from the
- *                          app_start_timer() call to the timeout handler.
- */
-static void sec_req_timeout_handler(void * p_context)
-{
-    ret_code_t              err_code;
-    pm_conn_sec_status_t    status;
-
-    if (m_conn_handle != BLE_CONN_HANDLE_INVALID)
-    {
-        err_code = pm_conn_sec_status_get(m_conn_handle, &status);
-        APP_ERROR_CHECK(err_code);
-
-        // If the link is still not secured by the peer, initiate security procedure.
-        if (!status.encrypted)
-        {
-            err_code = pm_conn_secure(m_conn_handle, false);
-            APP_ERROR_CHECK(err_code);
-        }
-    }
-}
-
-
 /**@brief Function for the Timer initialization.
  *
 * @details Initializes the timer module. This creates and starts application timers.
@@ -251,12 +222,6 @@ static void timers_init(void)
 
     // Initialize timer module, making it use the scheduler.
     err_code = app_timer_init();
-    APP_ERROR_CHECK(err_code);
-
-    // Create Security Request timer.
-    err_code = app_timer_create(&m_sec_req_timer_id,
-                                APP_TIMER_MODE_SINGLE_SHOT,
-                                sec_req_timeout_handler);
     APP_ERROR_CHECK(err_code);
 }
 
@@ -480,8 +445,7 @@ static void services_init(void)
 
     ble_srv_ascii_to_utf8(&dis_init.manufact_name_str, MANUFACTURER_NAME);
 
-    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&dis_init.dis_attr_md.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&dis_init.dis_attr_md.write_perm);
+    dis_init.dis_char_rd_sec = SEC_OPEN;
 
     err_code = ble_dis_init(&dis_init);
     APP_ERROR_CHECK(err_code);
@@ -600,6 +564,8 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
 {
     ret_code_t err_code = NRF_SUCCESS;
 
+    pm_handler_secure_on_connection(p_ble_evt);
+
     switch (p_ble_evt->header.evt_id)
     {
         case BLE_GAP_EVT_CONNECTED:
@@ -617,7 +583,6 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             NRF_LOG_INFO("Disconnected");
             delete_disconnected_bonds();
             m_conn_handle = BLE_CONN_HANDLE_INVALID;
-            err_code = app_timer_stop(m_sec_req_timer_id);
             APP_ERROR_CHECK(err_code);
             break;
 
@@ -715,93 +680,15 @@ static void bsp_event_handler(bsp_event_t event)
  */
 static void pm_evt_handler(pm_evt_t const * p_evt)
 {
-    ret_code_t err_code;
+    pm_handler_on_pm_evt(p_evt);
+    pm_handler_flash_clean(p_evt);
 
     switch (p_evt->evt_id)
     {
-        case PM_EVT_BONDED_PEER_CONNECTED:
-        {
-            NRF_LOG_INFO("Connected to a previously bonded device.");
-            err_code = app_timer_start(m_sec_req_timer_id, SECURITY_REQUEST_DELAY, NULL);
-            APP_ERROR_CHECK(err_code);
-        } break;
-
-        case PM_EVT_CONN_SEC_SUCCEEDED:
-        {
-            NRF_LOG_INFO("Connection secured: role: %d, conn_handle: 0x%x, procedure: %d.",
-                         ble_conn_state_role(p_evt->conn_handle),
-                         p_evt->conn_handle,
-                         p_evt->params.conn_sec_succeeded.procedure);
-        } break;
-
-        case PM_EVT_CONN_SEC_FAILED:
-        {
-            NRF_LOG_INFO("Failed to secure connection.");
-        } break;
-
-        case PM_EVT_CONN_SEC_CONFIG_REQ:
-        {
-            // Reject pairing request from an already bonded peer.
-            pm_conn_sec_config_t conn_sec_config = {.allow_repairing = false};
-            pm_conn_sec_config_reply(p_evt->conn_handle, &conn_sec_config);
-        } break;
-
-        case PM_EVT_STORAGE_FULL:
-        {
-            // Run garbage collection on the flash.
-            err_code = fds_gc();
-            if (err_code == FDS_ERR_NO_SPACE_IN_QUEUES)
-            {
-                // Retry.
-            }
-            else
-            {
-                APP_ERROR_CHECK(err_code);
-            }
-        } break;
-
-        case PM_EVT_PEER_DELETE_SUCCEEDED:
-        {
-            NRF_LOG_INFO("Peer Manager: Bond deleted.");
-        } break;
-
         case PM_EVT_PEERS_DELETE_SUCCEEDED:
-        {
-            NRF_LOG_INFO("Peer Manager: All bonds deleted.");
             advertising_start(false);
-        } break;
+            break;
 
-        case PM_EVT_PEER_DATA_UPDATE_FAILED:
-        {
-            // Assert.
-            APP_ERROR_CHECK(p_evt->params.peer_data_update_failed.error);
-        } break;
-
-        case PM_EVT_PEER_DELETE_FAILED:
-        {
-            // Assert.
-            APP_ERROR_CHECK(p_evt->params.peer_delete_failed.error);
-        } break;
-
-        case PM_EVT_PEERS_DELETE_FAILED:
-        {
-            // Assert.
-            APP_ERROR_CHECK(p_evt->params.peers_delete_failed_evt.error);
-        } break;
-
-        case PM_EVT_ERROR_UNEXPECTED:
-        {
-            // Assert.
-            APP_ERROR_CHECK(p_evt->params.error_unexpected.error);
-        } break;
-
-        case PM_EVT_CONN_SEC_START:
-        case PM_EVT_PEER_DATA_UPDATE_SUCCEEDED:
-        case PM_EVT_LOCAL_DB_CACHE_APPLIED:
-        case PM_EVT_LOCAL_DB_CACHE_APPLY_FAILED:
-            // This can happen when the local DB has changed.
-        case PM_EVT_SERVICE_CHANGED_IND_SENT:
-        case PM_EVT_SERVICE_CHANGED_IND_CONFIRMED:
         default:
             break;
     }

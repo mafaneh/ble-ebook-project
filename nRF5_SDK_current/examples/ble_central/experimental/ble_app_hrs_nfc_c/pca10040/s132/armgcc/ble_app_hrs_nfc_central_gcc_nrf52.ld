@@ -25,17 +25,23 @@ SECTIONS
     KEEP(*(SORT(.log_dynamic_data*)))
     PROVIDE(__stop_log_dynamic_data = .);
   } > RAM
-  .fs_data :
+  .log_filter_data :
   {
-    PROVIDE(__start_fs_data = .);
-    KEEP(*(.fs_data))
-    PROVIDE(__stop_fs_data = .);
+    PROVIDE(__start_log_filter_data = .);
+    KEEP(*(SORT(.log_filter_data*)))
+    PROVIDE(__stop_log_filter_data = .);
   } > RAM
   .cli_sorted_cmd_ptrs :
   {
     PROVIDE(__start_cli_sorted_cmd_ptrs = .);
     KEEP(*(.cli_sorted_cmd_ptrs))
     PROVIDE(__stop_cli_sorted_cmd_ptrs = .);
+  } > RAM
+  .fs_data :
+  {
+    PROVIDE(__start_fs_data = .);
+    KEEP(*(.fs_data))
+    PROVIDE(__stop_fs_data = .);
   } > RAM
 
 } INSERT AFTER .data;
@@ -57,6 +63,12 @@ SECTIONS
     KEEP(*(SORT(.sdh_ble_observers*)))
     PROVIDE(__stop_sdh_ble_observers = .);
   } > FLASH
+    .nrf_queue :
+  {
+    PROVIDE(__start_nrf_queue = .);
+    KEEP(*(.nrf_queue))
+    PROVIDE(__stop_nrf_queue = .);
+  } > FLASH
   .log_const_data :
   {
     PROVIDE(__start_log_const_data = .);
@@ -69,18 +81,6 @@ SECTIONS
     KEEP(*(.nrf_balloc))
     PROVIDE(__stop_nrf_balloc = .);
   } > FLASH
-    .nrf_queue :
-  {
-    PROVIDE(__start_nrf_queue = .);
-    KEEP(*(.nrf_queue))
-    PROVIDE(__stop_nrf_queue = .);
-  } > FLASH
-  .sdh_state_observers :
-  {
-    PROVIDE(__start_sdh_state_observers = .);
-    KEEP(*(SORT(.sdh_state_observers*)))
-    PROVIDE(__stop_sdh_state_observers = .);
-  } > FLASH
   .sdh_stack_observers :
   {
     PROVIDE(__start_sdh_stack_observers = .);
@@ -92,6 +92,12 @@ SECTIONS
     PROVIDE(__start_sdh_req_observers = .);
     KEEP(*(SORT(.sdh_req_observers*)))
     PROVIDE(__stop_sdh_req_observers = .);
+  } > FLASH
+  .sdh_state_observers :
+  {
+    PROVIDE(__start_sdh_state_observers = .);
+    KEEP(*(SORT(.sdh_state_observers*)))
+    PROVIDE(__stop_sdh_state_observers = .);
   } > FLASH
     .cli_command :
   {
@@ -110,6 +116,12 @@ SECTIONS
     PROVIDE(__start_pwr_mgmt_data = .);
     KEEP(*(SORT(.pwr_mgmt_data*)))
     PROVIDE(__stop_pwr_mgmt_data = .);
+  } > FLASH
+  .log_backends :
+  {
+    PROVIDE(__start_log_backends = .);
+    KEEP(*(SORT(.log_backends*)))
+    PROVIDE(__stop_log_backends = .);
   } > FLASH
 
 } INSERT AFTER .text

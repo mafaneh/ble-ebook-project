@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2012 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 /* Attention!
  * To maintain compliance with Nordic Semiconductor ASA's Bluetooth profile
@@ -204,178 +204,6 @@ static uint8_t csc_measurement_encode(ble_cscs_t      * p_cscs,
 }
 
 
-/**@brief Function for adding CSC Measurement characteristics.
- *
- * @param[in]   p_cscs        Cycling Speed and Cadence Service structure.
- * @param[in]   p_cscs_init   Information needed to initialize the service.
- *
- * @return      NRF_SUCCESS on success, otherwise an error code.
- */
-static uint32_t csc_measurement_char_add(ble_cscs_t * p_cscs, ble_cscs_init_t const * p_cscs_init)
-{
-    ble_gatts_char_md_t char_md;
-    ble_gatts_attr_md_t cccd_md;
-    ble_gatts_attr_t    attr_char_value;
-    ble_uuid_t          ble_uuid;
-    ble_gatts_attr_md_t attr_md;
-    ble_cscs_meas_t     initial_scm = {0};
-    uint8_t             encoded_scm[MAX_CSCM_LEN];
-    memset(&cccd_md, 0, sizeof(cccd_md));
-
-    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cccd_md.read_perm);
-    cccd_md.write_perm = p_cscs_init->csc_meas_attr_md.cccd_write_perm;
-    cccd_md.vloc       = BLE_GATTS_VLOC_STACK;
-
-    memset(&char_md, 0, sizeof(char_md));
-
-    char_md.char_props.notify = 1;
-    char_md.p_char_user_desc  = NULL;
-    char_md.p_char_pf         = NULL;
-    char_md.p_user_desc_md    = NULL;
-    char_md.p_cccd_md         = &cccd_md;
-    char_md.p_sccd_md         = NULL;
-
-    BLE_UUID_BLE_ASSIGN(ble_uuid, BLE_UUID_CSC_MEASUREMENT_CHAR);
-
-    memset(&attr_md, 0, sizeof(attr_md));
-
-    BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&attr_md.read_perm );
-
-    BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&attr_md.write_perm);
-    attr_md.vloc       = BLE_GATTS_VLOC_STACK;
-    attr_md.rd_auth    = 0;
-    attr_md.wr_auth    = 0;
-    attr_md.vlen       = 1;
-
-    memset(&attr_char_value, 0, sizeof(attr_char_value));
-
-    attr_char_value.p_uuid       = &ble_uuid;
-    attr_char_value.p_attr_md    = &attr_md;
-    attr_char_value.init_len     = csc_measurement_encode(p_cscs, &initial_scm, encoded_scm);
-    attr_char_value.init_offs    = 0;
-    attr_char_value.max_len      = MAX_CSCM_LEN;
-    attr_char_value.p_value      = encoded_scm;
-
-    return sd_ble_gatts_characteristic_add(p_cscs->service_handle,
-                                           &char_md,
-                                           &attr_char_value,
-                                           &p_cscs->meas_handles);
-}
-
-
-/**@brief Function for adding CSC Feature characteristics.
- *
- * @param[in]   p_cscs        Cycling Speed and Cadence Service structure.
- * @param[in]   p_cscs_init   Information needed to initialize the service.
- *
- * @return      NRF_SUCCESS on success, otherwise an error code.
- */
-static uint32_t csc_feature_char_add(ble_cscs_t * p_cscs, ble_cscs_init_t const * p_cscs_init)
-{
-    ble_gatts_char_md_t char_md;
-    ble_gatts_attr_t    attr_char_value;
-    ble_uuid_t          ble_uuid;
-    ble_gatts_attr_md_t attr_md;
-    uint8_t             init_value_encoded[2];
-    uint8_t             init_value_len;
-
-    memset(&char_md, 0, sizeof(char_md));
-
-    char_md.char_props.read  = 1;
-    char_md.p_char_user_desc = NULL;
-    char_md.p_char_pf        = NULL;
-    char_md.p_user_desc_md   = NULL;
-    char_md.p_cccd_md        = NULL;
-    char_md.p_sccd_md        = NULL;
-
-    BLE_UUID_BLE_ASSIGN(ble_uuid, BLE_UUID_CSC_FEATURE_CHAR);
-
-    memset(&attr_md, 0, sizeof(attr_md));
-
-    attr_md.read_perm  = p_cscs_init->csc_feature_attr_md.read_perm;
-
-    BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&attr_md.write_perm);
-    attr_md.vloc       = BLE_GATTS_VLOC_STACK;
-    attr_md.rd_auth    = 0;
-    attr_md.wr_auth    = 0;
-    attr_md.vlen       = 0;
-
-    memset(&attr_char_value, 0, sizeof(attr_char_value));
-
-    init_value_len = uint16_encode(p_cscs_init->feature, &init_value_encoded[0]);
-
-    attr_char_value.p_uuid    = &ble_uuid;
-    attr_char_value.p_attr_md = &attr_md;
-    attr_char_value.init_len  = init_value_len;
-    attr_char_value.init_offs = 0;
-    attr_char_value.max_len   = init_value_len;
-    attr_char_value.p_value   = init_value_encoded;
-
-    return sd_ble_gatts_characteristic_add(p_cscs->service_handle,
-                                           &char_md,
-                                           &attr_char_value,
-                                           &p_cscs->feature_handles);
-}
-
-
-/**@brief Function for adding CSC Sensor Location characteristic.
- *
- * @param[in]   p_cscs        Cycling Speed and Cadence Service structure.
- * @param[in]   p_cscs_init   Information needed to initialize the service.
- *
- * @return      NRF_SUCCESS on success, otherwise an error code.
- */
-static uint32_t csc_sensor_loc_char_add(ble_cscs_t * p_cscs, ble_cscs_init_t const * p_cscs_init)
-{
-    ble_gatts_char_md_t char_md;
-    ble_gatts_attr_t    attr_char_value;
-    ble_uuid_t          ble_uuid;
-    ble_gatts_attr_md_t attr_md;
-    uint8_t             init_value_len;
-    uint8_t             encoded_init_value[1];
-
-    memset(&char_md, 0, sizeof(char_md));
-
-    char_md.char_props.read  = 1;
-    char_md.p_char_user_desc = NULL;
-    char_md.p_char_pf        = NULL;
-    char_md.p_user_desc_md   = NULL;
-    char_md.p_cccd_md        = NULL;
-    char_md.p_sccd_md        = NULL;
-
-    BLE_UUID_BLE_ASSIGN(ble_uuid, BLE_UUID_SENSOR_LOCATION_CHAR);
-
-    memset(&attr_md, 0, sizeof(attr_md));
-
-    attr_md.read_perm  = p_cscs_init->csc_sensor_loc_attr_md.read_perm;
-    BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&attr_md.write_perm);
-    attr_md.vloc       = BLE_GATTS_VLOC_STACK;
-    attr_md.rd_auth    = 0;
-    attr_md.wr_auth    = 0;
-    attr_md.vlen       = 0;
-
-    memset(&attr_char_value, 0, sizeof(attr_char_value));
-
-    init_value_len = sizeof(uint8_t);
-    if (p_cscs_init->sensor_location != NULL)
-    {
-        encoded_init_value[0] = *p_cscs_init->sensor_location;
-    }
-
-    attr_char_value.p_uuid    = &ble_uuid;
-    attr_char_value.p_attr_md = &attr_md;
-    attr_char_value.init_len  = init_value_len;
-    attr_char_value.init_offs = 0;
-    attr_char_value.max_len   = init_value_len;
-    attr_char_value.p_value   = encoded_init_value;
-
-    return sd_ble_gatts_characteristic_add(p_cscs->service_handle,
-                                           &char_md,
-                                           &attr_char_value,
-                                           &p_cscs->sensor_loc_handles);
-}
-
-
 uint32_t ble_cscs_init(ble_cscs_t * p_cscs, ble_cscs_init_t const * p_cscs_init)
 {
     if (p_cscs == NULL || p_cscs_init == NULL)
@@ -383,9 +211,12 @@ uint32_t ble_cscs_init(ble_cscs_t * p_cscs, ble_cscs_init_t const * p_cscs_init)
         return NRF_ERROR_NULL;
     }
 
-    uint32_t             err_code;
-    ble_uuid_t           ble_uuid;
-    ble_cs_ctrlpt_init_t sc_ctrlpt_init;
+    uint32_t              err_code;
+    uint8_t               init_value_encoded[MAX_CSCM_LEN];
+    ble_cscs_meas_t       initial_scm = {0};
+    ble_add_char_params_t add_char_params;
+    ble_uuid_t            ble_uuid;
+    ble_cs_ctrlpt_init_t  sc_ctrlpt_init;
 
     // Initialize service structure
     p_cscs->evt_handler = p_cscs_init->evt_handler;
@@ -405,16 +236,33 @@ uint32_t ble_cscs_init(ble_cscs_t * p_cscs, ble_cscs_init_t const * p_cscs_init)
     }
 
     // Add cycling speed and cadence measurement characteristic
-    err_code = csc_measurement_char_add(p_cscs, p_cscs_init);
+    memset(&add_char_params, 0, sizeof(add_char_params));
+    add_char_params.uuid              = BLE_UUID_CSC_MEASUREMENT_CHAR;
+    add_char_params.max_len           = MAX_CSCM_LEN;
+    add_char_params.is_var_len        = true;
+    add_char_params.init_len          = csc_measurement_encode(p_cscs, &initial_scm, init_value_encoded);
+    add_char_params.p_init_value      = init_value_encoded;
+    add_char_params.char_props.notify = 1;
+    add_char_params.cccd_write_access = p_cscs_init->csc_meas_cccd_wr_sec;
 
+    err_code = characteristic_add(p_cscs->service_handle, &add_char_params, &p_cscs->meas_handles);
     if (err_code != NRF_SUCCESS)
     {
         return err_code;
     }
 
     // Add cycling speed and cadence feature characteristic
-    err_code = csc_feature_char_add(p_cscs, p_cscs_init);
+    memset(&add_char_params, 0, sizeof(add_char_params));
+    add_char_params.uuid            = BLE_UUID_CSC_FEATURE_CHAR;
+    add_char_params.max_len         = sizeof(uint16_t);
+    add_char_params.init_len        = uint16_encode(p_cscs_init->feature, &init_value_encoded[0]);
+    add_char_params.p_init_value    = init_value_encoded;
+    add_char_params.char_props.read = 1;
+    add_char_params.read_access     = p_cscs_init->csc_feature_rd_sec;
 
+    err_code = characteristic_add(p_cscs->service_handle, 
+                                  &add_char_params, 
+                                  &p_cscs->feature_handles);
     if (err_code != NRF_SUCCESS)
     {
         return err_code;
@@ -423,14 +271,20 @@ uint32_t ble_cscs_init(ble_cscs_t * p_cscs, ble_cscs_init_t const * p_cscs_init)
     // Add Sensor Location characteristic (optional)
     if (p_cscs_init->sensor_location != NULL)
     {
-        err_code = csc_sensor_loc_char_add(p_cscs, p_cscs_init);
+        memset(&add_char_params, 0, sizeof(add_char_params));
+        add_char_params.uuid            = BLE_UUID_SENSOR_LOCATION_CHAR;
+        add_char_params.max_len         = sizeof(uint8_t);
+        add_char_params.init_len        = sizeof(uint8_t);
+        add_char_params.p_init_value    = (uint8_t *)p_cscs_init->sensor_location;
+        add_char_params.char_props.read = 1;
+        add_char_params.read_access     = p_cscs_init->csc_location_rd_sec;
 
+        err_code = characteristic_add(p_cscs->service_handle, &add_char_params, &p_cscs->sensor_loc_handles);
         if (err_code != NRF_SUCCESS)
         {
             return err_code;
         }
     }
-
 
     // Add speed and cadence control point characteristic
     sc_ctrlpt_init.error_handler                 = p_cscs_init->error_handler;
@@ -438,7 +292,8 @@ uint32_t ble_cscs_init(ble_cscs_t * p_cscs, ble_cscs_init_t const * p_cscs_init)
     sc_ctrlpt_init.supported_functions           = p_cscs_init->ctrplt_supported_functions;
     sc_ctrlpt_init.evt_handler                   = p_cscs_init->ctrlpt_evt_handler;
     sc_ctrlpt_init.list_supported_locations      = p_cscs_init->list_supported_locations;
-    sc_ctrlpt_init.sc_ctrlpt_attr_md             = p_cscs_init->csc_ctrlpt_attr_md;
+    sc_ctrlpt_init.sc_ctrlpt_wr_sec              = p_cscs_init->sc_ctrlpt_wr_sec;
+    sc_ctrlpt_init.sc_ctrlpt_cccd_wr_sec         = p_cscs_init->sc_ctrlpt_cccd_wr_sec;
     sc_ctrlpt_init.sensor_location_handle        = p_cscs->sensor_loc_handles.value_handle;
     sc_ctrlpt_init.service_handle                = p_cscs->service_handle;
 

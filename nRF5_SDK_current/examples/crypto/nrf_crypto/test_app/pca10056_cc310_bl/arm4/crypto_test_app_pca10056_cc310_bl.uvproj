@@ -352,7 +352,7 @@
               <MiscControls>--c99 --reduce_paths</MiscControls>
               <Define> BOARD_PCA10056 BSP_DEFINES_ONLY CONFIG_GPIO_AS_PINRESET FLOAT_ABI_HARD NRF52840_XXAA SWI_DISABLE0 __HEAP_SIZE=8192 __STACK_SIZE=16384</Define>
               <Undefine></Undefine>
-              <IncludePath>..\..\config;..\..\..\..\..\..\components;..\..\..\..\..\..\components\boards;..\..\..\..\..\..\components\drivers_nrf\nrf_soc_nosd;..\..\..\..\..\..\components\libraries\atomic;..\..\..\..\..\..\components\libraries\balloc;..\..\..\..\..\..\components\libraries\bsp;..\..\..\..\..\..\components\libraries\crypto;..\..\..\..\..\..\components\libraries\crypto\backend\cc310;..\..\..\..\..\..\components\libraries\crypto\backend\cc310_bl;..\..\..\..\..\..\components\libraries\crypto\backend\cifra;..\..\..\..\..\..\components\libraries\crypto\backend\mbedtls;..\..\..\..\..\..\components\libraries\crypto\backend\micro_ecc;..\..\..\..\..\..\components\libraries\crypto\backend\nrf_hw;..\..\..\..\..\..\components\libraries\crypto\backend\nrf_sw;..\..\..\..\..\..\components\libraries\crypto\backend\oberon;..\..\..\..\..\..\components\libraries\delay;..\..\..\..\..\..\components\libraries\experimental_log;..\..\..\..\..\..\components\libraries\experimental_log\src;..\..\..\..\..\..\components\libraries\experimental_memobj;..\..\..\..\..\..\components\libraries\experimental_section_vars;..\..\..\..\..\..\components\libraries\mem_manager;..\..\..\..\..\..\components\libraries\mutex;..\..\..\..\..\..\components\libraries\queue;..\..\..\..\..\..\components\libraries\scheduler;..\..\..\..\..\..\components\libraries\stack_info;..\..\..\..\..\..\components\libraries\strerror;..\..\..\..\..\..\components\libraries\timer;..\..\..\..\..\..\components\libraries\util;..\..;..\..\common_test;..\..\test_cases;..\..\..\..\..\..\external\fprintf;..\..\..\..\..\..\external\nrf_cc310\include;..\..\..\..\..\..\external\nrf_cc310_bl\include;..\..\..\..\..\..\external\segger_rtt;..\..\..\..\..\..\integration\nrfx;..\..\..\..\..\..\integration\nrfx\legacy;..\..\..\..\..\..\modules\nrfx;..\..\..\..\..\..\modules\nrfx\drivers\include;..\..\..\..\..\..\modules\nrfx\hal;..\..\..\..\..\..\modules\nrfx\mdk;..\config</IncludePath>
+              <IncludePath>..\..\config;..\..\..\..\..\..\components;..\..\..\..\..\..\components\boards;..\..\..\..\..\..\components\drivers_nrf\nrf_soc_nosd;..\..\..\..\..\..\components\libraries\atomic;..\..\..\..\..\..\components\libraries\balloc;..\..\..\..\..\..\components\libraries\bsp;..\..\..\..\..\..\components\libraries\crypto;..\..\..\..\..\..\components\libraries\crypto\backend\cc310;..\..\..\..\..\..\components\libraries\crypto\backend\cc310_bl;..\..\..\..\..\..\components\libraries\crypto\backend\cifra;..\..\..\..\..\..\components\libraries\crypto\backend\mbedtls;..\..\..\..\..\..\components\libraries\crypto\backend\micro_ecc;..\..\..\..\..\..\components\libraries\crypto\backend\nrf_hw;..\..\..\..\..\..\components\libraries\crypto\backend\nrf_sw;..\..\..\..\..\..\components\libraries\crypto\backend\oberon;..\..\..\..\..\..\components\libraries\delay;..\..\..\..\..\..\components\libraries\experimental_section_vars;..\..\..\..\..\..\components\libraries\log;..\..\..\..\..\..\components\libraries\log\src;..\..\..\..\..\..\components\libraries\mem_manager;..\..\..\..\..\..\components\libraries\memobj;..\..\..\..\..\..\components\libraries\mutex;..\..\..\..\..\..\components\libraries\queue;..\..\..\..\..\..\components\libraries\ringbuf;..\..\..\..\..\..\components\libraries\scheduler;..\..\..\..\..\..\components\libraries\stack_info;..\..\..\..\..\..\components\libraries\strerror;..\..\..\..\..\..\components\libraries\timer;..\..\..\..\..\..\components\libraries\util;..\..;..\..\common_test;..\..\test_cases;..\..\..\..\..\..\external\fprintf;..\..\..\..\..\..\external\nrf_cc310\include;..\..\..\..\..\..\external\nrf_cc310_bl\include;..\..\..\..\..\..\external\segger_rtt;..\..\..\..\..\..\integration\nrfx;..\..\..\..\..\..\integration\nrfx\legacy;..\..\..\..\..\..\modules\nrfx;..\..\..\..\..\..\modules\nrfx\drivers\include;..\..\..\..\..\..\modules\nrfx\hal;..\..\..\..\..\..\modules\nrfx\mdk;..\config</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -368,7 +368,7 @@
               <MiscControls> --cpreproc_opts=-DBOARD_PCA10056,-DBSP_DEFINES_ONLY,-DCONFIG_GPIO_AS_PINRESET,-DFLOAT_ABI_HARD,-DNRF52840_XXAA,-DSWI_DISABLE0,-D__HEAP_SIZE=8192,-D__STACK_SIZE=16384</MiscControls>
               <Define> BOARD_PCA10056 BSP_DEFINES_ONLY CONFIG_GPIO_AS_PINRESET FLOAT_ABI_HARD NRF52840_XXAA SWI_DISABLE0 __HEAP_SIZE=8192 __STACK_SIZE=16384</Define>
               <Undefine></Undefine>
-              <IncludePath>..\..\config;..\..\..\..\..\..\components;..\..\..\..\..\..\components\boards;..\..\..\..\..\..\components\drivers_nrf\nrf_soc_nosd;..\..\..\..\..\..\components\libraries\atomic;..\..\..\..\..\..\components\libraries\balloc;..\..\..\..\..\..\components\libraries\bsp;..\..\..\..\..\..\components\libraries\crypto;..\..\..\..\..\..\components\libraries\crypto\backend\cc310;..\..\..\..\..\..\components\libraries\crypto\backend\cc310_bl;..\..\..\..\..\..\components\libraries\crypto\backend\cifra;..\..\..\..\..\..\components\libraries\crypto\backend\mbedtls;..\..\..\..\..\..\components\libraries\crypto\backend\micro_ecc;..\..\..\..\..\..\components\libraries\crypto\backend\nrf_hw;..\..\..\..\..\..\components\libraries\crypto\backend\nrf_sw;..\..\..\..\..\..\components\libraries\crypto\backend\oberon;..\..\..\..\..\..\components\libraries\delay;..\..\..\..\..\..\components\libraries\experimental_log;..\..\..\..\..\..\components\libraries\experimental_log\src;..\..\..\..\..\..\components\libraries\experimental_memobj;..\..\..\..\..\..\components\libraries\experimental_section_vars;..\..\..\..\..\..\components\libraries\mem_manager;..\..\..\..\..\..\components\libraries\mutex;..\..\..\..\..\..\components\libraries\queue;..\..\..\..\..\..\components\libraries\scheduler;..\..\..\..\..\..\components\libraries\stack_info;..\..\..\..\..\..\components\libraries\strerror;..\..\..\..\..\..\components\libraries\timer;..\..\..\..\..\..\components\libraries\util;..\..;..\..\common_test;..\..\test_cases;..\..\..\..\..\..\external\fprintf;..\..\..\..\..\..\external\nrf_cc310\include;..\..\..\..\..\..\external\nrf_cc310_bl\include;..\..\..\..\..\..\external\segger_rtt;..\..\..\..\..\..\integration\nrfx;..\..\..\..\..\..\integration\nrfx\legacy;..\..\..\..\..\..\modules\nrfx;..\..\..\..\..\..\modules\nrfx\drivers\include;..\..\..\..\..\..\modules\nrfx\hal;..\..\..\..\..\..\modules\nrfx\mdk;..\config</IncludePath>
+              <IncludePath>..\..\config;..\..\..\..\..\..\components;..\..\..\..\..\..\components\boards;..\..\..\..\..\..\components\drivers_nrf\nrf_soc_nosd;..\..\..\..\..\..\components\libraries\atomic;..\..\..\..\..\..\components\libraries\balloc;..\..\..\..\..\..\components\libraries\bsp;..\..\..\..\..\..\components\libraries\crypto;..\..\..\..\..\..\components\libraries\crypto\backend\cc310;..\..\..\..\..\..\components\libraries\crypto\backend\cc310_bl;..\..\..\..\..\..\components\libraries\crypto\backend\cifra;..\..\..\..\..\..\components\libraries\crypto\backend\mbedtls;..\..\..\..\..\..\components\libraries\crypto\backend\micro_ecc;..\..\..\..\..\..\components\libraries\crypto\backend\nrf_hw;..\..\..\..\..\..\components\libraries\crypto\backend\nrf_sw;..\..\..\..\..\..\components\libraries\crypto\backend\oberon;..\..\..\..\..\..\components\libraries\delay;..\..\..\..\..\..\components\libraries\experimental_section_vars;..\..\..\..\..\..\components\libraries\log;..\..\..\..\..\..\components\libraries\log\src;..\..\..\..\..\..\components\libraries\mem_manager;..\..\..\..\..\..\components\libraries\memobj;..\..\..\..\..\..\components\libraries\mutex;..\..\..\..\..\..\components\libraries\queue;..\..\..\..\..\..\components\libraries\ringbuf;..\..\..\..\..\..\components\libraries\scheduler;..\..\..\..\..\..\components\libraries\stack_info;..\..\..\..\..\..\components\libraries\strerror;..\..\..\..\..\..\components\libraries\timer;..\..\..\..\..\..\components\libraries\util;..\..;..\..\common_test;..\..\test_cases;..\..\..\..\..\..\external\fprintf;..\..\..\..\..\..\external\nrf_cc310\include;..\..\..\..\..\..\external\nrf_cc310_bl\include;..\..\..\..\..\..\external\segger_rtt;..\..\..\..\..\..\integration\nrfx;..\..\..\..\..\..\integration\nrfx\legacy;..\..\..\..\..\..\modules\nrfx;..\..\..\..\..\..\modules\nrfx\drivers\include;..\..\..\..\..\..\modules\nrfx\hal;..\..\..\..\..\..\modules\nrfx\mdk;..\config</IncludePath>
             </VariousControls>
           </Aads>
           <LDads>
@@ -520,10 +520,13 @@
               <FilePath>..\..\..\..\..\..\external\fprintf\nrf_fprintf_format.c</FilePath>            </File>            <File>
               <FileName>nrf_memobj.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\..\components\libraries\experimental_memobj\nrf_memobj.c</FilePath>            </File>            <File>
+              <FilePath>..\..\..\..\..\..\components\libraries\memobj\nrf_memobj.c</FilePath>            </File>            <File>
               <FileName>nrf_queue.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\components\libraries\queue\nrf_queue.c</FilePath>            </File>            <File>
+              <FileName>nrf_ringbuf.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\components\libraries\ringbuf\nrf_ringbuf.c</FilePath>            </File>            <File>
               <FileName>nrf_strerror.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\components\libraries\strerror\nrf_strerror.c</FilePath>            </File>          </Files>
@@ -532,19 +535,19 @@
           <Files>            <File>
               <FileName>nrf_log_backend_rtt.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\..\components\libraries\experimental_log\src\nrf_log_backend_rtt.c</FilePath>            </File>            <File>
+              <FilePath>..\..\..\..\..\..\components\libraries\log\src\nrf_log_backend_rtt.c</FilePath>            </File>            <File>
               <FileName>nrf_log_backend_serial.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\..\components\libraries\experimental_log\src\nrf_log_backend_serial.c</FilePath>            </File>            <File>
+              <FilePath>..\..\..\..\..\..\components\libraries\log\src\nrf_log_backend_serial.c</FilePath>            </File>            <File>
               <FileName>nrf_log_default_backends.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\..\components\libraries\experimental_log\src\nrf_log_default_backends.c</FilePath>            </File>            <File>
+              <FilePath>..\..\..\..\..\..\components\libraries\log\src\nrf_log_default_backends.c</FilePath>            </File>            <File>
               <FileName>nrf_log_frontend.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\..\components\libraries\experimental_log\src\nrf_log_frontend.c</FilePath>            </File>            <File>
+              <FilePath>..\..\..\..\..\..\components\libraries\log\src\nrf_log_frontend.c</FilePath>            </File>            <File>
               <FileName>nrf_log_str_formatter.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\..\..\components\libraries\experimental_log\src\nrf_log_str_formatter.c</FilePath>            </File>          </Files>
+              <FilePath>..\..\..\..\..\..\components\libraries\log\src\nrf_log_str_formatter.c</FilePath>            </File>          </Files>
         </Group>        <Group>
           <GroupName>nRF_Segger_RTT</GroupName>
           <Files>            <File>
@@ -560,9 +563,9 @@
         </Group>        <Group>
           <GroupName>nrf_cc310_bl</GroupName>
           <Files>            <File>
-              <FileName>nrf_cc310_bl_keil_0.9.9.lib</FileName>
+              <FileName>nrf_cc310_bl_keil_0.9.10.lib</FileName>
               <FileType>4</FileType>
-              <FilePath>..\..\..\..\..\..\external\nrf_cc310_bl\lib\nrf_cc310_bl_keil_0.9.9.lib</FilePath>            </File>          </Files>
+              <FilePath>..\..\..\..\..\..\external\nrf_cc310_bl\lib\nrf_cc310_bl_keil_0.9.10.lib</FilePath>            </File>          </Files>
         </Group>      </Groups>
     </Target>  </Targets>
 

@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2017 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #include "ble_ots_oacp.h"
 
@@ -59,7 +59,7 @@ NRF_LOG_MODULE_REGISTER();
  *
  * @param[in] cccd_handle The CCCD handle.
  */
-bool is_cccd_configured(ble_ots_oacp_t * const p_ots_oacp)
+static bool is_cccd_configured(ble_ots_oacp_t * const p_ots_oacp)
 {
     uint32_t          err_code;
     uint8_t           cccd_value_buf[BLE_CCCD_VALUE_LEN];
@@ -68,6 +68,7 @@ bool is_cccd_configured(ble_ots_oacp_t * const p_ots_oacp)
 
     uint16_t cccd_handle = p_ots_oacp->oacp_handles.cccd_handle;
     uint16_t conn_handle = p_ots_oacp->p_ots->conn_handle;
+
     // Initialize value struct.
     memset(&gatts_value, 0, sizeof(gatts_value));
 
@@ -78,7 +79,12 @@ bool is_cccd_configured(ble_ots_oacp_t * const p_ots_oacp)
     err_code = sd_ble_gatts_value_get(conn_handle,
                                       cccd_handle,
                                       &gatts_value);
-    if (err_code != NRF_SUCCESS)
+
+    if (err_code == BLE_ERROR_GATTS_SYS_ATTR_MISSING)
+    {
+        is_oacp_indic_enabled = false;
+    }
+    else if (err_code != NRF_SUCCESS)
     {
         // Report error to application
         if (p_ots_oacp->p_ots->error_handler != NULL)
@@ -86,12 +92,12 @@ bool is_cccd_configured(ble_ots_oacp_t * const p_ots_oacp)
             p_ots_oacp->p_ots->error_handler(err_code);
         }
     }
-
-    is_oacp_indic_enabled = ble_srv_is_indication_enabled(cccd_value_buf);
-
+    else
+    {
+        is_oacp_indic_enabled = ble_srv_is_indication_enabled(cccd_value_buf);
+    }
     return is_oacp_indic_enabled;
 }
-
 
 
 /** @brief This is the l2cap connection oriented channel event handler.
@@ -112,6 +118,7 @@ static void ots_l2cap_evt_handler(ble_ots_l2cap_t * p_ots_l2cap, ble_ots_l2cap_e
             NRF_LOG_INFO("BLE_OTS_L2CAP_EVT_CH_DISCONNECTED.");
             break;
         case BLE_OTS_L2CAP_EVT_SEND_COMPLETE:
+            NRF_LOG_INFO("BLE_OTS_L2CAP_EVT_SEND_COMPLETE.");
             p_ots_l2cap->p_ots_oacp->p_ots->p_current_object->is_locked = false;
             break;
         case BLE_OTS_L2CAP_EVT_RECV_COMPLETE:
@@ -159,7 +166,7 @@ static uint32_t oacp_char_add(ble_ots_oacp_t * const p_ots_oacp,
     add_char_params.char_props.indicate = true;
     add_char_params.char_props.write    = true;
     add_char_params.cccd_write_access   = cccd_write_access;
-    //add_char_params.is_defered_write    = true;
+    add_char_params.is_defered_write    = true;
     add_char_params.write_access        = write_access;
 
     return characteristic_add(service_handle,
@@ -287,12 +294,12 @@ static inline ble_ots_oacp_res_code_t oacp_read_proc(ble_ots_oacp_t * p_ots_oacp
 
     p_ots_oacp->p_ots->evt_handler(p_ots_oacp->p_ots, &ble_ots_evt);
     
-    ret_code_t err_code = ble_ots_l2cap_start_send(&p_ots_oacp->ots_l2cap, 
-                                                   p_ots_oacp->p_ots->p_current_object->data,
-                                                   p_ots_oacp->p_ots->p_current_object->current_size);
+    ret_code_t err_code = ble_ots_l2cap_obj_send(&p_ots_oacp->ots_l2cap,
+                                                 p_ots_oacp->p_ots->p_current_object->data,
+                                                 p_ots_oacp->p_ots->p_current_object->current_size);
     if (err_code != NRF_SUCCESS)
     {
-        NRF_LOG_ERROR("ble_ots_l2cap_start_send returned error 0x%x", err_code);
+        NRF_LOG_ERROR("ble_ots_l2cap_obj_send returned error 0x%x", err_code);
     }
     return BLE_OTS_OACP_RES_SUCCESS;
 }
@@ -467,6 +474,40 @@ static void on_oacp_write(ble_ots_oacp_t * p_ots_oacp, ble_gatts_evt_write_t con
     ble_ots_oacp_res_code_t oacp_status;
     ble_ots_oacp_proc_t     oacp_proc;
 
+    ble_gatts_rw_authorize_reply_params_t auth_reply;
+    memset(&auth_reply, 0, sizeof(auth_reply));
+
+    auth_reply.type                     = BLE_GATTS_AUTHORIZE_TYPE_WRITE;
+    auth_reply.params.write.offset      = 0;
+    auth_reply.params.write.len         = 0;
+    auth_reply.params.write.p_data      = NULL;
+    auth_reply.params.write.gatt_status = BLE_GATT_STATUS_SUCCESS;
+    auth_reply.params.write.update      = 1;
+
+    if(is_cccd_configured(p_ots_oacp))
+    {
+       auth_reply.params.write.gatt_status = BLE_GATT_STATUS_SUCCESS;
+       err_code = sd_ble_gatts_rw_authorize_reply(p_ots_oacp->p_ots->conn_handle, &auth_reply);
+
+       if (err_code != NRF_SUCCESS && p_ots_oacp->p_ots->error_handler != NULL)
+       {
+           p_ots_oacp->p_ots->error_handler(err_code);
+       }
+    }
+    else
+    {
+        NRF_LOG_DEBUG("OACD indications not enabled.");
+        auth_reply.params.write.gatt_status = BLE_GATT_STATUS_ATTERR_CPS_CCCD_CONFIG_ERROR;
+
+        err_code = sd_ble_gatts_rw_authorize_reply(p_ots_oacp->p_ots->conn_handle, &auth_reply);
+    
+        if (err_code != NRF_SUCCESS && p_ots_oacp->p_ots->error_handler != NULL)
+        {
+            p_ots_oacp->p_ots->error_handler(err_code);
+        }
+        return;
+    }
+
     memset(&oacp_proc, 0, sizeof(oacp_proc));
 
     oacp_status = decode_oacp_command(p_ble_evt_write, &oacp_proc);
@@ -502,9 +543,29 @@ static void on_write(ble_ots_oacp_t * p_ots_oacp, ble_evt_t const * p_ble_evt)
     {
         on_cccd_write(p_ots_oacp, p_evt_write);
     }
-    if (p_evt_write->handle == p_ots_oacp->p_ots->oacp_chars.oacp_handles.value_handle)
+}
+
+
+static void on_rw_authorize_request(ble_ots_oacp_t * p_ots_oacp, ble_gatts_evt_t const * p_gatts_evt)
+{
+    ble_gatts_evt_rw_authorize_request_t const * p_auth_req =
+        &p_gatts_evt->params.authorize_request;
+
+    if (p_auth_req->type == BLE_GATTS_AUTHORIZE_TYPE_WRITE)
     {
-        on_oacp_write(p_ots_oacp, p_evt_write);
+        if (   (p_gatts_evt->params.authorize_request.request.write.op
+                != BLE_GATTS_OP_PREP_WRITE_REQ)
+            && (p_gatts_evt->params.authorize_request.request.write.op
+                != BLE_GATTS_OP_EXEC_WRITE_REQ_NOW)
+            && (p_gatts_evt->params.authorize_request.request.write.op
+                != BLE_GATTS_OP_EXEC_WRITE_REQ_CANCEL)
+           )
+        {
+            if (p_auth_req->request.write.handle == p_ots_oacp->p_ots->oacp_chars.oacp_handles.value_handle)
+            {
+                on_oacp_write(p_ots_oacp, &p_auth_req->request.write);
+            }
+        }
     }
 }
 
@@ -527,6 +588,9 @@ void ble_ots_oacp_on_ble_evt(ble_ots_oacp_t * p_ots_oacp, ble_evt_t const * p_bl
 
         case BLE_GATTS_EVT_WRITE:
             on_write(p_ots_oacp, p_ble_evt);
+            break;
+        case BLE_GATTS_EVT_RW_AUTHORIZE_REQUEST:
+            on_rw_authorize_request(p_ots_oacp, &p_ble_evt->evt.gatts_evt);
             break;
         default:
             // No implementation needed.

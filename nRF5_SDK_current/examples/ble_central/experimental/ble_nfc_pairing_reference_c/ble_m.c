@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2016 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #include "ble_m.h"
 #include "nordic_common.h"
@@ -43,63 +43,31 @@
 #include "nrf_sdh_ble.h"
 #include "nrf_sdh_soc.h"
 #include "peer_manager.h"
+#include "peer_manager_handler.h"
 #include "nfc_pair_m.h"
 #include "fds.h"
 #include "nrf_fstorage.h"
 #include "nrf_ble_gatt.h"
+#include "nrf_ble_scan.h"
 
 #define NRF_LOG_MODULE_NAME BLE_M
 #include "nrf_log.h"
 NRF_LOG_MODULE_REGISTER();
 
-#define MIN_CONNECTION_INTERVAL     MSEC_TO_UNITS(7.5, UNIT_1_25_MS)            /**< Determines minimum connection interval in milliseconds. */
-#define MAX_CONNECTION_INTERVAL     MSEC_TO_UNITS(30, UNIT_1_25_MS)             /**< Determines maximum connection interval in milliseconds. */
-#define SLAVE_LATENCY               0                                           /**< Determines slave latency in terms of connection events. */
-#define SUPERVISION_TIMEOUT         MSEC_TO_UNITS(4000, UNIT_10_MS)             /**< Determines supervision time-out in units of 10 milliseconds. */
-
-#define SCAN_INTERVAL               0x00A0                                      /**< Determines scan interval in units of 0.625 millisecond. */
-#define SCAN_WINDOW                 0x0050                                      /**< Determines scan window in units of 0.625 millisecond. */
-#define SCAN_TIMEOUT                0x0000                                      /**< Timout when scanning. 0x0000 disables timeout. */
 
 #define APP_BLE_OBSERVER_PRIO       3                                           /**< Application's BLE observer priority. You shouldn't need to modify this value. */
-#define APP_SOC_OBSERVER_PRIO       1                                           /**< Applications' SoC observer priority. You shoulnd't need to modify this value. */
+#define APP_SOC_OBSERVER_PRIO       1                                           /**< Applications' SoC observer priority. You shouldn't need to modify this value. */
 #define APP_BLE_CONN_CFG_TAG        1                                           /**< A tag identifying the SoftDevice BLE configuration. */
 
 #define DEV_NAME_LEN                ((BLE_GAP_ADV_SET_DATA_SIZE_MAX + 1) - \
                                     AD_DATA_OFFSET)                             /**< Determines device name length.  */
 
 NRF_BLE_GATT_DEF(m_gatt);                                                       /**< GATT module instance. */
+NRF_BLE_SCAN_DEF(m_scan);                                                       /**< Scanning module instance. */
 
 static bool     m_is_connected              = false;                            /**< Flag to keep track of BLE connections with peripheral devices */
 static uint16_t m_conn_handle               = BLE_CONN_HANDLE_INVALID;          /**< Current connection handle. */
 static bool     m_memory_access_in_progress = false;                            /**< Flag to keep track of ongoing operations on persistent memory. */
-
-/**@brief Connection parameters requested for connection. */
-static ble_gap_conn_params_t const m_connection_param =
-{
-    .min_conn_interval = (uint16_t)MIN_CONNECTION_INTERVAL,
-    .max_conn_interval = (uint16_t)MAX_CONNECTION_INTERVAL,
-    .slave_latency     = (uint16_t)SLAVE_LATENCY,
-    .conn_sup_timeout  = (uint16_t)SUPERVISION_TIMEOUT
-};
-
-static uint8_t               m_scan_buffer_data[BLE_GAP_SCAN_BUFFER_MIN]; /**< buffer where advertising reports will be stored by the SoftDevice. */
-    
-/**@brief Pointer to the buffer where advertising reports will be stored by the SoftDevice. */
-static ble_data_t m_scan_buffer =
-{
-    m_scan_buffer_data,
-    BLE_GAP_SCAN_BUFFER_MIN
-};
-
-/**@brief Parameters used when scanning. */
-ble_gap_scan_params_t const m_scan_params =
-{
-    .active   = 1,
-    .interval = SCAN_INTERVAL,
-    .window   = SCAN_WINDOW,
-    .timeout  = SCAN_TIMEOUT,
-};
 
 
 void ble_disconnect(void)
@@ -129,6 +97,15 @@ uint16_t ble_get_conn_handle(void)
 }
 
 
+void scan_init(void)
+{
+    ret_code_t err_code;
+
+    err_code = nrf_ble_scan_init(&m_scan, NULL, NULL);
+    APP_ERROR_CHECK(err_code);
+}
+
+
 void scan_start(void)
 {
     ret_code_t err_code;
@@ -140,9 +117,7 @@ void scan_start(void)
         return;
     }
 
-    (void) sd_ble_gap_scan_stop();
-
-    err_code = sd_ble_gap_scan_start(&m_scan_params, &m_scan_buffer);
+    err_code = nrf_ble_scan_start(&m_scan);
     APP_ERROR_CHECK(err_code);
 }
 
@@ -165,23 +140,19 @@ static void on_adv_report(ble_gap_evt_adv_report_t const * p_adv_report)
     data_len   = p_adv_report->data.len;
 
     // Search for advertising names.
-    field_len = ble_advdata_search(p_adv_data, 
-                                   data_len, 
-                                   &dev_name_offset, 
+    field_len = ble_advdata_search(p_adv_data,
+                                   data_len,
+                                   &dev_name_offset,
                                    BLE_GAP_AD_TYPE_COMPLETE_LOCAL_NAME);
     if (field_len == 0)
     {
         // Look for the short local name if it was not found as complete.
-        field_len = ble_advdata_search(p_adv_data, 
+        field_len = ble_advdata_search(p_adv_data,
                                        data_len,
                                        &dev_name_offset,
                                        BLE_GAP_AD_TYPE_SHORT_LOCAL_NAME);
         if (field_len == 0)
         {
-            // If we can't parse the data, then exit.
-            err_code = sd_ble_gap_scan_start(NULL, &m_scan_buffer);
-            APP_ERROR_CHECK(err_code);
-
             return;
         }
     }
@@ -195,18 +166,12 @@ static void on_adv_report(ble_gap_evt_adv_report_t const * p_adv_report)
     if (nfc_oob_pairing_tag_match(&p_adv_report->peer_addr))
     {
         // If address is correct, stop scanning and initiate connection with peripheral device.
-        err_code = sd_ble_gap_scan_stop();
-        APP_ERROR_CHECK(err_code);
+        nrf_ble_scan_stop();
 
         err_code = sd_ble_gap_connect(&p_adv_report->peer_addr,
-                                      &m_scan_params,
-                                      &m_connection_param,
+                                      &m_scan.scan_params,
+                                      &m_scan.conn_params,
                                       APP_BLE_CONN_CFG_TAG);
-        APP_ERROR_CHECK(err_code);
-    }
-    else
-    {
-        err_code = sd_ble_gap_scan_start(NULL, &m_scan_buffer);
         APP_ERROR_CHECK(err_code);
     }
 }
@@ -222,13 +187,13 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
     ret_code_t err_code;
     ble_gap_evt_t const * p_gap_evt = &p_ble_evt->evt.gap_evt;
 
+    pm_handler_secure_on_connection(p_ble_evt);
+
     switch (p_ble_evt->header.evt_id)
     {
         // Upon connection, initiate secure bonding.
         case BLE_GAP_EVT_CONNECTED:
             NRF_LOG_INFO("Connected.");
-            err_code = pm_conn_secure(p_ble_evt->evt.gap_evt.conn_handle, false);
-            APP_ERROR_CHECK(err_code);
             m_is_connected = true;
             m_conn_handle  = p_ble_evt->evt.gap_evt.conn_handle;
             break;
@@ -236,7 +201,10 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
         // Upon disconnection, reset the connection handle of the peer which disconnected
         // and invalidate data taken from the NFC tag.
         case BLE_GAP_EVT_DISCONNECTED:
-            NRF_LOG_INFO("Disconnected.");
+            NRF_LOG_INFO("Disconnected. conn_handle: 0x%x, reason: 0x%x",
+                         p_gap_evt->conn_handle,
+                         p_gap_evt->params.disconnected.reason);
+
             m_conn_handle  = BLE_CONN_HANDLE_INVALID;
             m_is_connected = false;
             nfc_oob_pairing_tag_invalidate();

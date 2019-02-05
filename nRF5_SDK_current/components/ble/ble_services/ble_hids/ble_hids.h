@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2012 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 /** @file
  *
@@ -210,13 +210,21 @@ typedef struct ble_hids_s ble_hids_t;
 /**@brief HID Service event handler type. */
 typedef void (*ble_hids_evt_handler_t) (ble_hids_t * p_hids, ble_hids_evt_t * p_evt);
 
+/**@brief Security requirements for HID Service characteristic. */
+typedef struct
+{
+    security_req_t                rd;               /**< Security requirement for reading HID Service characteristic value. */
+    security_req_t                wr;               /**< Security requirement for writing HID Service characteristic value. */
+    security_req_t                cccd_wr;          /**< Security requirement for writing HID Service characteristic CCCD. */
+} ble_hids_char_sec_t;
+
 /**@brief HID Information characteristic value. */
 typedef struct
 {
     uint16_t                      bcd_hid;          /**< 16-bit unsigned integer representing version number of base USB HID Specification implemented by HID Device */
     uint8_t                       b_country_code;   /**< Identifies which country the hardware is localized for. Most hardware is not localized and thus this value would be zero (0). */
     uint8_t                       flags;            /**< See http://developer.bluetooth.org/gatt/characteristics/Pages/CharacteristicViewer.aspx?u=org.bluetooth.characteristic.hid_information.xml */
-    ble_srv_security_mode_t       security_mode;    /**< Security mode for the HID Information characteristic. */
+    security_req_t                rd_sec;           /**< Security requirement for reading HID Information characteristic value. */
 } ble_hids_hid_information_t;
 
 /**@brief HID Service Input Report characteristic init structure. This contains all options and
@@ -225,7 +233,7 @@ typedef struct
 {
     uint16_t                      max_len;          /**< Maximum length of characteristic value. */
     ble_srv_report_ref_t          rep_ref;          /**< Value of the Report Reference descriptor. */
-    ble_srv_cccd_security_mode_t  security_mode;    /**< Security mode for the HID Input Report characteristic, including cccd. */
+    ble_hids_char_sec_t           sec;              /**< Security requirements for HID Service Input Report characteristic. */
 } ble_hids_inp_rep_init_t;
 
 /**@brief HID Service Output Report characteristic init structure. This contains all options and
@@ -234,7 +242,7 @@ typedef struct
 {
     uint16_t                      max_len;          /**< Maximum length of characteristic value. */
     ble_srv_report_ref_t          rep_ref;          /**< Value of the Report Reference descriptor. */
-    ble_srv_cccd_security_mode_t  security_mode;    /**< Security mode for the HID Output Report characteristic, including cccd. */
+    ble_hids_char_sec_t           sec;              /**< Security requirements for HID Service Output Report characteristic. */
 } ble_hids_outp_rep_init_t;
 
 /**@brief HID Service Feature Report characteristic init structure. This contains all options and
@@ -243,7 +251,7 @@ typedef struct
 {
     uint16_t                      max_len;          /**< Maximum length of characteristic value. */
     ble_srv_report_ref_t          rep_ref;          /**< Value of the Report Reference descriptor. */
-    ble_srv_cccd_security_mode_t  security_mode;    /**< Security mode for the HID Service Feature Report characteristic, including cccd. */
+    ble_hids_char_sec_t           sec;              /**< Security requirements for HID Service Feature Report characteristic. */
 } ble_hids_feature_rep_init_t;
 
 /**@brief HID Service Report Map characteristic init structure. This contains all options and data
@@ -254,7 +262,7 @@ typedef struct
     uint16_t                      data_len;         /**< Length of report map data. */
     uint8_t                       ext_rep_ref_num;  /**< Number of Optional External Report Reference descriptors. */
     ble_uuid_t const *            p_ext_rep_ref;    /**< Optional External Report Reference descriptor (will be added if != NULL). */
-    ble_srv_security_mode_t       security_mode;    /**< Security mode for the HID Service Report Map characteristic. */
+    security_req_t                rd_sec;           /**< Security requirement for HID Service Report Map characteristic. */
 } ble_hids_rep_map_init_t;
 
 /**@brief HID Report characteristic structure. */
@@ -289,11 +297,12 @@ typedef struct
     ble_hids_hid_information_t          hid_information;                              /**< Value of the HID Information characteristic. */
     uint8_t                             included_services_count;                      /**< Number of services to include in HID service. */
     uint16_t *                          p_included_services_array;                    /**< Array of services to include in HID service. */
-    ble_srv_security_mode_t             security_mode_protocol;                       /**< Security settings for HID service protocol attribute */
-    ble_srv_security_mode_t             security_mode_ctrl_point;                     /**< Security settings for HID service Control Point attribute */
-    ble_srv_cccd_security_mode_t        security_mode_boot_mouse_inp_rep;             /**< Security settings for HID service Mouse input report attribute */
-    ble_srv_cccd_security_mode_t        security_mode_boot_kb_inp_rep;                /**< Security settings for HID service Keyboard input report attribute */
-    ble_srv_security_mode_t             security_mode_boot_kb_outp_rep;               /**< Security settings for HID service Keyboard output report attribute */
+    security_req_t                      protocol_mode_rd_sec;                         /**< Security requirement for reading HID service Protocol Mode characteristic. */
+    security_req_t                      protocol_mode_wr_sec;                         /**< Security requirement for writing HID service Protocol Mode characteristic. */
+    security_req_t                      ctrl_point_wr_sec;                            /**< Security requirement for writing HID service Control Point characteristic. */
+    ble_hids_char_sec_t                 boot_mouse_inp_rep_sec;                       /**< Security requirements for HID Boot Keyboard Input Report characteristic. */
+    ble_hids_char_sec_t                 boot_kb_inp_rep_sec;                          /**< Security requirements for HID Boot Keyboard Input Report characteristic. */
+    ble_hids_char_sec_t                 boot_kb_outp_rep_sec;                         /**< Security requirements for HID Boot Keyboard Output Report characteristic. */
 } ble_hids_init_t;
 
 /**@brief HID Service structure. This contains various status information for the service. */

@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2016 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #ifndef APP_USBD_AUDIO_DESC_H__
 #define APP_USBD_AUDIO_DESC_H__
@@ -54,11 +54,11 @@ extern "C" {
  */
 
 /**
- * @brief Initializer of interface descriptor for AUDIO class
+ * @brief Initializer of interface descriptor for AUDIO class.
  *
- * @param interface_number Interface number
- * @param alt_setting      Interface alternate setting
- * @param ep_num           Number of endpoints
+ * @param interface_number Interface number.
+ * @param alt_setting      Interface alternate setting.
+ * @param ep_num           Number of endpoints.
  * @param subclass         Audio subclass @ref app_usbd_audio_subclass_t
  * */
 #define APP_USBD_AUDIO_INTERFACE_DSC(interface_number, alt_setting, ep_num, subclass)   \
@@ -73,13 +73,13 @@ extern "C" {
     /*.iInterface = 0,      */ 0x00,                                                    \
 
 /**
- * @brief Initializer of isochronous endpoint descriptors for audio class
+ * @brief Initializer of isochronous endpoint descriptors for audio class.
  *
  * @param ep            ISO endpoint id: @ref NRF_DRV_USBD_EPIN8, @ref NRF_DRV_USBD_EPOUT8
- * @param ep_size       Endpoint size (bytes)
- * @param interval      Endpoint interval (milliseconds)
- * @param refresh       Refresh value (usually 0)
- * @param synch_addr    Synch address (usually 0)
+ * @param ep_size       Endpoint size (bytes).
+ * @param interval      Endpoint interval (milliseconds).
+ * @param refresh       Refresh value (usually 0).
+ * @param synch_addr    Synch address (usually 0).
  * */
 #define APP_USBD_AUDIO_ISO_EP_DSC(ep, ep_size, interval, refresh, synch_addr)       \
     /*.bLength =          */ sizeof(app_usbd_descriptor_ep_t) + 2,                  \
@@ -106,8 +106,8 @@ extern "C" {
 /**
  * @brief Initializer of @ref app_usbd_audio_ac_iface_header_desc_t
  *
- * @param descriptor_list   Descriptor list following audio interface header descriptor
- * @param ...               List of interfaces following audio control interface
+ * @param descriptor_list   Descriptor list following audio interface header descriptor.
+ * @param ...               List of interfaces following audio control interface.
  * */
 #define APP_USBD_AUDIO_AC_IFACE_HEADER_DSC(descriptor_list, ...)                            \
     /*.bLength =            */ sizeof(app_usbd_audio_ac_iface_header_desc_t) +              \
@@ -126,10 +126,10 @@ extern "C" {
 /**
  * @brief Initializer of @ref app_usbd_audio_input_terminal_desc_t
  *
- * @param terminal_id   Terminal ID
+ * @param terminal_id   Terminal ID.
  * @param terminal_type Terminal type @ref app_usbd_audio_terminal_type_t
- * @param nr_channels   Number of channels
- * @param ch_config     CHannel config bitmask
+ * @param nr_channels   Number of channels.
+ * @param ch_config     Channel config bitmask.
  * */
 #define APP_USBD_AUDIO_INPUT_TERMINAL_DSC(terminal_id, terminal_type, nr_channels, ch_config) \
     /*.bLength =            */ sizeof(app_usbd_audio_input_terminal_desc_t),                  \
@@ -147,9 +147,9 @@ extern "C" {
 /**
  * @brief Initializer of @ref app_usbd_audio_output_terminal_desc_t
  *
- * @param terminal_id   Terminal ID
+ * @param terminal_id   Terminal ID.
  * @param terminal_type Terminal type @ref app_usbd_audio_terminal_type_t
- * @param source_id     Source ID
+ * @param source_id     Source ID.
  * */
 #define APP_USBD_AUDIO_OUTPUT_TERMINAL_DSC(terminal_id, terminal_type, source_id) \
     /*.bLength =            */ sizeof(app_usbd_audio_output_terminal_desc_t),     \
@@ -165,9 +165,9 @@ extern "C" {
 /**
  * @brief Initializer of @ref app_usbd_audio_feature_unit_desc_t
  *
- * @param unit_id   Unit ID
- * @param source_id Source ID
- * @param ...       List of controls
+ * @param unit_id   Unit ID.
+ * @param source_id Source ID.
+ * @param ...       List of controls.
  * */
 #define APP_USBD_AUDIO_FEATURE_UNIT_DSC(unit_id, source_id, ...)             \
     /*.bLength =            */ sizeof(app_usbd_audio_feature_unit_desc_t) +  \
@@ -184,9 +184,9 @@ extern "C" {
 /**
  * @brief Initializer of @ref app_usbd_audio_as_iface_desc_t
  *
- * @param terminal_link Terminal link
- * @param delay         Delay
- * @param format_tag    Format TAG
+ * @param terminal_link Terminal link.
+ * @param delay         Delay.
+ * @param format_tag    Format TAG.
  * */
 #define APP_USBD_AUDIO_AS_IFACE_DSC(terminal_link, delay, format_tag)   \
     /*.bLength =            */ sizeof(app_usbd_audio_as_iface_desc_t),  \
@@ -199,11 +199,11 @@ extern "C" {
 /**
  * @brief Initializer of @ref app_usbd_audio_as_format_type_one_desc_t
  *
- * @param nr_channels       Number of channels
- * @param subframe_size     Subframe size
- * @param resolution        Bit resolution
- * @param freq_type         Frequency type
- * @param ...               List of frequencies
+ * @param nr_channels       Number of channels.
+ * @param subframe_size     Subframe size.
+ * @param resolution        Bit resolution.
+ * @param freq_type         Frequency type.
+ * @param ...               List of frequencies.
  * */
 #define APP_USBD_AUDIO_AS_FORMAT_I_DSC(nr_channels, subframe_size, resolution, freq_type, ...) \
     /*.bLength =            */ sizeof(app_usbd_audio_as_format_type_one_desc_t) +              \
@@ -220,10 +220,10 @@ extern "C" {
 /**
  * @brief Initializer of @ref app_usbd_audio_as_format_type_two_desc_t
  *
- * @param max_bitrate        Maximum bitrate
- * @param samples_per_frame  Samples per frame
- * @param freq_type          Frequency type
- * @param ...                List of frequencies
+ * @param max_bitrate        Maximum bitrate.
+ * @param samples_per_frame  Samples per frame.
+ * @param freq_type          Frequency type.
+ * @param ...                List of frequencies.
  * */
 #define APP_USBD_AUDIO_AS_FORMAT_II_DSC(max_bitrate, samples_per_frame, freq_type, ...) \
     /*.bLength =            */ sizeof(app_usbd_audio_as_format_type_two_desc_t) +       \
@@ -239,11 +239,11 @@ extern "C" {
 /**
 * @brief Initializer of @ref app_usbd_audio_as_format_type_three_desc_t
  *
- * @param nr_channels       Number of channels
- * @param subframe_size     Subframe size
- * @param resolution        Bit resolution
- * @param freq_type         Frequency type
- * @param ...               List of frequencies
+ * @param nr_channels       Number of channels.
+ * @param subframe_size     Subframe size.
+ * @param resolution        Bit resolution.
+ * @param freq_type         Frequency type.
+ * @param ...               List of frequencies.
  * */
 #define APP_USBD_AUDIO_AS_FORMAT_III_DSC(nr_channels, subframe_size, resolution, freq_type, ...) \
     /*.bLength =            */ sizeof(app_usbd_audio_as_format_type_three_desc_t) +              \
@@ -261,9 +261,9 @@ extern "C" {
 /**
  * @brief Initializer of @ref app_usbd_audio_as_endpoint_desc_t
  *
- * @param attributes       Endpoint attributes
- * @param lock_delay_units Lock delay units
- * @param lock_delay       Lock delay
+ * @param attributes       Endpoint attributes.
+ * @param lock_delay_units Lock delay units.
+ * @param lock_delay       Lock delay.
  * */
 #define APP_USBD_AUDIO_EP_GENERAL_DSC(attributes, lock_delay_units, lock_delay) \
     /*.bLength =            */ sizeof(app_usbd_audio_as_endpoint_desc_t),       \
@@ -274,10 +274,10 @@ extern "C" {
     /*.wLockDelay =         */ APP_USBD_U16_TO_RAW_DSC(lock_delay),             \
 
 /**
- * @brief Macro to configure Audio Class control descriptor
+ * @brief Macro to configure Audio Class control descriptor.
  *
- * @param interface_number  Interface number
- * @param descriptor_list   List of descriptors after Audio interface header descriptor
+ * @param interface_number  Interface number.
+ * @param descriptor_list   List of descriptors after Audio interface header descriptor.
  * @param interface_list    List of interfaces passed to @ref APP_USBD_AUDIO_AC_IFACE_HEADER_DSC
  * */
 #define APP_USBD_AUDIO_CONTROL_DSC(interface_number, descriptor_list, interface_list)              \
@@ -287,22 +287,22 @@ extern "C" {
 
 
 /**
- * @brief Macro to configure Audio Class streaming descriptor
+ * @brief Macro to configure Audio Class streaming descriptor.
  *
- * @param interface_number  Interface number
- * @param alt_setting       Alternate interface setting
- * @param ep_num            Number of endpoints
+ * @param interface_number  Interface number.
+ * @param alt_setting       Alternate interface setting.
+ * @param ep_num            Number of endpoints.
  */
 #define APP_USBD_AUDIO_STREAMING_DSC(interface_number, alt_setting, ep_num)    \
         APP_USBD_AUDIO_INTERFACE_DSC(interface_number, alt_setting, ep_num,    \
                                     APP_USBD_AUDIO_SUBCLASS_AUDIOSTREAMING)
 
 /**
- * @brief Macro to configure Audio Class MIDI streaming descriptor
+ * @brief Macro to configure Audio Class MIDI streaming descriptor.
  *
- * @param interface_number  Interface number
- * @param alt_setting       Alternate interface setting
- * @param ep_num            Number of endpoints
+ * @param interface_number  Interface number.
+ * @param alt_setting       Alternate interface setting.
+ * @param ep_num            Number of endpoints.
  */
 #define APP_USBD_AUDIO_MIDI_STREAMING_DSC(interface_number, alt_setting, ep_num)  \
         APP_USBD_AUDIO_INTERFACE_DSC(interface_number, alt_setting, ep_num,       \

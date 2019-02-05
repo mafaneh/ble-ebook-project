@@ -362,13 +362,7 @@
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\csense_drv</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\delay</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\ecc</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_log</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_log\src</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_memobj</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_mpu</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_ringbuf</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_section_vars</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_stack_guard</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_task_manager</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\fds</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\fstorage</state>
@@ -377,18 +371,25 @@
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\hardfault</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\hci</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\led_softblink</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\log</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\log\src</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\low_power_pwm</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\mem_manager</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\memobj</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\mpu</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\mutex</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\pwm</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\pwr_mgmt</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\queue</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\ringbuf</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\scheduler</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\sdcard</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\slip</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\sortlist</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\spi_mngr</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\stack_guard</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\strerror</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\svc</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\timer</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\twi_mngr</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\twi_sensor</state>
@@ -401,7 +402,6 @@
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\usbd\class\hid\kbd</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\usbd\class\hid\mouse</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\usbd\class\msc</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\usbd\config</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\util</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\nfc\ndef\conn_hand_parser</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\nfc\ndef\conn_hand_parser\ac_rec_parser</state>
@@ -436,6 +436,7 @@
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\softdevice\s132\headers\nrf52</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\toolchain\cmsis\include</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\external\fprintf</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\external\utf_converter</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\integration\nrfx</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\integration\nrfx\legacy</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\modules\nrfx</state>
@@ -753,13 +754,7 @@
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\csense_drv</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\delay</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\ecc</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_log</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_log\src</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_memobj</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_mpu</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_ringbuf</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_section_vars</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_stack_guard</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_task_manager</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\fds</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\fstorage</state>
@@ -768,18 +763,25 @@
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\hardfault</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\hci</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\led_softblink</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\log</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\log\src</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\low_power_pwm</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\mem_manager</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\memobj</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\mpu</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\mutex</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\pwm</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\pwr_mgmt</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\queue</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\ringbuf</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\scheduler</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\sdcard</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\slip</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\sortlist</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\spi_mngr</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\stack_guard</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\strerror</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\svc</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\timer</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\twi_mngr</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\twi_sensor</state>
@@ -792,7 +794,6 @@
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\usbd\class\hid\kbd</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\usbd\class\hid\mouse</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\usbd\class\msc</state>
-          <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\usbd\config</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\util</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\nfc\ndef\conn_hand_parser</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\nfc\ndef\conn_hand_parser\ac_rec_parser</state>
@@ -827,6 +828,7 @@
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\softdevice\s132\headers\nrf52</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\components\toolchain\cmsis\include</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\external\fprintf</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\external\utf_converter</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\integration\nrfx</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\integration\nrfx\legacy</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\modules\nrfx</state>
@@ -1218,8 +1220,8 @@
     </settings>
   </configuration>  <group>
   <name>nRF_Log</name>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_log\src\nrf_log_frontend.c</name>    </file>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_log\src\nrf_log_str_formatter.c</name>    </file>  </group>  <group>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\log\src\nrf_log_frontend.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\log\src\nrf_log_str_formatter.c</name>    </file>  </group>  <group>
   <name>nRF_Libraries</name>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\button\app_button.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\util\app_error.c</name>    </file>    <file>
@@ -1235,8 +1237,9 @@
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\balloc\nrf_balloc.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\external\fprintf\nrf_fprintf.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\external\fprintf\nrf_fprintf_format.c</name>    </file>    <file>
-    <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_memobj\nrf_memobj.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\memobj\nrf_memobj.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\pwr_mgmt\nrf_pwr_mgmt.c</name>    </file>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\ringbuf\nrf_ringbuf.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\experimental_section_vars\nrf_section_iter.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\libraries\strerror\nrf_strerror.c</name>    </file>  </group>  <group>
   <name>Board Definition</name>    <file>
@@ -1259,6 +1262,8 @@
   <name>None</name>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\modules\nrfx\mdk\iar_startup_nrf52.s</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\modules\nrfx\mdk\system_nrf52.c</name>    </file>  </group>  <group>
+  <name>UTF8/UTF16 converter</name>    <file>
+    <name>$PROJ_DIR$\..\..\..\..\..\..\external\utf_converter\utf.c</name>    </file>  </group>  <group>
   <name>nRF_SoftDevice</name>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\softdevice\common\nrf_sdh.c</name>    </file>    <file>
     <name>$PROJ_DIR$\..\..\..\..\..\..\components\softdevice\common\nrf_sdh_ble.c</name>    </file>    <file>

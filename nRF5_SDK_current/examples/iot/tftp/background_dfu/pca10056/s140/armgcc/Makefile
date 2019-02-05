@@ -11,22 +11,76 @@ $(OUTPUT_DIRECTORY)/nrf52840_xxaa.out: \
 # Source files common to all targets
 SRC_FILES += \
   $(SDK_ROOT)/modules/nrfx/mdk/gcc_startup_nrf52840.S \
-  $(SDK_ROOT)/components/libraries/bsp/bsp.c \
-  $(SDK_ROOT)/components/libraries/experimental_log/src/nrf_log_backend_rtt.c \
-  $(SDK_ROOT)/components/libraries/experimental_log/src/nrf_log_backend_serial.c \
-  $(SDK_ROOT)/components/libraries/experimental_log/src/nrf_log_backend_uart.c \
-  $(SDK_ROOT)/components/libraries/experimental_log/src/nrf_log_default_backends.c \
-  $(SDK_ROOT)/components/libraries/experimental_log/src/nrf_log_frontend.c \
-  $(SDK_ROOT)/components/libraries/experimental_log/src/nrf_log_str_formatter.c \
   $(SDK_ROOT)/components/boards/boards.c \
   $(SDK_ROOT)/components/libraries/crypto/backend/micro_ecc/micro_ecc_backend_ecc.c \
   $(SDK_ROOT)/components/libraries/crypto/backend/micro_ecc/micro_ecc_backend_ecdh.c \
   $(SDK_ROOT)/components/libraries/crypto/backend/micro_ecc/micro_ecc_backend_ecdsa.c \
+  $(PROJ_DIR)/../../../dfu/dfu_public_key.c \
+  $(PROJ_DIR)/main.c \
+  $(SDK_ROOT)/components/libraries/bsp/bsp.c \
+  $(SDK_ROOT)/external/segger_rtt/SEGGER_RTT.c \
+  $(SDK_ROOT)/external/segger_rtt/SEGGER_RTT_Syscalls_GCC.c \
+  $(SDK_ROOT)/external/segger_rtt/SEGGER_RTT_printf.c \
+  $(SDK_ROOT)/components/iot/medium/ble_ncfgs/ble_ncfgs.c \
+  $(SDK_ROOT)/components/libraries/crypto/backend/oberon/oberon_backend_chacha_poly_aead.c \
+  $(SDK_ROOT)/components/libraries/crypto/backend/oberon/oberon_backend_ecc.c \
+  $(SDK_ROOT)/components/libraries/crypto/backend/oberon/oberon_backend_ecdh.c \
+  $(SDK_ROOT)/components/libraries/crypto/backend/oberon/oberon_backend_ecdsa.c \
+  $(SDK_ROOT)/components/libraries/crypto/backend/oberon/oberon_backend_eddsa.c \
+  $(SDK_ROOT)/components/libraries/crypto/backend/oberon/oberon_backend_hash.c \
+  $(SDK_ROOT)/components/libraries/crypto/backend/oberon/oberon_backend_hmac.c \
   $(SDK_ROOT)/external/cJSON/cJSON.c \
   $(SDK_ROOT)/external/cJSON/cJSON_iot_hooks.c \
+  $(SDK_ROOT)/integration/nrfx/legacy/nrf_drv_clock.c \
+  $(SDK_ROOT)/integration/nrfx/legacy/nrf_drv_uart.c \
+  $(SDK_ROOT)/modules/nrfx/hal/nrf_nvmc.c \
+  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_clock.c \
+  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_gpiote.c \
+  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_power_clock.c \
+  $(SDK_ROOT)/modules/nrfx/drivers/src/prs/nrfx_prs.c \
+  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_uart.c \
+  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_uarte.c \
+  $(SDK_ROOT)/components/ble/common/ble_advdata.c \
+  $(SDK_ROOT)/components/ble/common/ble_srv_common.c \
+  $(SDK_ROOT)/components/iot/background_dfu/background_dfu_block.c \
+  $(SDK_ROOT)/components/iot/background_dfu/background_dfu_operation.c \
+  $(SDK_ROOT)/components/iot/background_dfu/background_dfu_state.c \
+  $(SDK_ROOT)/components/iot/ble_6lowpan/ble_6lowpan.c \
+  $(SDK_ROOT)/components/iot/ipv6_stack/icmp6/icmp6.c \
+  $(SDK_ROOT)/components/iot/context_manager/iot_context_manager.c \
+  $(SDK_ROOT)/components/iot/iot_file/iot_file.c \
+  $(SDK_ROOT)/components/iot/iot_file/static/iot_file_static.c \
+  $(SDK_ROOT)/components/iot/ipv6_stack/pbuffer/iot_pbuffer.c \
+  $(SDK_ROOT)/components/iot/ipv6_stack/tftp/iot_tftp.c \
+  $(SDK_ROOT)/components/iot/iot_timer/iot_timer.c \
+  $(SDK_ROOT)/components/iot/ipv6_stack/ipv6/ipv6.c \
+  $(SDK_ROOT)/components/iot/medium/ipv6_medium_ble.c \
+  $(SDK_ROOT)/components/iot/ipv6_stack/utils/ipv6_utils.c \
+  $(SDK_ROOT)/components/iot/background_dfu/transport/tftp/tftp_dfu.c \
+  $(SDK_ROOT)/components/iot/ipv6_stack/udp/udp6.c \
+  $(SDK_ROOT)/external/nano-pb/pb_common.c \
+  $(SDK_ROOT)/external/nano-pb/pb_decode.c \
+  $(SDK_ROOT)/components/libraries/bootloader/dfu/dfu-cc.pb.c \
+  $(SDK_ROOT)/components/libraries/bootloader/dfu/nrf_dfu.c \
+  $(SDK_ROOT)/components/libraries/bootloader/dfu/nrf_dfu_flash.c \
+  $(SDK_ROOT)/components/libraries/bootloader/dfu/nrf_dfu_handling_error.c \
+  $(SDK_ROOT)/components/libraries/bootloader/dfu/nrf_dfu_mbr.c \
+  $(SDK_ROOT)/components/libraries/bootloader/dfu/nrf_dfu_req_handler.c \
+  $(SDK_ROOT)/components/libraries/bootloader/dfu/nrf_dfu_settings.c \
+  $(SDK_ROOT)/components/libraries/bootloader/dfu/nrf_dfu_transport.c \
+  $(SDK_ROOT)/components/libraries/bootloader/dfu/nrf_dfu_utils.c \
+  $(SDK_ROOT)/components/libraries/bootloader/dfu/nrf_dfu_validation.c \
+  $(SDK_ROOT)/components/libraries/bootloader/dfu/nrf_dfu_ver_validation.c \
+  $(SDK_ROOT)/components/ble/ble_services/ble_ipsp/ble_ipsp.c \
   $(SDK_ROOT)/components/softdevice/common/nrf_sdh.c \
   $(SDK_ROOT)/components/softdevice/common/nrf_sdh_ble.c \
   $(SDK_ROOT)/components/softdevice/common/nrf_sdh_soc.c \
+  $(SDK_ROOT)/components/libraries/log/src/nrf_log_backend_rtt.c \
+  $(SDK_ROOT)/components/libraries/log/src/nrf_log_backend_serial.c \
+  $(SDK_ROOT)/components/libraries/log/src/nrf_log_backend_uart.c \
+  $(SDK_ROOT)/components/libraries/log/src/nrf_log_default_backends.c \
+  $(SDK_ROOT)/components/libraries/log/src/nrf_log_frontend.c \
+  $(SDK_ROOT)/components/libraries/log/src/nrf_log_str_formatter.c \
   $(SDK_ROOT)/components/libraries/button/app_button.c \
   $(SDK_ROOT)/components/libraries/util/app_error.c \
   $(SDK_ROOT)/components/libraries/util/app_error_handler_gcc.c \
@@ -46,65 +100,20 @@ SRC_FILES += \
   $(SDK_ROOT)/components/libraries/fstorage/nrf_fstorage.c \
   $(SDK_ROOT)/components/libraries/fstorage/nrf_fstorage_nvmc.c \
   $(SDK_ROOT)/components/libraries/fstorage/nrf_fstorage_sd.c \
-  $(SDK_ROOT)/components/libraries/experimental_memobj/nrf_memobj.c \
+  $(SDK_ROOT)/components/libraries/memobj/nrf_memobj.c \
   $(SDK_ROOT)/components/libraries/queue/nrf_queue.c \
+  $(SDK_ROOT)/components/libraries/ringbuf/nrf_ringbuf.c \
   $(SDK_ROOT)/components/libraries/experimental_section_vars/nrf_section_iter.c \
   $(SDK_ROOT)/components/libraries/strerror/nrf_strerror.c \
   $(SDK_ROOT)/components/libraries/sha256/sha256.c \
-  $(SDK_ROOT)/integration/nrfx/legacy/nrf_drv_clock.c \
-  $(SDK_ROOT)/integration/nrfx/legacy/nrf_drv_uart.c \
-  $(SDK_ROOT)/modules/nrfx/hal/nrf_nvmc.c \
-  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_clock.c \
-  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_gpiote.c \
-  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_power_clock.c \
-  $(SDK_ROOT)/modules/nrfx/drivers/src/prs/nrfx_prs.c \
-  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_uart.c \
-  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_uarte.c \
-  $(SDK_ROOT)/modules/nrfx/mdk/system_nrf52840.c \
   $(SDK_ROOT)/components/libraries/crypto/nrf_crypto_ecc.c \
   $(SDK_ROOT)/components/libraries/crypto/nrf_crypto_ecdsa.c \
   $(SDK_ROOT)/components/libraries/crypto/nrf_crypto_hash.c \
   $(SDK_ROOT)/components/libraries/crypto/nrf_crypto_init.c \
   $(SDK_ROOT)/components/libraries/crypto/nrf_crypto_shared.c \
-  $(PROJ_DIR)/../../../dfu/dfu_public_key.c \
-  $(PROJ_DIR)/main.c \
-  $(SDK_ROOT)/external/segger_rtt/SEGGER_RTT.c \
-  $(SDK_ROOT)/external/segger_rtt/SEGGER_RTT_Syscalls_GCC.c \
-  $(SDK_ROOT)/external/segger_rtt/SEGGER_RTT_printf.c \
-  $(SDK_ROOT)/components/iot/background_dfu/background_dfu_block.c \
-  $(SDK_ROOT)/components/iot/background_dfu/background_dfu_operation.c \
-  $(SDK_ROOT)/components/iot/background_dfu/background_dfu_state.c \
-  $(SDK_ROOT)/components/iot/ble_6lowpan/ble_6lowpan.c \
-  $(SDK_ROOT)/components/iot/ipv6_stack/icmp6/icmp6.c \
-  $(SDK_ROOT)/components/iot/context_manager/iot_context_manager.c \
-  $(SDK_ROOT)/components/iot/iot_file/iot_file.c \
-  $(SDK_ROOT)/components/iot/iot_file/static/iot_file_static.c \
-  $(SDK_ROOT)/components/iot/ipv6_stack/pbuffer/iot_pbuffer.c \
-  $(SDK_ROOT)/components/iot/ipv6_stack/tftp/iot_tftp.c \
-  $(SDK_ROOT)/components/iot/iot_timer/iot_timer.c \
-  $(SDK_ROOT)/components/iot/ipv6_stack/ipv6/ipv6.c \
-  $(SDK_ROOT)/components/iot/medium/ipv6_medium_ble.c \
-  $(SDK_ROOT)/components/iot/ipv6_stack/utils/ipv6_utils.c \
-  $(SDK_ROOT)/components/iot/background_dfu/transport/tftp/tftp_dfu.c \
-  $(SDK_ROOT)/components/iot/ipv6_stack/udp/udp6.c \
-  $(SDK_ROOT)/external/nano-pb/pb_common.c \
-  $(SDK_ROOT)/external/nano-pb/pb_decode.c \
   $(SDK_ROOT)/components/libraries/crypto/backend/nrf_sw/nrf_sw_backend_hash.c \
-  $(SDK_ROOT)/components/ble/common/ble_advdata.c \
-  $(SDK_ROOT)/components/ble/common/ble_srv_common.c \
-  $(SDK_ROOT)/components/libraries/bootloader/dfu/dfu-cc.pb.c \
-  $(SDK_ROOT)/components/libraries/bootloader/dfu/nrf_dfu.c \
-  $(SDK_ROOT)/components/libraries/bootloader/dfu/nrf_dfu_flash.c \
-  $(SDK_ROOT)/components/libraries/bootloader/dfu/nrf_dfu_handling_error.c \
-  $(SDK_ROOT)/components/libraries/bootloader/dfu/nrf_dfu_mbr.c \
-  $(SDK_ROOT)/components/libraries/bootloader/dfu/nrf_dfu_req_handler.c \
-  $(SDK_ROOT)/components/libraries/bootloader/dfu/nrf_dfu_settings.c \
-  $(SDK_ROOT)/components/libraries/bootloader/dfu/nrf_dfu_transport.c \
-  $(SDK_ROOT)/components/libraries/bootloader/dfu/nrf_dfu_utils.c \
-  $(SDK_ROOT)/components/libraries/bootloader/dfu/nrf_dfu_validation.c \
-  $(SDK_ROOT)/components/libraries/bootloader/dfu/nrf_dfu_ver_validation.c \
-  $(SDK_ROOT)/components/ble/ble_services/ble_ipsp/ble_ipsp.c \
-  $(SDK_ROOT)/components/iot/medium/ble_ncfgs/ble_ncfgs.c \
+  $(SDK_ROOT)/modules/nrfx/mdk/system_nrf52840.c \
+  $(SDK_ROOT)/external/utf_converter/utf.c \
 
 # Include folders common to all targets
 INC_FOLDERS += \
@@ -117,20 +126,23 @@ INC_FOLDERS += \
   $(PROJ_DIR) \
   $(SDK_ROOT)/components/iot/background_dfu \
   $(SDK_ROOT)/integration/nrfx/legacy \
-  $(SDK_ROOT)/components/libraries/experimental_mpu \
   $(SDK_ROOT)/components/libraries/usbd \
   $(SDK_ROOT)/components/ble/ble_services/ble_lbs \
   $(SDK_ROOT)/components/ble/ble_services/ble_cts_c \
+  $(SDK_ROOT)/external/nrf_oberon \
   $(SDK_ROOT)/components/libraries/delay \
   $(SDK_ROOT)/components/ble/ble_services/ble_hrs \
+  $(SDK_ROOT)/external/nrf_oberon/include \
   $(SDK_ROOT)/components/libraries/crypto \
   $(SDK_ROOT)/external/micro-ecc/micro-ecc \
   $(SDK_ROOT)/components/libraries/mem_manager \
   $(SDK_ROOT)/components/iot/iot_file/static \
+  $(SDK_ROOT)/components/libraries/memobj \
   $(SDK_ROOT)/components/ble/ble_services/ble_nus \
   $(SDK_ROOT)/components/libraries/crypto/backend/nrf_sw \
   $(SDK_ROOT)/components/libraries/scheduler \
   $(SDK_ROOT)/components/iot/iot_timer \
+  $(SDK_ROOT)/external/utf_converter \
   $(SDK_ROOT)/components/libraries/bootloader/dfu \
   $(SDK_ROOT)/components/ble/ble_services/ble_bas \
   $(SDK_ROOT)/components/nfc/t4t_parser/cc_file \
@@ -140,9 +152,10 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/nfc/t4t_parser/hl_detection_procedure \
   $(SDK_ROOT)/components/libraries/led_softblink \
   $(SDK_ROOT)/components/softdevice/s140/headers/nrf52 \
-  $(SDK_ROOT)/components/libraries/experimental_ringbuf \
-  $(SDK_ROOT)/components/libraries/spi_mngr \
   $(SDK_ROOT)/components/libraries/bsp \
+  $(SDK_ROOT)/components/libraries/mpu \
+  $(SDK_ROOT)/components/libraries/spi_mngr \
+  $(SDK_ROOT)/components/nfc/ndef/connection_handover/hs_rec \
   $(SDK_ROOT)/components/iot/common \
   $(SDK_ROOT)/components/libraries/timer \
   $(SDK_ROOT)/components/libraries/usbd/class/cdc/acm \
@@ -152,17 +165,16 @@ INC_FOLDERS += \
   $(SDK_ROOT)/external/cJSON \
   $(SDK_ROOT)/components/libraries/crypto/backend/cifra \
   $(SDK_ROOT)/components/nfc/ndef/launchapp \
-  $(SDK_ROOT)/components/nfc/ndef/connection_handover/hs_rec \
   $(SDK_ROOT)/components/boards \
   $(SDK_ROOT)/components/libraries/atomic_fifo \
   $(SDK_ROOT)/components/nfc/ndef/text \
   $(SDK_ROOT)/components/ble/ble_services/ble_bas_c \
-  $(SDK_ROOT)/components/libraries/experimental_log \
+  $(SDK_ROOT)/components/nfc/ndef/conn_hand_parser/ble_oob_advdata_parser \
   $(SDK_ROOT)/components/libraries/usbd/class/cdc \
   $(SDK_ROOT)/components/nfc/ndef/parser/message \
   $(SDK_ROOT)/components/nfc/ndef/connection_handover/common \
   $(SDK_ROOT)/components/iot/background_dfu/transport \
-  $(SDK_ROOT)/components/toolchain/cmsis/include \
+  $(SDK_ROOT)/components/libraries/sha256 \
   $(SDK_ROOT)/components/libraries/balloc \
   $(SDK_ROOT)/components/ble/ble_services/ble_rscs \
   $(SDK_ROOT)/components/ble/ble_dtm \
@@ -171,7 +183,6 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/libraries/twi_sensor \
   $(SDK_ROOT)/components/libraries/strerror \
   $(SDK_ROOT)/modules/nrfx/drivers/include \
-  $(SDK_ROOT)/components/libraries/experimental_log/src \
   $(SDK_ROOT)/components/libraries/util \
   $(SDK_ROOT)/components/libraries/pwm \
   $(SDK_ROOT)/components/libraries/hci \
@@ -179,7 +190,6 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/nfc/t2t_lib/hal_t2t \
   $(SDK_ROOT)/components/ble/ble_services/ble_hids \
   ../config \
-  $(SDK_ROOT)/components/libraries/usbd/config \
   $(SDK_ROOT)/components/ble/ble_services/ble_ipsp \
   $(SDK_ROOT)/modules/nrfx/hal \
   $(SDK_ROOT)/components/libraries/bootloader/ble_dfu \
@@ -195,9 +205,10 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/libraries/sortlist \
   $(SDK_ROOT)/external/fprintf \
   $(SDK_ROOT)/components/nfc/ndef/connection_handover/ble_oob_advdata \
-  $(SDK_ROOT)/components/libraries/experimental_memobj \
+  $(SDK_ROOT)/components/nfc/ndef/conn_hand_parser/ac_rec_parser \
   $(SDK_ROOT)/components/ble/common \
   $(SDK_ROOT)/components/iot/medium \
+  $(SDK_ROOT)/components/libraries/log \
   $(SDK_ROOT)/components/ble/ble_services/ble_rscs_c \
   $(SDK_ROOT)/components \
   $(SDK_ROOT)/components/nfc/ndef/generic/message \
@@ -211,6 +222,7 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/ble/ble_services/ble_dis \
   $(SDK_ROOT)/components/ble/ble_services/ble_ias_c \
   $(SDK_ROOT)/components/ble/ble_services/ble_cscs \
+  $(SDK_ROOT)/components/libraries/log/src \
   $(SDK_ROOT)/components/libraries/usbd/class/hid \
   $(SDK_ROOT)/components/nfc/ndef/conn_hand_parser/le_oob_rec_parser \
   $(SDK_ROOT)/components/iot/ipv6_stack/include \
@@ -218,6 +230,7 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/libraries/ecc \
   $(SDK_ROOT)/components/libraries/crypto/backend/nrf_hw \
   $(SDK_ROOT)/components/libraries/crc16 \
+  $(SDK_ROOT)/components/libraries/stack_guard \
   $(SDK_ROOT)/components/nfc/t4t_parser/apdu \
   $(SDK_ROOT)/components/libraries/button \
   $(SDK_ROOT)/components/nfc/ndef/connection_handover/le_oob_rec \
@@ -240,7 +253,6 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/libraries/fds \
   $(SDK_ROOT)/components/libraries/bootloader \
   $(SDK_ROOT)/components/iot/ipv6_stack/utils \
-  $(SDK_ROOT)/components/libraries/experimental_stack_guard \
   $(SDK_ROOT)/components/iot/iot_file \
   $(SDK_ROOT)/modules/nrfx/mdk \
   $(SDK_ROOT)/components/ble/ble_racp \
@@ -248,8 +260,7 @@ INC_FOLDERS += \
   $(SDK_ROOT)/integration/nrfx \
   $(SDK_ROOT)/components/ble/ble_services/ble_lls \
   $(SDK_ROOT)/components/nfc/t2t_parser \
-  $(SDK_ROOT)/components/nfc/ndef/conn_hand_parser/ble_oob_advdata_parser \
-  $(SDK_ROOT)/components/libraries/sha256 \
+  $(SDK_ROOT)/components/libraries/ringbuf \
   $(SDK_ROOT)/components/nfc/ndef/connection_handover/ac_rec \
   $(SDK_ROOT)/external/nano-pb \
   $(SDK_ROOT)/modules/nrfx \
@@ -269,11 +280,13 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/nfc/ndef/generic/record \
   $(SDK_ROOT)/components/iot/background_dfu/transport/tftp \
   $(SDK_ROOT)/components/ble/ble_services/ble_tps \
+  $(SDK_ROOT)/components/toolchain/cmsis/include \
   $(SDK_ROOT)/components/libraries/crypto/backend/oberon \
-  $(SDK_ROOT)/components/nfc/ndef/conn_hand_parser/ac_rec_parser \
+  $(SDK_ROOT)/components/libraries/svc \
 
 # Libraries common to all targets
 LIB_FILES += \
+  $(SDK_ROOT)/external/nrf_oberon/lib/nrf52/liboberon_2.0.5.a \
   $(SDK_ROOT)/external/micro-ecc/nrf52hf_armgcc/armgcc/micro_ecc_lib_nrf52.a \
 
 # Optimization flags
@@ -375,15 +388,15 @@ $(foreach target, $(TARGETS), $(call define_target, $(target)))
 .PHONY: flash flash_softdevice erase
 
 # Flash the program
-flash: $(OUTPUT_DIRECTORY)/nrf52840_xxaa.hex
-	@echo Flashing: $<
-	nrfjprog -f nrf52 --program $< --sectorerase
+flash: default
+	@echo Flashing: $(OUTPUT_DIRECTORY)/nrf52840_xxaa.hex
+	nrfjprog -f nrf52 --program $(OUTPUT_DIRECTORY)/nrf52840_xxaa.hex --sectorerase
 	nrfjprog -f nrf52 --reset
 
 # Flash softdevice
 flash_softdevice:
-	@echo Flashing: s140_nrf52_6.0.0_softdevice.hex
-	nrfjprog -f nrf52 --program $(SDK_ROOT)/components/softdevice/s140/hex/s140_nrf52_6.0.0_softdevice.hex --sectorerase
+	@echo Flashing: s140_nrf52_6.1.0_softdevice.hex
+	nrfjprog -f nrf52 --program $(SDK_ROOT)/components/softdevice/s140/hex/s140_nrf52_6.1.0_softdevice.hex --sectorerase
 	nrfjprog -f nrf52 --reset
 
 erase:

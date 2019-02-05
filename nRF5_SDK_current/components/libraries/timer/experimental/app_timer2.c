@@ -1,30 +1,30 @@
 /**
- * Copyright (c) 2018 - 2018, Nordic Semiconductor ASA
- * 
+ * Copyright (c) 2018, Nordic Semiconductor ASA
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #include "app_timer.h"
 #include "nrf_atfifo.h"
@@ -62,7 +62,7 @@ NRF_LOG_MODULE_REGISTER();
  * Maximum possible relative value is limited by safe window to detect cases when requested
  * compare event has already occured.
  */
-#define APP_TIMER_SAFE_WINDOW 1000
+#define APP_TIMER_SAFE_WINDOW APP_TIMER_TICKS(APP_TIMER_SAFE_WINDOW_MS)
 
 #define APP_TIMER_RTC_MAX_VALUE   (DRV_RTC_MAX_CNT - APP_TIMER_SAFE_WINDOW)
 
@@ -134,8 +134,12 @@ static bool timer_expire(app_timer_t * p_timer)
 {
     ASSERT(p_timer->handler);
     bool ret = false;
-    if (m_global_active == true && p_timer != NULL && p_timer->active)
+    if ((m_global_active == true) && (p_timer != NULL) && (p_timer->active))
     {
+        if (p_timer->repeat_period == 0)
+        {
+            p_timer->active = false;
+        }
 #if APP_TIMER_CONFIG_USE_SCHEDULER
         app_timer_event_t timer_event;
 
@@ -148,15 +152,11 @@ static bool timer_expire(app_timer_t * p_timer)
 #else
         p_timer->handler(p_timer->p_context);
 #endif
-        if (p_timer->repeat_period && p_timer->active)
+        if ((p_timer->repeat_period) && (p_timer->active))
         {
             p_timer->end_val += p_timer->repeat_period;
             nrf_sortlist_add(&m_app_timer_sortlist, &p_timer->list_item);
             ret = true;
-        }
-        else
-        {
-            p_timer->active = false;
         }
     }
     return ret;
@@ -263,10 +263,14 @@ static void on_overflow_evt(void)
 /**
  * #brief Function for handling RTC compare event - active timer expiration.
  */
-static void on_compare_evt(void)
+static void on_compare_evt(drv_rtc_t const * const  p_instance)
 {
     if (mp_active_timer)
     {
+        //If assert fails it suggests that safe window should be increased.
+        ASSERT(app_timer_cnt_diff_compute(drv_rtc_counter_get(p_instance), 
+                                          mp_active_timer->end_val & RTC_COUNTER_COUNTER_Msk) < APP_TIMER_SAFE_WINDOW);
+
         NRF_LOG_INST_DEBUG(mp_active_timer->p_log, "Compare EVT");
         UNUSED_RETURN_VALUE(timer_expire(mp_active_timer));
         mp_active_timer = NULL;
@@ -411,7 +415,7 @@ static void rtc_irq(drv_rtc_t const * const  p_instance)
     }
     if (drv_rtc_compare_pending(p_instance, 0))
     {
-        on_compare_evt();
+        on_compare_evt(p_instance);
     }
     timer_req_process(p_instance);
     rtc_update(p_instance);
@@ -511,6 +515,12 @@ ret_code_t app_timer_start(app_timer_t * p_timer, uint32_t timeout_ticks, void *
     {
         return NRF_ERROR_INVALID_PARAM;
     }
+
+    if (p_t->active)
+    {
+        return NRF_SUCCESS;
+    }
+
     p_t->p_context = p_context;
     p_t->end_val = drv_rtc_counter_get(&m_rtc_inst) + timeout_ticks;
 

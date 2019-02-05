@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2017 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 /** @file
  *
@@ -96,7 +96,7 @@ APP_TIMER_DEF(m_blink_ble);
 APP_TIMER_DEF(m_blink_cdc);
 
 /**
- * @brief App timer handler for blinking LEDs
+ * @brief App timer handler for blinking the LEDs.
  *
  * @param p_context LED to blink.
  */
@@ -146,15 +146,15 @@ APP_USBD_CDC_ACM_GLOBAL_DEF(m_app_cdc_acm,
 #define APP_ADV_DURATION                18000                                       /**< The advertising duration (180 seconds) in units of 10 milliseconds. */
 
 
-#define MIN_CONN_INTERVAL               MSEC_TO_UNITS(20, UNIT_1_25_MS)             /**< Minimum acceptable connection interval (20 ms), Connection interval uses 1.25 ms units. */
-#define MAX_CONN_INTERVAL               MSEC_TO_UNITS(75, UNIT_1_25_MS)             /**< Maximum acceptable connection interval (75 ms), Connection interval uses 1.25 ms units. */
+#define MIN_CONN_INTERVAL               MSEC_TO_UNITS(20, UNIT_1_25_MS)             /**< Minimum acceptable connection interval (20 ms). Connection interval uses 1.25 ms units. */
+#define MAX_CONN_INTERVAL               MSEC_TO_UNITS(75, UNIT_1_25_MS)             /**< Maximum acceptable connection interval (75 ms). Connection interval uses 1.25 ms units. */
 #define SLAVE_LATENCY                   0                                           /**< Slave latency. */
-#define CONN_SUP_TIMEOUT                MSEC_TO_UNITS(4000, UNIT_10_MS)             /**< Connection supervisory timeout (4 seconds), Supervision Timeout uses 10 ms units. */
-#define FIRST_CONN_PARAMS_UPDATE_DELAY  APP_TIMER_TICKS(5000)                       /**< Time from initiating event (connect or start of notification) to first time sd_ble_gap_conn_param_update is called (5 seconds). */
+#define CONN_SUP_TIMEOUT                MSEC_TO_UNITS(4000, UNIT_10_MS)             /**< Connection supervisory timeout (4 seconds). Supervision Timeout uses 10 ms units. */
+#define FIRST_CONN_PARAMS_UPDATE_DELAY  APP_TIMER_TICKS(5000)                       /**< Time from initiating an event (connect or start of notification) to the first time sd_ble_gap_conn_param_update is called (5 seconds). */
 #define NEXT_CONN_PARAMS_UPDATE_DELAY   APP_TIMER_TICKS(30000)                      /**< Time between each call to sd_ble_gap_conn_param_update after the first call (30 seconds). */
 #define MAX_CONN_PARAMS_UPDATE_COUNT    3                                           /**< Number of attempts before giving up the connection parameter negotiation. */
 
-#define DEAD_BEEF                       0xDEADBEEF                                  /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
+#define DEAD_BEEF                       0xDEADBEEF                                  /**< Value used as error code on stack dump. Can be used to identify stack location on stack unwind. */
 
 #define UART_TX_BUF_SIZE                256                                         /**< UART TX buffer size. */
 #define UART_RX_BUF_SIZE                256                                         /**< UART RX buffer size. */
@@ -180,7 +180,7 @@ static char m_nus_data_array[BLE_NUS_MAX_DATA_LEN];
  * @details This function will be called in case of an assert in the SoftDevice.
  *
  * @warning This handler is an example only and does not fit a final product. You need to analyze
- *          how your product is supposed to react in case of Assert.
+ *          how your product is supposed to react in case of an assert.
  * @warning On assert from the SoftDevice, the system can only recover on reset.
  *
  * @param[in] line_num    Line number of the failing ASSERT call.
@@ -205,7 +205,7 @@ static void timers_init(void)
 /**
  * @brief Function for the GAP initialization.
  *
- * @details This function will set up all the necessary GAP (Generic Access Profile) parameters of
+ * @details This function sets up all the necessary GAP (Generic Access Profile) parameters of
  *          the device. It also sets the permissions and appearance.
  */
 static void gap_params_init(void)
@@ -236,7 +236,7 @@ static void gap_params_init(void)
 /**
  * @brief Function for handling the data from the Nordic UART Service.
  *
- * @details This function will process the data received from the Nordic UART BLE Service and send
+ * @details This function processes the data received from the Nordic UART BLE Service and sends
  *          it to the USBD CDC ACM module.
  *
  * @param[in] p_evt Nordic UART Service event.
@@ -322,7 +322,7 @@ static void conn_params_init(void)
 /**
  * @brief Function for putting the chip into sleep mode.
  *
- * @note This function will not return.
+ * @note This function does not return.
  */
 static void sleep_mode_enter(void)
 {
@@ -349,7 +349,7 @@ static void advertising_start(void)
 /**
  * @brief Function for handling advertising events.
  *
- * @details This function will be called for advertising events which are passed to the application.
+ * @details This function is called for advertising events which are passed to the application.
  *
  * @param[in] ble_adv_evt  Advertising event.
  */
@@ -414,7 +414,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
         } break;
 
         case BLE_GAP_EVT_SEC_PARAMS_REQUEST:
-            // Pairing not supported
+            // Pairing not supported.
             err_code = sd_ble_gap_sec_params_reply(m_conn_handle, BLE_GAP_SEC_STATUS_PAIRING_NOT_SUPP, NULL, NULL);
             APP_ERROR_CHECK(err_code);
             break;
@@ -423,7 +423,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
         {
             ble_gap_data_length_params_t dl_params;
 
-            // Clearing the struct will effectivly set members to @ref BLE_GAP_DATA_LENGTH_AUTO
+            // Clearing the struct will effectively set members to @ref BLE_GAP_DATA_LENGTH_AUTO.
             memset(&dl_params, 0, sizeof(ble_gap_data_length_params_t));
             err_code = sd_ble_gap_data_length_update(p_ble_evt->evt.gap_evt.conn_handle, &dl_params, NULL);
             APP_ERROR_CHECK(err_code);
@@ -610,7 +610,7 @@ static void advertising_init(void)
 }
 
 
-/** @brief Function for initializing buttons and leds. */
+/** @brief Function for initializing buttons and LEDs. */
 static void buttons_leds_init(void)
 {
     uint32_t err_code = bsp_init(BSP_INIT_LEDS, bsp_event_handler);
@@ -618,7 +618,7 @@ static void buttons_leds_init(void)
 }
 
 
-/** @brief Function for initializing the nrf log module. */
+/** @brief Function for initializing the nrf_log module. */
 static void log_init(void)
 {
     ret_code_t err_code = NRF_LOG_INIT(NULL);
@@ -662,7 +662,7 @@ static void cdc_acm_user_ev_handler(app_usbd_class_inst_t const * p_inst,
     {
         case APP_USBD_CDC_ACM_USER_EVT_PORT_OPEN:
         {
-            /*Setup first transfer*/
+            /*Set up the first transfer*/
             ret_code_t ret = app_usbd_cdc_acm_read(&m_app_cdc_acm,
                                                    m_cdc_data_array,
                                                    1);
@@ -696,49 +696,54 @@ static void cdc_acm_user_ev_handler(app_usbd_class_inst_t const * p_inst,
 
             do
             {
-                if ((m_cdc_data_array[index - 1] == '\r') || (index >= (m_ble_nus_max_data_len)))
+                if ((m_cdc_data_array[index - 1] == '\n') ||
+                    (m_cdc_data_array[index - 1] == '\r') ||
+                    (index >= (m_ble_nus_max_data_len)))
                 {
-                    bsp_board_led_invert(LED_CDC_ACM_RX);
-                    NRF_LOG_DEBUG("Ready to send data over BLE NUS");
-                    NRF_LOG_HEXDUMP_DEBUG(m_cdc_data_array, index);
-
-                    do
+                    if (index > 1)
                     {
-                        uint16_t length = (uint16_t)index;
-                        if (length + sizeof(ENDLINE_STRING) < BLE_NUS_MAX_DATA_LEN)
-                        {
-                            memcpy(m_cdc_data_array + length, ENDLINE_STRING, sizeof(ENDLINE_STRING));
-                            length += sizeof(ENDLINE_STRING);
-                        }
+                        bsp_board_led_invert(LED_CDC_ACM_RX);
+                        NRF_LOG_DEBUG("Ready to send data over BLE NUS");
+                        NRF_LOG_HEXDUMP_DEBUG(m_cdc_data_array, index);
 
-                        ret = ble_nus_data_send(&m_nus,
-                                                (uint8_t *) m_cdc_data_array,
-                                                &length,
-                                                m_conn_handle);
-
-                        if (ret == NRF_ERROR_NOT_FOUND)
+                        do
                         {
-                            NRF_LOG_INFO("BLE NUS unavailable, data received: %s", m_cdc_data_array);
-                            break;
-                        }
+                            uint16_t length = (uint16_t)index;
+                            if (length + sizeof(ENDLINE_STRING) < BLE_NUS_MAX_DATA_LEN)
+                            {
+                                memcpy(m_cdc_data_array + length, ENDLINE_STRING, sizeof(ENDLINE_STRING));
+                                length += sizeof(ENDLINE_STRING);
+                            }
 
-                        if (ret == NRF_ERROR_RESOURCES)
-                        {
-                            NRF_LOG_ERROR("BLE NUS Too many notifications queued.");
-                            break;
-                        }
+                            ret = ble_nus_data_send(&m_nus,
+                                                    (uint8_t *) m_cdc_data_array,
+                                                    &length,
+                                                    m_conn_handle);
 
-                        if ((ret != NRF_ERROR_INVALID_STATE) && (ret != NRF_ERROR_BUSY))
-                        {
-                            APP_ERROR_CHECK(ret);
+                            if (ret == NRF_ERROR_NOT_FOUND)
+                            {
+                                NRF_LOG_INFO("BLE NUS unavailable, data received: %s", m_cdc_data_array);
+                                break;
+                            }
+
+                            if (ret == NRF_ERROR_RESOURCES)
+                            {
+                                NRF_LOG_ERROR("BLE NUS Too many notifications queued.");
+                                break;
+                            }
+
+                            if ((ret != NRF_ERROR_INVALID_STATE) && (ret != NRF_ERROR_BUSY))
+                            {
+                                APP_ERROR_CHECK(ret);
+                            }
                         }
+                        while (ret == NRF_ERROR_BUSY);
                     }
-                    while (ret == NRF_ERROR_BUSY);
 
                     index = 0;
                 }
 
-                /*Get amount of data transfered*/
+                /*Get amount of data transferred*/
                 size_t size = app_usbd_cdc_acm_rx_size(p_cdc_acm);
                 NRF_LOG_DEBUG("RX: size: %lu char: %c", size, m_cdc_data_array[index - 1]);
 

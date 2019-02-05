@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2016 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 /**@cond To Make Doxygen skip documentation generation for this file.
  * @{
@@ -57,18 +57,19 @@
 #include "nordic_common.h"
 #include "nrf_gpio.h"
 #include "bsp_btn_ble.h"
-#include "ble_advdata.h"
 #include "ble_srv_common.h"
 #include "nrf_sdh.h"
 #include "nrf_sdh_ble.h"
 #include "nrf_ble_gatt.h"
 #include "nrf_ble_qwr.h"
+#include "ble_advdata.h"
 #include "app_timer.h"
 #include "app_error.h"
 #include "nrf_cli.h"
 #include "nrf_cli_rtt.h"
 #include "nrf_cli_uart.h"
 #include "nrf_pwr_mgmt.h"
+#include "nrf_ble_scan.h"
 
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
@@ -79,8 +80,8 @@
 
 #define CONN_INTERVAL_DEFAULT           (uint16_t)(MSEC_TO_UNITS(7.5, UNIT_1_25_MS))    /**< Default connection interval used at connection establishment by central side. */
 
-#define CONN_INTERVAL_MIN               (uint16_t)(MSEC_TO_UNITS(7.5, UNIT_1_25_MS))    /**< Minimum acceptable connection interval, in 1.25 ms units. */
-#define CONN_INTERVAL_MAX               (uint16_t)(MSEC_TO_UNITS(500, UNIT_1_25_MS))    /**< Maximum acceptable connection interval, in 1.25 ms units. */
+#define CONN_INTERVAL_MIN               (uint16_t)(MSEC_TO_UNITS(7.5, UNIT_1_25_MS))    /**< Minimum acceptable connection interval, in units of 1.25 ms. */
+#define CONN_INTERVAL_MAX               (uint16_t)(MSEC_TO_UNITS(500, UNIT_1_25_MS))    /**< Maximum acceptable connection interval, in units of 1.25 ms. */
 #define CONN_SUP_TIMEOUT                (uint16_t)(MSEC_TO_UNITS(4000,  UNIT_10_MS))    /**< Connection supervisory timeout (4 seconds). */
 #define SLAVE_LATENCY                   0                                               /**< Slave latency. */
 
@@ -89,12 +90,12 @@
 #define PROGRESS_LED                    BSP_BOARD_LED_2
 #define DONE_LED                        BSP_BOARD_LED_3
 
-#define BOARD_TESTER_BUTTON             BSP_BUTTON_2                                    /**< Button to press at beginning of the test to indicate that this board is connected to the PC and takes input from it via the UART. */
-#define BOARD_DUMMY_BUTTON              BSP_BUTTON_3                                    /**< Button to press at beginning of the test to indicate that this board is standalone (automatic behavior). */
+#define BOARD_TESTER_BUTTON             BSP_BUTTON_2                                    /**< Button to press at the beginning of the test to indicate that this board is connected to the PC and takes input from it via the UART. */
+#define BOARD_DUMMY_BUTTON              BSP_BUTTON_3                                    /**< Button to press at the beginning of the test to indicate that this board is standalone (automatic behavior). */
 #define BUTTON_DETECTION_DELAY          APP_TIMER_TICKS(50)                             /**< Delay from a GPIOTE event until a button is reported as pushed (in number of timer ticks). */
 
-#define APP_BLE_CONN_CFG_TAG            1                                               /**< A tag that refers to the BLE stack configuration. */
-#define APP_BLE_OBSERVER_PRIO           3                                               /**< Application's BLE observer priority. You shouldn't need to modify this value. */
+#define APP_BLE_CONN_CFG_TAG            1                                               /**< Tag that refers to the BLE stack configuration. */
+#define APP_BLE_OBSERVER_PRIO           3                                               /**< BLE observer priority of the application. There is no need to modify this value. */
 
 static uint8_t m_adv_handle = BLE_GAP_ADV_SET_HANDLE_NOT_SET;                           /**< Advertising handle used to identify an advertising set. */
 static uint8_t m_enc_advdata[BLE_GAP_ADV_SET_DATA_SIZE_MAX];                            /**< Buffer for storing an encoded advertising set. */
@@ -115,14 +116,6 @@ static ble_gap_adv_data_t m_adv_data =
     }
 };
 
-static uint8_t m_scan_buffer_data[BLE_GAP_SCAN_BUFFER_MIN]; /**< buffer where advertising reports will be stored by the SoftDevice. */
-
-/**@brief Pointer to the buffer where advertising reports will be stored by the SoftDevice. */
-static ble_data_t m_scan_buffer =
-{
-    m_scan_buffer_data,
-    BLE_GAP_SCAN_BUFFER_MIN
-};
 
 typedef enum
 {
@@ -143,7 +136,8 @@ typedef struct
 
 NRF_BLE_GATT_DEF(m_gatt);                       /**< GATT module instance. */
 NRF_BLE_QWR_DEF(m_qwr);                         /**< Context for the Queued Write module.*/
-BLE_DB_DISCOVERY_DEF(m_ble_db_discovery);       /**< DB discovery module instance. */
+BLE_DB_DISCOVERY_DEF(m_ble_db_discovery);       /**< Database discovery module instance. */
+NRF_BLE_SCAN_DEF(m_scan);                       /**< Scanning Module instance. */
 
 static nrf_ble_amtc_t     m_amtc;
 static nrf_ble_amts_t     m_amts;
@@ -171,7 +165,7 @@ static uint8_t m_gap_role     = BLE_GAP_ROLE_INVALID;       /**< BLE role for th
 static char const m_target_periph_name[] = DEVICE_NAME;
 
 // Test parameters.
-// Settings like ATT MTU size are set only once on the dummy board.
+// Settings like ATT MTU size are set only once, on the dummy board.
 // Make sure that defaults are sensible.
 static test_params_t m_test_params =
 {
@@ -189,16 +183,6 @@ static test_params_t m_test_params =
 #endif
 };
 
-// Scan parameters requested for scanning and connection.
-static ble_gap_scan_params_t const m_scan_param =
-{
-    .active        = 0x00,
-    .interval      = SCAN_INTERVAL,
-    .window        = SCAN_WINDOW,
-    .timeout       = 0x0000, // No timeout.
-    .scan_phys     = BLE_GAP_PHY_1MBPS,
-    .filter_policy = BLE_GAP_SCAN_FP_ACCEPT_ALL,
-};
 
 // Connection parameters requested for connection.
 static ble_gap_conn_params_t m_conn_param =
@@ -246,48 +230,8 @@ char const * phy_str(ble_gap_phys_t phys)
 static void instructions_print(void)
 {
     NRF_LOG_INFO("Type 'config' to change the configuration parameters.");
-    NRF_LOG_INFO("You can use the TAB key to autocomplete your input.");
+    NRF_LOG_INFO("You can use the Tab key to autocomplete your input.");
     NRF_LOG_INFO("Type 'run' when you are ready to run the test.");
-}
-
-
-/**@brief Function for handling BLE_GAP_ADV_REPORT events.
- * Search for a peer with matching device name.
- * If found, stop advertising and send a connection request to the peer.
- */
-static void on_adv_report(ble_gap_evt_adv_report_t const * p_adv_report)
-{
-    ret_code_t err_code;
-
-    if (!ble_advdata_name_find(p_adv_report->data.p_data,
-                               p_adv_report->data.len,
-                               m_target_periph_name))
-    {
-        err_code = sd_ble_gap_scan_start(NULL, &m_scan_buffer);
-        APP_ERROR_CHECK(err_code);
-
-        return;
-    }
-
-    NRF_LOG_INFO("Device \"%s\" found, sending a connection request.",
-                 (uint32_t) m_target_periph_name);
-
-    // Stop advertising.
-    (void) sd_ble_gap_adv_stop(m_adv_handle);
-
-    // Initiate connection.
-    m_conn_param.min_conn_interval = CONN_INTERVAL_DEFAULT;
-    m_conn_param.max_conn_interval = CONN_INTERVAL_DEFAULT;
-
-    err_code = sd_ble_gap_connect(&p_adv_report->peer_addr,
-                                  &m_scan_param,
-                                  &m_conn_param,
-                                  APP_BLE_CONN_CFG_TAG);
-
-    if (err_code != NRF_SUCCESS)
-    {
-        NRF_LOG_ERROR("sd_ble_gap_connect() failed: 0x%x.", err_code);
-    }
 }
 
 
@@ -311,7 +255,7 @@ static void on_ble_gap_evt_connected(ble_gap_evt_t const * p_gap_evt)
     }
 
     // Stop scanning and advertising.
-    (void) sd_ble_gap_scan_stop();
+    nrf_ble_scan_stop();
     (void) sd_ble_gap_adv_stop(m_adv_handle);
 
     bsp_board_leds_off();
@@ -365,10 +309,6 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
 
     switch (p_ble_evt->header.evt_id)
     {
-        case BLE_GAP_EVT_ADV_REPORT:
-            on_adv_report(&p_gap_evt->params.adv_report);
-            break;
-
         case BLE_GAP_EVT_CONNECTED:
             on_ble_gap_evt_connected(p_gap_evt);
             break;
@@ -404,7 +344,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             APP_ERROR_CHECK(err_code);
         } break;
 
-        case BLE_GATTC_EVT_TIMEOUT: // Fallthrough.
+        case BLE_GATTC_EVT_TIMEOUT: // Fall through.
         case BLE_GATTS_EVT_TIMEOUT:
         {
             NRF_LOG_DEBUG("GATT timeout, disconnecting.");
@@ -600,10 +540,10 @@ static void amtc_evt_handler(nrf_ble_amtc_t * p_amt_c, nrf_ble_amtc_evt_t * p_ev
 }
 
 
-/**@brief Function for handling Database Discovery events.
+/**@brief Function for handling database discovery events.
  *
  * @details This function is a callback function to handle events from the database discovery module.
- *          Depending on the UUIDs that are discovered, this function should forward the events
+ *          Depending on the UUIDs that are discovered, this function forwards the events
  *          to their respective service instances.
  *
  * @param[in] p_evt  Pointer to the database discovery event.
@@ -640,7 +580,6 @@ static void gatt_evt_handler(nrf_ble_gatt_t * p_gatt, nrf_ble_gatt_evt_t const *
 /**@brief Function for setting up advertising data. */
 static void advertising_data_set(void)
 {
-
     ret_code_t ret;
 
     ble_gap_adv_params_t const adv_params =
@@ -684,14 +623,80 @@ static void advertising_start(void)
 }
 
 
-/**@brief Function to start scanning. */
+/**@brief Function for handling Scanning Module events.
+ */
+static void scan_evt_handler(scan_evt_t const * p_scan_evt)
+{
+    ret_code_t                       err_code;
+    ble_gap_evt_adv_report_t const * p_adv = 
+                   p_scan_evt->params.filter_match.p_adv_report;
+    ble_gap_scan_params_t    const * p_scan_param = 
+                   p_scan_evt->p_scan_params;
+
+    switch(p_scan_evt->scan_evt_id)
+    {
+        case NRF_BLE_SCAN_EVT_FILTER_MATCH:
+        {
+             NRF_LOG_INFO("Device \"%s\" found, sending a connection request.",
+             (uint32_t) m_target_periph_name);
+
+            // Stop advertising.
+            err_code = sd_ble_gap_adv_stop(m_adv_handle);
+            if (err_code != NRF_ERROR_INVALID_STATE)
+            {
+                APP_ERROR_CHECK(err_code);
+            }
+
+            // Initiate connection.
+            m_conn_param.min_conn_interval = CONN_INTERVAL_DEFAULT;
+            m_conn_param.max_conn_interval = CONN_INTERVAL_DEFAULT;
+
+            err_code = sd_ble_gap_connect(&p_adv->peer_addr,
+                                          p_scan_param,
+                                          &m_conn_param,
+                                          APP_BLE_CONN_CFG_TAG);
+
+            if (err_code != NRF_SUCCESS)
+            {
+                NRF_LOG_ERROR("sd_ble_gap_connect() failed: 0x%x.", err_code);
+            }
+        } break;
+
+        default:
+            break;
+     }
+}
+
+
+/**@brief Function for initialization the scanning and setting the filters.
+ */
+static void scan_init(void)
+{
+    ret_code_t err_code;
+
+    err_code = nrf_ble_scan_init(&m_scan, NULL, scan_evt_handler);
+    APP_ERROR_CHECK(err_code);
+
+    err_code = nrf_ble_scan_filter_set(&m_scan, 
+                                       SCAN_NAME_FILTER, 
+                                       m_target_periph_name);
+    APP_ERROR_CHECK(err_code);
+
+    err_code = nrf_ble_scan_filters_enable(&m_scan, 
+                                           NRF_BLE_SCAN_NAME_FILTER, 
+                                           false);
+    APP_ERROR_CHECK(err_code);
+}
+
+
+/**@brief Function for starting the scanning. */
 static void scan_start(void)
 {
-    NRF_LOG_INFO("Starting scan.");
+    NRF_LOG_INFO("Starting scanning.");
 
     bsp_board_led_on(SCAN_ADV_LED);
 
-    ret_code_t err_code = sd_ble_gap_scan_start(&m_scan_param, &m_scan_buffer);
+    ret_code_t err_code = nrf_ble_scan_start(&m_scan);
     APP_ERROR_CHECK(err_code);
 }
 
@@ -703,7 +708,7 @@ static void log_init(void)
 }
 
 
-/**@brief Function for the LEDs initialization.
+/**@brief Function for initializing the LEDs.
  *
  * @details Initializes all LEDs used by the application.
  */
@@ -713,7 +718,7 @@ static void leds_init(void)
 }
 
 
-/**@brief Function for the Timer initialization.
+/**@brief Function for initializing the timer.
  *
  * @details Initializes the timer module. This creates and starts application timers.
  */
@@ -743,7 +748,7 @@ static void buttons_disable(void)
 /**@brief Function for handling events from the button handler module.
  *
  * @param[in] pin_no        The pin that the event applies to.
- * @param[in] button_action The button action (press/release).
+ * @param[in] button_action The button action (press or release).
  */
 static void button_evt_handler(uint8_t pin_no, uint8_t button_action)
 {
@@ -761,8 +766,8 @@ static void button_evt_handler(uint8_t pin_no, uint8_t button_action)
             NRF_LOG_INFO("This board will act as responder.");
             m_board_role = BOARD_DUMMY;
 
-            // Set the data length to the maximum if necessary, so that this board will
-            // accept whatever value requested by the tester.
+            // Set the data length to the maximum if necessary, so that this board
+            // accepts whatever value requested by the tester.
 
             uint8_t dl = 0;
             (void) nrf_ble_gatt_data_length_get(&m_gatt, BLE_CONN_HANDLE_INVALID, &dl);
@@ -808,12 +813,12 @@ static void client_init(void)
 }
 
 
-/**@brief Function for handling Queued Write Module errors.
+/**@brief Function for handling Queued Write module errors.
  *
- * @details A pointer to this function will be passed to each service which may need to inform the
+ * @details A pointer to this function is passed to each service that may need to inform the
  *          application about an error.
  *
- * @param[in]   nrf_error   Error code containing information about what went wrong.
+ * @param[in]   nrf_error   Error code that contains information about what went wrong.
  */
 static void nrf_qwr_error_handler(uint32_t nrf_error)
 {
@@ -872,7 +877,7 @@ static void ble_stack_init(void)
 /**@brief Function for initializing GAP parameters.
  *
  * @details This function sets up all the necessary GAP (Generic Access Profile) parameters of the
- *          device including the device name and the preferred connection parameters.
+ *          device, including the device name and the preferred connection parameters.
  */
 static void gap_params_init(void)
 {
@@ -996,15 +1001,15 @@ void test_begin(void)
     NRF_LOG_FLUSH();
 
 #if defined(S132)
-    // PHY does not need to be updated for s132
+    // PHY does not need to be updated for s132.
      m_phy_updated = true;
 #endif
 
     switch (m_gap_role)
     {
         default:
-            // If no connection was established, the role won't be either.
-            // In this case, start both advertising and scanning.
+            // If no connection was established, the role is not established either.
+            // In this case, start both the advertising and the scanning.
             advertising_start();
             scan_start();
             break;
@@ -1048,7 +1053,7 @@ void cli_process(void)
 
 /**@brief Function for handling the idle state (main loop).
  *
- * @details Handle any pending operation(s), then sleep until the next event occurs.
+ * @details Handles any pending operations, then sleeps until the next event occurs.
  */
 static void idle_state_handle(void)
 {
@@ -1145,6 +1150,7 @@ int main(void)
     gap_params_init();
     gatt_init();
     advertising_data_set();
+    scan_init();
 
     server_init();
     client_init();

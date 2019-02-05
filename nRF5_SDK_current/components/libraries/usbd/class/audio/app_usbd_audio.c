@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2016 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #include "sdk_common.h"
 #if NRF_MODULE_ENABLED(APP_USBD_AUDIO)
@@ -66,9 +66,9 @@ STATIC_ASSERT(sizeof(app_usbd_audio_as_endpoint_desc_t) == 7);
 #define APP_USBD_CDC_AUDIO_STREAMING_EP_IDX 0 /**< Audio streaming isochronous endpoint index */
 
 /**
- * @brief Auxiliary function to access audio class instance data
+ * @brief Auxiliary function to access audio class instance data.
  *
- * @param[in] p_inst Class instance data
+ * @param[in] p_inst Class instance data.
  * @return Audio class instance data @ref app_usbd_audio_t
  */
 static inline app_usbd_audio_t const * audio_get(app_usbd_class_inst_t const * p_inst)
@@ -79,9 +79,9 @@ static inline app_usbd_audio_t const * audio_get(app_usbd_class_inst_t const * p
 
 
 /**
- * @brief Auxiliary function to access audio class context data
+ * @brief Auxiliary function to access audio class context data.
  *
- * @param[in] p_audio    Audio class instance data
+ * @param[in] p_audio    Audio class instance data.
  * @return Audio class context data @ref app_usbd_audio_ctx_t
  */
 static inline app_usbd_audio_ctx_t * audio_ctx_get(app_usbd_audio_t const * p_audio)
@@ -93,9 +93,9 @@ static inline app_usbd_audio_ctx_t * audio_ctx_get(app_usbd_audio_t const * p_au
 
 
 /**
- * @brief User event handler
+ * @brief User event handler.
  *
- * @param[in] p_inst        Class instance
+ * @param[in] p_inst        Class instance.
  * @param[in] event user    Event type @ref app_usbd_audio_user_event_t
  */
 static inline void user_event_handler(
@@ -112,11 +112,11 @@ static inline void user_event_handler(
 
 
 /**
- * @brief Select interface
+ * @brief Select interface.
  *
- * @param[in,out] p_inst    Instance of the class
- * @param[in]     iface_idx Index of the interface inside class structure
- * @param[in]     alternate Alternate setting that should be selected
+ * @param[in,out] p_inst    Instance of the class.
+ * @param[in]     iface_idx Index of the interface inside class structure.
+ * @param[in]     alternate Alternate setting that should be selected.
  */
 static ret_code_t iface_select(
     app_usbd_class_inst_t const * const p_inst,
@@ -194,14 +194,14 @@ static uint8_t iface_selection_get(
 
 
 /**
- * @brief Internal SETUP standard IN request handler
+ * @brief Internal SETUP standard IN request handler.
  *
- * @param[in] p_inst        Generic class instance
- * @param[in] p_setup_ev    Setup event
+ * @param[in] p_inst        Generic class instance.
+ * @param[in] p_setup_ev    Setup event.
  *
- * @return Standard error code
- * @retval NRF_SUCCESS if request handled correctly
- * @retval NRF_ERROR_NOT_SUPPORTED if request is not supported
+ * @return Standard error code.
+ * @retval NRF_SUCCESS              Request handled correctly.
+ * @retval NRF_ERROR_NOT_SUPPORTED  Request is not supported.
  */
 static ret_code_t setup_req_std_in(app_usbd_class_inst_t const * p_inst,
                                    app_usbd_setup_evt_t const  * p_setup_ev)
@@ -236,14 +236,14 @@ static ret_code_t setup_req_std_in(app_usbd_class_inst_t const * p_inst,
 
 
 /**
- * @brief Internal SETUP class IN request handler
+ * @brief Internal SETUP class IN request handler.
  *
- * @param[in] p_inst        Generic class instance
- * @param[in] p_setup_ev    Setup event
+ * @param[in] p_inst        Generic class instance.
+ * @param[in] p_setup_ev    Setup event.
  *
- * @return Standard error code
- * @retval NRF_SUCCESS if request handled correctly
- * @retval NRF_ERROR_NOT_SUPPORTED if request is not supported
+ * @return Standard error code.
+ * @retval NRF_SUCCESS              Request handled correctly.
+ * @retval NRF_ERROR_NOT_SUPPORTED  Request is not supported.
  */
 static ret_code_t setup_req_class_in(
     app_usbd_class_inst_t const * p_inst,
@@ -350,14 +350,14 @@ static ret_code_t audio_req_out(
 
 
 /**
- * @brief Internal SETUP class OUT request handler
+ * @brief Internal SETUP class OUT request handler.
  *
- * @param[in] p_inst        Generic class instance
- * @param[in] p_setup_ev    Setup event
+ * @param[in] p_inst        Generic class instance.
+ * @param[in] p_setup_ev    Setup event.
  *
  * @return Standard error code
- * @retval NRF_SUCCESS if request handled correctly
- * @retval NRF_ERROR_NOT_SUPPORTED if request is not supported
+ * @retval NRF_SUCCESS              Request handled correctly.
+ * @retval NRF_ERROR_NOT_SUPPORTED  Request is not supported.
  */
 static ret_code_t setup_req_class_out(
     app_usbd_class_inst_t const * p_inst,
@@ -381,14 +381,14 @@ static ret_code_t setup_req_class_out(
 
 
 /**
- * @brief Control endpoint handle
+ * @brief Control endpoint handle.
  *
- * @param[in] p_inst        Generic class instance
- * @param[in] p_setup_ev    Setup event
+ * @param[in] p_inst        Generic class instance.
+ * @param[in] p_setup_ev    Setup event.
  *
- * @return Standard error code
- * @retval NRF_SUCCESS if request handled correctly
- * @retval NRF_ERROR_NOT_SUPPORTED if request is not supported
+ * @return Standard error code.
+ * @retval NRF_SUCCESS              Request handled correctly.
+ * @retval NRF_ERROR_NOT_SUPPORTED  Request is not supported.
  */
 static ret_code_t setup_event_handler(
     app_usbd_class_inst_t const * p_inst,
@@ -428,13 +428,13 @@ static ret_code_t setup_event_handler(
 
 
 /**
- * @brief Endpoint IN event handler
+ * @brief Endpoint IN event handler.
  *
- * @param[in] p_inst        Generic class instance
+ * @param[in] p_inst        Generic class instance.
  *
- * @return Standard error code
- * @retval NRF_SUCCESS if request handled correctly
- * @retval NRF_ERROR_NOT_SUPPORTED if request is not supported
+ * @return Standard error code.
+ * @retval NRF_SUCCESS              Request handled correctly.
+ * @retval NRF_ERROR_NOT_SUPPORTED  Request is not supported.
  */
 static ret_code_t endpoint_in_event_handler(app_usbd_class_inst_t const * p_inst)
 {
@@ -444,13 +444,13 @@ static ret_code_t endpoint_in_event_handler(app_usbd_class_inst_t const * p_inst
 
 
 /**
- * @brief Endpoint OUT event handler
+ * @brief Endpoint OUT event handler.
  *
- * @param[in] p_inst        Generic class instance
+ * @param[in] p_inst        Generic class instance.
  *
- * @return Standard error code
- * @retval NRF_SUCCESS if request handled correctly
- * @retval NRF_ERROR_NOT_SUPPORTED if request is not supported
+ * @return Standard error code.
+ * @retval NRF_SUCCESS              Request handled correctly.
+ * @retval NRF_ERROR_NOT_SUPPORTED  Request is not supported.
  */
 static ret_code_t endpoint_out_event_handler(app_usbd_class_inst_t const * p_inst)
 {
@@ -460,11 +460,11 @@ static ret_code_t endpoint_out_event_handler(app_usbd_class_inst_t const * p_ins
 
 
 /**
- * @brief Auxiliary function to access isochronous endpoint address
+ * @brief Auxiliary function to access isochronous endpoint address.
  *
- * @param[in] p_inst Class instance data
+ * @param[in] p_inst Class instance data.
  *
- * @return ISO endpoint address
+ * @return ISO endpoint address.
  */
 static inline nrf_drv_usbd_ep_t ep_iso_addr_get(app_usbd_class_inst_t const * p_inst)
 {
@@ -518,10 +518,28 @@ static ret_code_t audio_event_handler(
             break;
 
         case APP_USBD_EVT_INST_APPEND:
+        {
+            app_usbd_audio_t const * p_audio     = audio_get(p_inst);
+            app_usbd_audio_ctx_t   * p_audio_ctx = audio_ctx_get(p_audio);
+            if(p_audio_ctx->sof_handler != NULL)
+            {
+                ret = app_usbd_class_sof_interrupt_register(p_inst, p_audio_ctx->sof_handler);
+                APP_ERROR_CHECK(ret);
+            }
             break;
+        }
 
         case APP_USBD_EVT_INST_REMOVE:
+        {
+            app_usbd_audio_t const * p_audio     = audio_get(p_inst);
+            app_usbd_audio_ctx_t   * p_audio_ctx = audio_ctx_get(p_audio);
+            if(p_audio_ctx->sof_handler != NULL)
+            {
+                ret = app_usbd_class_sof_interrupt_unregister(p_inst);
+                APP_ERROR_CHECK(ret);
+            }
             break;
+        }
 
         case APP_USBD_EVT_STARTED:
             break;
@@ -542,6 +560,11 @@ static size_t audio_get_format_descriptor_size(app_usbd_class_inst_t const * p_i
 {
     app_usbd_audio_t const * p_audio = audio_get(p_inst);
 
+    if (p_audio->specific.inst.p_format_dsc == NULL)
+    {
+        return 0;
+    }
+
     return p_audio->specific.inst.p_format_dsc->size;
 }
 
@@ -558,6 +581,11 @@ static size_t audio_get_format_descriptor_data(app_usbd_class_inst_t const * p_i
 static size_t audio_get_input_descriptor_size(app_usbd_class_inst_t const * p_inst)
 {
     app_usbd_audio_t const * p_audio = audio_get(p_inst);
+
+    if (p_audio->specific.inst.p_input_dsc == NULL)
+    {
+        return 0;
+    }
 
     return p_audio->specific.inst.p_input_dsc->size;
 }
@@ -576,6 +604,11 @@ static size_t audio_get_output_descriptor_size(app_usbd_class_inst_t const * p_i
 {
     app_usbd_audio_t const * p_audio = audio_get(p_inst);
 
+    if (p_audio->specific.inst.p_output_dsc == NULL)
+    {
+        return 0;
+    }
+
     return p_audio->specific.inst.p_output_dsc->size;
 }
 
@@ -592,6 +625,11 @@ static size_t audio_get_output_descriptor_data(app_usbd_class_inst_t const * p_i
 static size_t audio_get_feature_descriptor_size(app_usbd_class_inst_t const * p_inst)
 {
     app_usbd_audio_t const * p_audio = audio_get(p_inst);
+
+    if (p_audio->specific.inst.p_feature_dsc == NULL)
+    {
+        return 0;
+    }
 
     return p_audio->specific.inst.p_feature_dsc->size;
 }
@@ -809,5 +847,15 @@ ret_code_t app_usbd_audio_class_tx_start(
     return app_usbd_ep_transfer(ep_addr, &transfer);
 }
 
+ret_code_t app_usbd_audio_sof_interrupt_register(app_usbd_class_inst_t const * p_inst, 
+                                                 app_usbd_sof_interrupt_handler_t handler)
+{
+    app_usbd_audio_t const * p_audio     = audio_get(p_inst);
+    app_usbd_audio_ctx_t   * p_audio_ctx = audio_ctx_get(p_audio);
+
+    p_audio_ctx->sof_handler = handler;
+
+    return NRF_SUCCESS;
+}
 
 #endif //NRF_MODULE_ENABLED(APP_USBD_AUDIO)

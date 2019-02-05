@@ -81,7 +81,7 @@ static void blenetif_input(struct netif  * p_netif,  uint8_t * p_payload, uint16
     NRF_DRIVER_ENTRY();
     NRF_DRIVER_DUMP(p_payload, payload_len);
 
-    //Allocate a pbuf chain of pbufs from the pool.
+    // Allocate a pbuf chain of pbufs from the pool.
     p_buffer = pbuf_alloc(PBUF_RAW, payload_len, PBUF_REF);
 
     if (p_buffer != NULL)
@@ -145,16 +145,16 @@ static err_t blenetif_output(struct netif * p_netif, struct pbuf * p_buffer, con
 /** @brief Initialization once network interface has been added. */
 static err_t blenetif_init(struct netif * p_netif)
 {
-    //Set link MTU size.
+    // Set link MTU size.
     p_netif->mtu = BLE_IPSP_MTU;
 
-    //Device capabilities and link status
+    // Device capabilities and link status
     p_netif->flags = NETIF_FLAG_LINK_UP;
 
-    //Indicate interface link is up.
+    // Indicate interface link is up.
     netif_set_up(p_netif);
 
-    //Enable Address Auto configuration.
+    // Enable Address Auto configuration.
     p_netif->ip6_autoconfig_enabled = 1;
 
     return ERR_OK;
@@ -247,7 +247,7 @@ static void blenetif_transport_callback(iot_interface_t     * p_interface,
 
                 err_code = iot_context_manager_table_free(p_interface);
 
-                if(err_code == NRF_SUCCESS)
+                if (err_code == NRF_SUCCESS)
                 {
                     NRF_DRIVER_ERR("Successfully freed context table!");
                 }
@@ -263,7 +263,7 @@ static void blenetif_transport_callback(iot_interface_t     * p_interface,
                 blenetif_input(&p_blenetif->netif,
                                p_event->event_param.rx_event_param.p_packet,
                                p_event->event_param.rx_event_param.packet_len);
-                nrf_free( p_event->event_param.rx_event_param.p_packet);
+                nrf_free(p_event->event_param.rx_event_param.p_packet);
             }
             else
             {
@@ -289,9 +289,9 @@ uint32_t nrf_driver_init(void)
 
     err_code = iot_context_manager_init();
 
-    if(err_code == NRF_SUCCESS)
+    if (err_code == NRF_SUCCESS)
     {
-        /* 6lowpan initialization and callback registration. */
+        // 6lowpan initialization and callback registration.
         err_code = ble_6lowpan_init(&init_param);
 
         for (index = 0; index < BLE_6LOWPAN_MAX_INTERFACE; index++)

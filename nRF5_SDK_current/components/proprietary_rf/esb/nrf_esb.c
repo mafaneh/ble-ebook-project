@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2016 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 
 #include "nrf_error.h"
@@ -47,15 +47,13 @@
 #include "sdk_common.h"
 #include "sdk_macros.h"
 #include "app_util.h"
-#include "nrf_log.h"
 #include "nrf_delay.h"
 
 #define BIT_MASK_UINT_8(x) (0xFF >> (8 - (x)))
-#define NRF_ESB_PIPE_COUNT 8
 
 // Constant parameters
 #define RX_WAIT_FOR_ACK_TIMEOUT_US_2MBPS        (48)        /**< 2 Mb RX wait for acknowledgment time-out value. Smallest reliable value - 43. */
-#define RX_WAIT_FOR_ACK_TIMEOUT_US_1MBPS        (64)        /**< 1 Mb RX wait for acknowledgment time-out value. Smallest reliable value - 59. */
+#define RX_WAIT_FOR_ACK_TIMEOUT_US_1MBPS        (73)        /**< 1 Mb RX wait for acknowledgment time-out value. Smallest reliable value - 68. */
 #define RX_WAIT_FOR_ACK_TIMEOUT_US_250KBPS      (250)       /**< 250 Kb RX wait for acknowledgment time-out value. */
 #define RX_WAIT_FOR_ACK_TIMEOUT_US_1MBPS_BLE    (73)        /**< 1 Mb RX wait for acknowledgment time-out (combined with BLE). Smallest reliable value - 68.*/
 
@@ -88,7 +86,7 @@ typedef enum {
 #define VERIFY_PAYLOAD_LENGTH(p)                            \
 do                                                          \
 {                                                           \
-    if (p->length == 0 ||                                    \
+    if (p->length == 0 ||                                   \
        p->length > NRF_ESB_MAX_PAYLOAD_LENGTH ||            \
        (m_config_local.protocol == NRF_ESB_PROTOCOL_ESB &&  \
         p->length > m_config_local.payload_length))         \
@@ -147,7 +145,7 @@ typedef struct
 
 // Module state
 static bool                         m_esb_initialized           = false;
-static nrf_esb_mainstate_t          m_nrf_esb_mainstate         = NRF_ESB_STATE_IDLE;
+static volatile nrf_esb_mainstate_t m_nrf_esb_mainstate         = NRF_ESB_STATE_IDLE;
 static nrf_esb_payload_t          * mp_current_payload;
 
 static nrf_esb_event_handler_t      m_event_handler;
@@ -178,11 +176,7 @@ static volatile uint32_t            m_retransmits_remaining;
 static volatile uint32_t            m_last_tx_attempts;
 static volatile uint32_t            m_wait_for_ack_timeout_us;
 
-// nRF52 address workaround enable
-#ifdef NRF52
-static bool                         m_address_hang_fix_enable = true;
-#endif
-static uint32_t                     m_radio_shorts_common = _RADIO_SHORTS_COMMON;
+static volatile uint32_t            m_radio_shorts_common = _RADIO_SHORTS_COMMON;
 
 // These function pointers are changed dynamically, depending on protocol configuration and state.
 static void (*on_radio_disabled)(void) = 0;
@@ -206,10 +200,11 @@ static void on_radio_disabled_rx_ack(void);
 // Function to do bytewise bit-swap on an unsigned 32-bit value
 static uint32_t bytewise_bit_swap(uint8_t const * p_inp)
 {
-    uint32_t inp = (*(uint32_t*)p_inp);
 #if __CORTEX_M == (0x04U)
+    uint32_t inp = (*(uint32_t*)p_inp);
     return __REV((uint32_t)__RBIT(inp)); //lint -esym(628, __rev) -esym(526, __rev) -esym(628, __rbit) -esym(526, __rbit) */
 #else
+    uint32_t inp = (p_inp[3] << 24) | (p_inp[2] << 16) | (p_inp[1] << 8) | (p_inp[0]);
     inp = (inp & 0xF0F0F0F0) >> 4 | (inp & 0x0F0F0F0F) << 4;
     inp = (inp & 0xCCCCCCCC) >> 2 | (inp & 0x33333333) << 2;
     inp = (inp & 0xAAAAAAAA) >> 1 | (inp & 0x55555555) << 1;
@@ -218,24 +213,59 @@ static uint32_t bytewise_bit_swap(uint8_t const * p_inp)
 }
 
 
-// Internal function to convert base addresses from nRF24L type addressing to nRF51 type addressing
+// Convert a base address from nRF24L format to nRF5 format
 static uint32_t addr_conv(uint8_t const* p_addr)
 {
     return __REV(bytewise_bit_swap(p_addr)); //lint -esym(628, __rev) -esym(526, __rev) */
 }
 
-
+#ifdef NRF52832_XXAA
 static ret_code_t apply_address_workarounds()
 {
-#ifdef NRF52
-    //  Set up radio parameters.
-    NRF_RADIO->MODECNF0 = (NRF_RADIO->MODECNF0 & ~RADIO_MODECNF0_RU_Msk) | RADIO_MODECNF0_RU_Default << RADIO_MODECNF0_RU_Pos;
+    if ((NRF_FICR->INFO.VARIANT & 0x0000FF00) == 0x00004200) //Check if the device is an nRF52832 Rev. 1.
+    {
+        // Workaround for nRF52832 Rev 1 erratas
+        //  Set up radio parameters.
+        NRF_RADIO->MODECNF0 = (NRF_RADIO->MODECNF0 & ~RADIO_MODECNF0_RU_Msk) | RADIO_MODECNF0_RU_Default << RADIO_MODECNF0_RU_Pos;
 
-    // Workaround for nRF52832 Rev 1 Errata 102 and nRF52832 Rev 1 Errata 106. This will reduce sensitivity by 3dB.
-    *((volatile uint32_t *)0x40001774) = (*((volatile uint32_t *)0x40001774) & 0xFFFFFFFE) | 0x01000000;
-#endif
+        // Workaround for nRF52832 Rev 1 Errata 102 and nRF52832 Rev 1 Errata 106. This will reduce sensitivity by 3dB.
+        *((volatile uint32_t *)0x40001774) = (*((volatile uint32_t *)0x40001774) & 0xFFFFFFFE) | 0x01000000;
+    }
+
+    if ((NRF_FICR->INFO.VARIANT & 0x0000FF00) == 0x00004500)//Check if the device is an nRF52832 Rev. 2.
+    {
+        /*
+        Workaround for nRF52832 Rev 2 Errata 143
+        Check if the most significant bytes of address 0 (including prefix) match those of another address.
+        It's recommended to use a unique address 0 since this will avoid the 3dBm penalty incurred from the workaround.
+        */
+        uint32_t base_address_mask = m_esb_addr.addr_length == 5 ? 0xFFFF0000 : 0xFF000000;
+
+        // Load the two addresses before comparing them to ensure defined ordering of volatile accesses.
+        uint32_t addr0 = NRF_RADIO->BASE0 & base_address_mask;
+        uint32_t addr1 = NRF_RADIO->BASE1 & base_address_mask;
+        if (addr0 == addr1)
+        {
+            uint32_t prefix0 = NRF_RADIO->PREFIX0 & 0x000000FF;
+            uint32_t prefix1 = (NRF_RADIO->PREFIX0 & 0x0000FF00) >> 8;
+            uint32_t prefix2 = (NRF_RADIO->PREFIX0 & 0x00FF0000) >> 16;
+            uint32_t prefix3 = (NRF_RADIO->PREFIX0 & 0xFF000000) >> 24;
+            uint32_t prefix4 = NRF_RADIO->PREFIX1 & 0x000000FF;
+            uint32_t prefix5 = (NRF_RADIO->PREFIX1 & 0x0000FF00) >> 8;
+            uint32_t prefix6 = (NRF_RADIO->PREFIX1 & 0x00FF0000) >> 16;
+            uint32_t prefix7 = (NRF_RADIO->PREFIX1 & 0xFF000000) >> 24;
+            
+            if (prefix0 == prefix1 || prefix0 == prefix2 || prefix0 == prefix3 || prefix0 == prefix4 || 
+                prefix0 == prefix5 || prefix0 == prefix6 || prefix0 == prefix7)
+            {
+                // This will cause a 3dBm sensitivity loss, avoid using such address combinations if possible.
+                *(volatile uint32_t *) 0x40001774 = ((*(volatile uint32_t *) 0x40001774) & 0xfffffffe) | 0x01000000; 
+            }
+        }
+    }
     return NRF_SUCCESS;
 }
+#endif
 
 
 static void update_rf_payload_format_esb_dpl(uint32_t payload_length)
@@ -306,7 +336,7 @@ static bool update_radio_bitrate()
     switch (m_config_local.bitrate)
     {
         case NRF_ESB_BITRATE_2MBPS:
-#ifdef NRF52
+#ifdef NRF52_SERIES
         case NRF_ESB_BITRATE_2MBPS_BLE:
 #endif
             m_wait_for_ack_timeout_us = RX_WAIT_FOR_ACK_TIMEOUT_US_2MBPS;
@@ -420,20 +450,22 @@ static void initialize_fifos()
 }
 
 
-static void tx_fifo_remove_last()
+uint32_t nrf_esb_skip_tx()
 {
-    if (m_tx_fifo.count > 0)
+    VERIFY_TRUE(m_esb_initialized, NRF_ERROR_INVALID_STATE);
+    VERIFY_TRUE(m_tx_fifo.count > 0, NRF_ERROR_BUFFER_EMPTY);
+
+    DISABLE_RF_IRQ();
+
+    m_tx_fifo.count--;
+    if (++m_tx_fifo.exit_point >= NRF_ESB_TX_FIFO_SIZE)
     {
-        DISABLE_RF_IRQ();
-
-        m_tx_fifo.count--;
-        if (++m_tx_fifo.exit_point >= NRF_ESB_TX_FIFO_SIZE)
-        {
-            m_tx_fifo.exit_point = 0;
-        }
-
-        ENABLE_RF_IRQ();
+        m_tx_fifo.exit_point = 0;
     }
+
+    ENABLE_RF_IRQ();
+
+    return NRF_SUCCESS;
 }
 
 /** @brief  Function to push the content of the rx_buffer to the RX FIFO.
@@ -506,7 +538,7 @@ static void ppi_init()
     NRF_PPI->CH[NRF_ESB_PPI_TIMER_START].TEP = (uint32_t)&NRF_ESB_SYS_TIMER->TASKS_START;
 
     NRF_PPI->CH[NRF_ESB_PPI_TIMER_STOP].EEP  = (uint32_t)&NRF_RADIO->EVENTS_ADDRESS;
-    NRF_PPI->CH[NRF_ESB_PPI_TIMER_STOP].TEP  = (uint32_t)&NRF_ESB_SYS_TIMER->TASKS_STOP;
+    NRF_PPI->CH[NRF_ESB_PPI_TIMER_STOP].TEP  = (uint32_t)&NRF_ESB_SYS_TIMER->TASKS_SHUTDOWN;
 
     NRF_PPI->CH[NRF_ESB_PPI_RX_TIMEOUT].EEP  = (uint32_t)&NRF_ESB_SYS_TIMER->EVENTS_COMPARE[0];
     NRF_PPI->CH[NRF_ESB_PPI_RX_TIMEOUT].TEP  = (uint32_t)&NRF_RADIO->TASKS_DISABLE;
@@ -595,7 +627,7 @@ static void start_tx_transaction()
 static void on_radio_disabled_tx_noack()
 {
     m_interrupt_flags |= NRF_ESB_INT_TX_SUCCESS_MSK;
-    tx_fifo_remove_last();
+    (void) nrf_esb_skip_tx();
 
     if (m_tx_fifo.count == 0)
     {
@@ -654,12 +686,12 @@ static void on_radio_disabled_tx_wait_for_ack()
     // If the radio has received a packet and the CRC status is OK
     if (NRF_RADIO->EVENTS_END && NRF_RADIO->CRCSTATUS != 0)
     {
-        NRF_ESB_SYS_TIMER->TASKS_STOP = 1;
+        NRF_ESB_SYS_TIMER->TASKS_SHUTDOWN = 1;
         NRF_PPI->CHENCLR = (1 << NRF_ESB_PPI_TX_START);
         m_interrupt_flags |= NRF_ESB_INT_TX_SUCCESS_MSK;
         m_last_tx_attempts = m_config_local.retransmit_count - m_retransmits_remaining + 1;
 
-        tx_fifo_remove_last();
+        (void) nrf_esb_skip_tx();
 
         if (m_config_local.protocol != NRF_ESB_PROTOCOL_ESB && m_rx_payload_buffer[0] > 0)
         {
@@ -684,7 +716,7 @@ static void on_radio_disabled_tx_wait_for_ack()
     {
         if (m_retransmits_remaining-- == 0)
         {
-            NRF_ESB_SYS_TIMER->TASKS_STOP = 1;
+            NRF_ESB_SYS_TIMER->TASKS_SHUTDOWN = 1;
             NRF_PPI->CHENCLR = (1 << NRF_ESB_PPI_TX_START);
             // All retransmits are expended, and the TX operation is suspended
             m_last_tx_attempts = m_config_local.retransmit_count + 1;
@@ -962,38 +994,15 @@ uint32_t nrf_esb_init(nrf_esb_config_t const * p_config)
     NVIC_SetPriority(ESB_EVT_IRQ, m_config_local.event_irq_priority & ESB_IRQ_PRIORITY_MSK);
     NVIC_EnableIRQ(ESB_EVT_IRQ);
 
-#ifdef NRF52
-    if(m_address_hang_fix_enable)
-    {
-        // Setup a timeout timer to start on an ADDRESS match, and stop on a BCMATCH event.
-        // If the BCMATCH event never occurs the CC[0] event will fire, and the timer interrupt will disable the radio to recover.
-        m_radio_shorts_common |= RADIO_SHORTS_ADDRESS_BCSTART_Msk;
-        NRF_RADIO->BCC = 2;
-        NRF_ESB_BUGFIX_TIMER->BITMODE = TIMER_BITMODE_BITMODE_32Bit << TIMER_BITMODE_BITMODE_Pos;
-        NRF_ESB_BUGFIX_TIMER->PRESCALER = 4;
-        NRF_ESB_BUGFIX_TIMER->CC[0] = 5;
-        NRF_ESB_BUGFIX_TIMER->SHORTS = TIMER_SHORTS_COMPARE0_STOP_Msk | TIMER_SHORTS_COMPARE0_CLEAR_Msk;
-        NRF_ESB_BUGFIX_TIMER->MODE = TIMER_MODE_MODE_Timer << TIMER_MODE_MODE_Pos;
-        NRF_ESB_BUGFIX_TIMER->INTENSET = TIMER_INTENSET_COMPARE0_Msk;
-        NRF_ESB_BUGFIX_TIMER->TASKS_CLEAR = 1;
-        NVIC_SetPriority(NRF_ESB_BUGFIX_TIMER_IRQn, 5);
-        NVIC_EnableIRQ(NRF_ESB_BUGFIX_TIMER_IRQn);
-
-        NRF_PPI->CH[NRF_ESB_PPI_BUGFIX1].EEP = (uint32_t)&NRF_RADIO->EVENTS_ADDRESS;
-        NRF_PPI->CH[NRF_ESB_PPI_BUGFIX1].TEP = (uint32_t)&NRF_ESB_BUGFIX_TIMER->TASKS_START;
-
-        NRF_PPI->CH[NRF_ESB_PPI_BUGFIX2].EEP = (uint32_t)&NRF_RADIO->EVENTS_BCMATCH;
-        NRF_PPI->CH[NRF_ESB_PPI_BUGFIX2].TEP = (uint32_t)&NRF_ESB_BUGFIX_TIMER->TASKS_STOP;
-
-        NRF_PPI->CH[NRF_ESB_PPI_BUGFIX3].EEP = (uint32_t)&NRF_RADIO->EVENTS_BCMATCH;
-        NRF_PPI->CH[NRF_ESB_PPI_BUGFIX3].TEP = (uint32_t)&NRF_ESB_BUGFIX_TIMER->TASKS_CLEAR;
-
-        NRF_PPI->CHENSET = (1 << NRF_ESB_PPI_BUGFIX1) | (1 << NRF_ESB_PPI_BUGFIX2) | (1 << NRF_ESB_PPI_BUGFIX3);
-    }
-#endif
-
     m_nrf_esb_mainstate = NRF_ESB_STATE_IDLE;
     m_esb_initialized = true;
+
+
+#ifdef NRF52832_XXAA
+if ((NRF_FICR->INFO.VARIANT & 0x0000FF00) == 0x00004500) //Check if the device is an nRF52832 Rev. 2.
+    //Workaround for nRF52832 rev 2 errata 182
+    *(volatile uint32_t *) 0x4000173C |= (1 << 10);
+#endif
 
     return NRF_SUCCESS;
 }
@@ -1024,6 +1033,7 @@ uint32_t nrf_esb_disable(void)
                        (1 << NRF_ESB_PPI_TX_START);
 
     m_nrf_esb_mainstate = NRF_ESB_STATE_IDLE;
+    m_esb_initialized = false;
 
     reset_fifos();
 
@@ -1228,7 +1238,7 @@ uint32_t nrf_esb_pop_tx(void)
 
     DISABLE_RF_IRQ();
 
-    if (++m_tx_fifo.entry_point >= NRF_ESB_TX_FIFO_SIZE)
+    if (--m_tx_fifo.entry_point >= NRF_ESB_TX_FIFO_SIZE)
     {
         m_tx_fifo.entry_point = 0;
     }
@@ -1263,46 +1273,62 @@ uint32_t nrf_esb_set_address_length(uint8_t length)
     VERIFY_TRUE(m_nrf_esb_mainstate == NRF_ESB_STATE_IDLE, NRF_ERROR_BUSY);
     VERIFY_TRUE(length > 2 && length < 6, NRF_ERROR_INVALID_PARAM);
     
-    /* 
-    Workaround for nRF52832 Rev 1 Errata 107
-    Check if pipe 0 or pipe 1-7 has a 'zero address'.
-    Avoid using access addresses in the following pattern (where X is don't care): 
-    ADDRLEN=5 
-    BASE0 = 0x0000XXXX, PREFIX0 = 0xXXXXXX00 
-    BASE1 = 0x0000XXXX, PREFIX0 = 0xXXXX00XX 
-    BASE1 = 0x0000XXXX, PREFIX0 = 0xXX00XXXX 
-    BASE1 = 0x0000XXXX, PREFIX0 = 0x00XXXXXX 
-    BASE1 = 0x0000XXXX, PREFIX1 = 0xXXXXXX00 
-    BASE1 = 0x0000XXXX, PREFIX1 = 0xXXXX00XX 
-    BASE1 = 0x0000XXXX, PREFIX1 = 0xXX00XXXX 
-    BASE1 = 0x0000XXXX, PREFIX1 = 0x00XXXXXX 
-
-    ADDRLEN=4 
-    BASE0 = 0x00XXXXXX, PREFIX0 = 0xXXXXXX00 
-    BASE1 = 0x00XXXXXX, PREFIX0 = 0xXXXX00XX 
-    BASE1 = 0x00XXXXXX, PREFIX0 = 0xXX00XXXX 
-    BASE1 = 0x00XXXXXX, PREFIX0 = 0x00XXXXXX 
-    BASE1 = 0x00XXXXXX, PREFIX1 = 0xXXXXXX00 
-    BASE1 = 0x00XXXXXX, PREFIX1 = 0xXXXX00XX 
-    BASE1 = 0x00XXXXXX, PREFIX1 = 0xXX00XXXX 
-    BASE1 = 0x00XXXXXX, PREFIX1 = 0x00XXXXXX
-    */
+#ifdef NRF52832_XXAA
     uint32_t base_address_mask = length == 5 ? 0xFFFF0000 : 0xFF000000;
-    if((NRF_RADIO->BASE0 & base_address_mask) == 0 && (NRF_RADIO->PREFIX0 & 0x000000FF) == 0)
+    if ((NRF_FICR->INFO.VARIANT & 0x0000FF00) == 0x00004200)  //Check if the device is an nRF52832 Rev. 1.
     {
-        return NRF_ERROR_INVALID_PARAM;
+        /* 
+        Workaround for nRF52832 Rev 1 Errata 107
+        Check if pipe 0 or pipe 1-7 has a 'zero address'.
+        Avoid using access addresses in the following pattern (where X is don't care): 
+        ADDRLEN=5 
+        BASE0 = 0x0000XXXX, PREFIX0 = 0xXXXXXX00 
+        BASE1 = 0x0000XXXX, PREFIX0 = 0xXXXX00XX 
+        BASE1 = 0x0000XXXX, PREFIX0 = 0xXX00XXXX 
+        BASE1 = 0x0000XXXX, PREFIX0 = 0x00XXXXXX 
+        BASE1 = 0x0000XXXX, PREFIX1 = 0xXXXXXX00 
+        BASE1 = 0x0000XXXX, PREFIX1 = 0xXXXX00XX 
+        BASE1 = 0x0000XXXX, PREFIX1 = 0xXX00XXXX 
+        BASE1 = 0x0000XXXX, PREFIX1 = 0x00XXXXXX 
+
+        ADDRLEN=4 
+        BASE0 = 0x00XXXXXX, PREFIX0 = 0xXXXXXX00 
+        BASE1 = 0x00XXXXXX, PREFIX0 = 0xXXXX00XX 
+        BASE1 = 0x00XXXXXX, PREFIX0 = 0xXX00XXXX 
+        BASE1 = 0x00XXXXXX, PREFIX0 = 0x00XXXXXX 
+        BASE1 = 0x00XXXXXX, PREFIX1 = 0xXXXXXX00 
+        BASE1 = 0x00XXXXXX, PREFIX1 = 0xXXXX00XX 
+        BASE1 = 0x00XXXXXX, PREFIX1 = 0xXX00XXXX 
+        BASE1 = 0x00XXXXXX, PREFIX1 = 0x00XXXXXX
+        */
+        if ((NRF_RADIO->BASE0 & base_address_mask) == 0 && (NRF_RADIO->PREFIX0 & 0x000000FF) == 0)
+        {
+            return NRF_ERROR_INVALID_PARAM;
+        }
+        if ((NRF_RADIO->BASE1 & base_address_mask) == 0 && ((NRF_RADIO->PREFIX0 & 0x0000FF00) == 0 ||(NRF_RADIO->PREFIX0 & 0x00FF0000) == 0 || (NRF_RADIO->PREFIX0 & 0xFF000000) == 0 ||
+           (NRF_RADIO->PREFIX1 & 0xFF000000) == 0 || (NRF_RADIO->PREFIX1 & 0x00FF0000) == 0 ||(NRF_RADIO->PREFIX1 & 0x0000FF00) == 0 || (NRF_RADIO->PREFIX1 & 0x000000FF) == 0))
+        {
+            return NRF_ERROR_INVALID_PARAM;
+        }
     }
-    if((NRF_RADIO->BASE1 & base_address_mask) == 0 && ((NRF_RADIO->PREFIX0 & 0x0000FF00) == 0 ||(NRF_RADIO->PREFIX0 & 0x00FF0000) == 0 || (NRF_RADIO->PREFIX0 & 0xFF000000) == 0 ||
-       (NRF_RADIO->PREFIX1 & 0xFF000000) == 0 || (NRF_RADIO->PREFIX1 & 0x00FF0000) == 0 ||(NRF_RADIO->PREFIX1 & 0x0000FF00) == 0 || (NRF_RADIO->PREFIX1 & 0x000000FF) == 0))
-    {
-        return NRF_ERROR_INVALID_PARAM;
-    }
-    
+#endif
+
     m_esb_addr.addr_length = length;
 
     update_rf_payload_format(m_config_local.payload_length);
 
+#ifdef NRF52832_XXAA
+    if ((NRF_FICR->INFO.VARIANT & 0x0000FF00) == 0x00004500)  //Check if the device is an nRF52832 Rev. 2.
+    {
+        return apply_address_workarounds();
+    }
+    else
+    {
+        return NRF_SUCCESS;
+    }
+#else
     return NRF_SUCCESS;
+#endif
 }
 
 
@@ -1310,42 +1336,52 @@ uint32_t nrf_esb_set_base_address_0(uint8_t const * p_addr)
 {
     VERIFY_TRUE(m_nrf_esb_mainstate == NRF_ESB_STATE_IDLE, NRF_ERROR_BUSY);
     VERIFY_PARAM_NOT_NULL(p_addr);
-    
-    /*
-    Workaround for nRF52832 Rev 1 Errata 107
-    Check if pipe 0 or pipe 1-7 has a 'zero address'.
-    Avoid using access addresses in the following pattern (where X is don't care): 
-    ADDRLEN=5 
-    BASE0 = 0x0000XXXX, PREFIX0 = 0xXXXXXX00 
-    BASE1 = 0x0000XXXX, PREFIX0 = 0xXXXX00XX 
-    BASE1 = 0x0000XXXX, PREFIX0 = 0xXX00XXXX 
-    BASE1 = 0x0000XXXX, PREFIX0 = 0x00XXXXXX 
-    BASE1 = 0x0000XXXX, PREFIX1 = 0xXXXXXX00 
-    BASE1 = 0x0000XXXX, PREFIX1 = 0xXXXX00XX 
-    BASE1 = 0x0000XXXX, PREFIX1 = 0xXX00XXXX 
-    BASE1 = 0x0000XXXX, PREFIX1 = 0x00XXXXXX 
 
-    ADDRLEN=4 
-    BASE0 = 0x00XXXXXX, PREFIX0 = 0xXXXXXX00 
-    BASE1 = 0x00XXXXXX, PREFIX0 = 0xXXXX00XX 
-    BASE1 = 0x00XXXXXX, PREFIX0 = 0xXX00XXXX 
-    BASE1 = 0x00XXXXXX, PREFIX0 = 0x00XXXXXX 
-    BASE1 = 0x00XXXXXX, PREFIX1 = 0xXXXXXX00 
-    BASE1 = 0x00XXXXXX, PREFIX1 = 0xXXXX00XX 
-    BASE1 = 0x00XXXXXX, PREFIX1 = 0xXX00XXXX 
-    BASE1 = 0x00XXXXXX, PREFIX1 = 0x00XXXXXX
-    */
-    uint32_t base_address_mask = m_esb_addr.addr_length == 5 ? 0xFFFF0000 : 0xFF000000;
-    if((addr_conv(p_addr) & base_address_mask) == 0 && (NRF_RADIO->PREFIX0 & 0x000000FF) == 0)
+#ifdef NRF52832_XXAA
+    if ((NRF_FICR->INFO.VARIANT & 0x0000FF00) == 0x00004200)  //Check if the device is an nRF52832 Rev. 1.
     {
-        return NRF_ERROR_INVALID_PARAM;
+        /*
+        Workaround for nRF52832 Rev 1 Errata 107
+        Check if pipe 0 or pipe 1-7 has a 'zero address'.
+        Avoid using access addresses in the following pattern (where X is don't care): 
+        ADDRLEN=5 
+        BASE0 = 0x0000XXXX, PREFIX0 = 0xXXXXXX00 
+        BASE1 = 0x0000XXXX, PREFIX0 = 0xXXXX00XX 
+        BASE1 = 0x0000XXXX, PREFIX0 = 0xXX00XXXX 
+        BASE1 = 0x0000XXXX, PREFIX0 = 0x00XXXXXX 
+        BASE1 = 0x0000XXXX, PREFIX1 = 0xXXXXXX00 
+        BASE1 = 0x0000XXXX, PREFIX1 = 0xXXXX00XX 
+        BASE1 = 0x0000XXXX, PREFIX1 = 0xXX00XXXX 
+        BASE1 = 0x0000XXXX, PREFIX1 = 0x00XXXXXX 
+
+        ADDRLEN=4 
+        BASE0 = 0x00XXXXXX, PREFIX0 = 0xXXXXXX00 
+        BASE1 = 0x00XXXXXX, PREFIX0 = 0xXXXX00XX 
+        BASE1 = 0x00XXXXXX, PREFIX0 = 0xXX00XXXX 
+        BASE1 = 0x00XXXXXX, PREFIX0 = 0x00XXXXXX 
+        BASE1 = 0x00XXXXXX, PREFIX1 = 0xXXXXXX00 
+        BASE1 = 0x00XXXXXX, PREFIX1 = 0xXXXX00XX 
+        BASE1 = 0x00XXXXXX, PREFIX1 = 0xXX00XXXX 
+        BASE1 = 0x00XXXXXX, PREFIX1 = 0x00XXXXXX
+        */
+        uint32_t base_address_mask = m_esb_addr.addr_length == 5 ? 0xFFFF0000 : 0xFF000000;
+        if ((addr_conv(p_addr) & base_address_mask) == 0 && (NRF_RADIO->PREFIX0 & 0x000000FF) == 0)
+        {
+            return NRF_ERROR_INVALID_PARAM;
+        }
     }
+#endif
+
+
 
     memcpy(m_esb_addr.base_addr_p0, p_addr, 4);
 
     update_radio_addresses(NRF_ESB_ADDR_UPDATE_MASK_BASE0);
-
+#ifdef NRF52832_XXAA
     return apply_address_workarounds();
+#else
+    return NRF_SUCCESS;
+#endif
 }
 
 
@@ -1353,43 +1389,55 @@ uint32_t nrf_esb_set_base_address_1(uint8_t const * p_addr)
 {
     VERIFY_TRUE(m_nrf_esb_mainstate == NRF_ESB_STATE_IDLE, NRF_ERROR_BUSY);
     VERIFY_PARAM_NOT_NULL(p_addr);
-    
-    /*
-    Workaround for nRF52832 Rev 1 Errata 107
-    Check if pipe 0 or pipe 1-7 has a 'zero address'.
-    Avoid using access addresses in the following pattern (where X is don't care): 
-    ADDRLEN=5 
-    BASE0 = 0x0000XXXX, PREFIX0 = 0xXXXXXX00 
-    BASE1 = 0x0000XXXX, PREFIX0 = 0xXXXX00XX 
-    BASE1 = 0x0000XXXX, PREFIX0 = 0xXX00XXXX 
-    BASE1 = 0x0000XXXX, PREFIX0 = 0x00XXXXXX 
-    BASE1 = 0x0000XXXX, PREFIX1 = 0xXXXXXX00 
-    BASE1 = 0x0000XXXX, PREFIX1 = 0xXXXX00XX 
-    BASE1 = 0x0000XXXX, PREFIX1 = 0xXX00XXXX 
-    BASE1 = 0x0000XXXX, PREFIX1 = 0x00XXXXXX 
 
-    ADDRLEN=4 
-    BASE0 = 0x00XXXXXX, PREFIX0 = 0xXXXXXX00 
-    BASE1 = 0x00XXXXXX, PREFIX0 = 0xXXXX00XX 
-    BASE1 = 0x00XXXXXX, PREFIX0 = 0xXX00XXXX 
-    BASE1 = 0x00XXXXXX, PREFIX0 = 0x00XXXXXX 
-    BASE1 = 0x00XXXXXX, PREFIX1 = 0xXXXXXX00 
-    BASE1 = 0x00XXXXXX, PREFIX1 = 0xXXXX00XX 
-    BASE1 = 0x00XXXXXX, PREFIX1 = 0xXX00XXXX 
-    BASE1 = 0x00XXXXXX, PREFIX1 = 0x00XXXXXX
-    */
-    uint32_t base_address_mask = m_esb_addr.addr_length == 5 ? 0xFFFF0000 : 0xFF000000;
-    if((addr_conv(p_addr) & base_address_mask) == 0 && ((NRF_RADIO->PREFIX0 & 0x0000FF00) == 0 ||(NRF_RADIO->PREFIX0 & 0x00FF0000) == 0 || (NRF_RADIO->PREFIX0 & 0xFF000000) == 0 ||
-       (NRF_RADIO->PREFIX1 & 0xFF000000) == 0 || (NRF_RADIO->PREFIX1 & 0x00FF0000) == 0 ||(NRF_RADIO->PREFIX1 & 0x0000FF00) == 0 || (NRF_RADIO->PREFIX1 & 0x000000FF) == 0))
+#ifdef NRF52832_XXAA
+    if ((NRF_FICR->INFO.VARIANT & 0x0000FF00) == 0x00004200)  //Check if the device is an nRF52832 Rev. 1.
     {
-        return NRF_ERROR_INVALID_PARAM;
+        /*
+        Workaround for nRF52832 Rev 1 Errata 107
+        Check if pipe 0 or pipe 1-7 has a 'zero address'.
+        Avoid using access addresses in the following pattern (where X is don't care): 
+        ADDRLEN=5 
+        BASE0 = 0x0000XXXX, PREFIX0 = 0xXXXXXX00
+        BASE1 = 0x0000XXXX, PREFIX0 = 0xXXXX00XX
+        BASE1 = 0x0000XXXX, PREFIX0 = 0xXX00XXXX
+        BASE1 = 0x0000XXXX, PREFIX0 = 0x00XXXXXX
+        BASE1 = 0x0000XXXX, PREFIX1 = 0xXXXXXX00
+        BASE1 = 0x0000XXXX, PREFIX1 = 0xXXXX00XX
+        BASE1 = 0x0000XXXX, PREFIX1 = 0xXX00XXXX
+        BASE1 = 0x0000XXXX, PREFIX1 = 0x00XXXXXX
+
+        ADDRLEN=4 
+        BASE0 = 0x00XXXXXX, PREFIX0 = 0xXXXXXX00
+        BASE1 = 0x00XXXXXX, PREFIX0 = 0xXXXX00XX
+        BASE1 = 0x00XXXXXX, PREFIX0 = 0xXX00XXXX
+        BASE1 = 0x00XXXXXX, PREFIX0 = 0x00XXXXXX
+        BASE1 = 0x00XXXXXX, PREFIX1 = 0xXXXXXX00
+        BASE1 = 0x00XXXXXX, PREFIX1 = 0xXXXX00XX
+        BASE1 = 0x00XXXXXX, PREFIX1 = 0xXX00XXXX
+        BASE1 = 0x00XXXXXX, PREFIX1 = 0x00XXXXXX
+        */
+        uint32_t base_address_mask = m_esb_addr.addr_length == 5 ? 0xFFFF0000 : 0xFF000000;
+        if ((addr_conv(p_addr) & base_address_mask) == 0 &&
+            ((NRF_RADIO->PREFIX0 & 0x0000FF00) == 0 ||(NRF_RADIO->PREFIX0 & 0x00FF0000) == 0 ||
+            (NRF_RADIO->PREFIX0 & 0xFF000000) == 0 || (NRF_RADIO->PREFIX1 & 0xFF000000) == 0 ||
+            (NRF_RADIO->PREFIX1 & 0x00FF0000) == 0 ||(NRF_RADIO->PREFIX1 & 0x0000FF00) == 0 ||
+            (NRF_RADIO->PREFIX1 & 0x000000FF) == 0))
+        {
+            return NRF_ERROR_INVALID_PARAM;
+        }
     }
-    
+#endif
+
     memcpy(m_esb_addr.base_addr_p1, p_addr, 4);
 
     update_radio_addresses(NRF_ESB_ADDR_UPDATE_MASK_BASE1);
 
+#ifdef NRF52832_XXAA
     return apply_address_workarounds();
+#else
+    return NRF_SUCCESS;
+#endif
 }
 
 
@@ -1397,48 +1445,53 @@ uint32_t nrf_esb_set_prefixes(uint8_t const * p_prefixes, uint8_t num_pipes)
 {
     VERIFY_TRUE(m_nrf_esb_mainstate == NRF_ESB_STATE_IDLE, NRF_ERROR_BUSY);
     VERIFY_PARAM_NOT_NULL(p_prefixes);
-    VERIFY_TRUE(num_pipes < 9, NRF_ERROR_INVALID_PARAM);
+    VERIFY_TRUE(num_pipes <= NRF_ESB_PIPE_COUNT, NRF_ERROR_INVALID_PARAM);
     
-    /*
-    Workaround for nRF52832 Rev 1 Errata 107
-    Check if pipe 0 or pipe 1-7 has a 'zero address'.
-    Avoid using access addresses in the following pattern (where X is don't care): 
-    ADDRLEN=5 
-    BASE0 = 0x0000XXXX, PREFIX0 = 0xXXXXXX00 
-    BASE1 = 0x0000XXXX, PREFIX0 = 0xXXXX00XX 
-    BASE1 = 0x0000XXXX, PREFIX0 = 0xXX00XXXX 
-    BASE1 = 0x0000XXXX, PREFIX0 = 0x00XXXXXX 
-    BASE1 = 0x0000XXXX, PREFIX1 = 0xXXXXXX00 
-    BASE1 = 0x0000XXXX, PREFIX1 = 0xXXXX00XX 
-    BASE1 = 0x0000XXXX, PREFIX1 = 0xXX00XXXX 
-    BASE1 = 0x0000XXXX, PREFIX1 = 0x00XXXXXX 
-
-    ADDRLEN=4 
-    BASE0 = 0x00XXXXXX, PREFIX0 = 0xXXXXXX00 
-    BASE1 = 0x00XXXXXX, PREFIX0 = 0xXXXX00XX 
-    BASE1 = 0x00XXXXXX, PREFIX0 = 0xXX00XXXX 
-    BASE1 = 0x00XXXXXX, PREFIX0 = 0x00XXXXXX 
-    BASE1 = 0x00XXXXXX, PREFIX1 = 0xXXXXXX00 
-    BASE1 = 0x00XXXXXX, PREFIX1 = 0xXXXX00XX 
-    BASE1 = 0x00XXXXXX, PREFIX1 = 0xXX00XXXX 
-    BASE1 = 0x00XXXXXX, PREFIX1 = 0x00XXXXXX
-    */
-    uint32_t base_address_mask = m_esb_addr.addr_length == 5 ? 0xFFFF0000 : 0xFF000000;
-    if(num_pipes >= 1 && (NRF_RADIO->BASE0 & base_address_mask) == 0 && p_prefixes[0] == 0)
+#ifdef NRF52832_XXAA
+    if ((NRF_FICR->INFO.VARIANT & 0x0000FF00) == 0x00004200)  //Check if the device is an nRF52832 Rev. 1.
     {
-        return NRF_ERROR_INVALID_PARAM;
-    }
+        /*
+        Workaround for nRF52832 Rev 1 Errata 107
+        Check if pipe 0 or pipe 1-7 has a 'zero address'.
+        Avoid using access addresses in the following pattern (where X is don't care): 
+        ADDRLEN=5 
+        BASE0 = 0x0000XXXX, PREFIX0 = 0xXXXXXX00 
+        BASE1 = 0x0000XXXX, PREFIX0 = 0xXXXX00XX 
+        BASE1 = 0x0000XXXX, PREFIX0 = 0xXX00XXXX 
+        BASE1 = 0x0000XXXX, PREFIX0 = 0x00XXXXXX 
+        BASE1 = 0x0000XXXX, PREFIX1 = 0xXXXXXX00 
+        BASE1 = 0x0000XXXX, PREFIX1 = 0xXXXX00XX 
+        BASE1 = 0x0000XXXX, PREFIX1 = 0xXX00XXXX 
+        BASE1 = 0x0000XXXX, PREFIX1 = 0x00XXXXXX 
 
-    if((NRF_RADIO->BASE1 & base_address_mask) == 0)
-    {
-        for (uint8_t i = 1; i < num_pipes; i++)
+        ADDRLEN=4 
+        BASE0 = 0x00XXXXXX, PREFIX0 = 0xXXXXXX00 
+        BASE1 = 0x00XXXXXX, PREFIX0 = 0xXXXX00XX 
+        BASE1 = 0x00XXXXXX, PREFIX0 = 0xXX00XXXX 
+        BASE1 = 0x00XXXXXX, PREFIX0 = 0x00XXXXXX 
+        BASE1 = 0x00XXXXXX, PREFIX1 = 0xXXXXXX00 
+        BASE1 = 0x00XXXXXX, PREFIX1 = 0xXXXX00XX 
+        BASE1 = 0x00XXXXXX, PREFIX1 = 0xXX00XXXX 
+        BASE1 = 0x00XXXXXX, PREFIX1 = 0x00XXXXXX
+        */
+        uint32_t base_address_mask = m_esb_addr.addr_length == 5 ? 0xFFFF0000 : 0xFF000000;
+        if (num_pipes >= 1 && (NRF_RADIO->BASE0 & base_address_mask) == 0 && p_prefixes[0] == 0)
         {
-            if (p_prefixes[i] == 0)
+            return NRF_ERROR_INVALID_PARAM;
+        }
+
+        if ((NRF_RADIO->BASE1 & base_address_mask) == 0)
+        {
+            for (uint8_t i = 1; i < num_pipes; i++)
             {
-                return NRF_ERROR_INVALID_PARAM;
+                if (p_prefixes[i] == 0)
+                {
+                    return NRF_ERROR_INVALID_PARAM;
+                }
             }
         }
     }
+#endif
     
     memcpy(m_esb_addr.pipe_prefixes, p_prefixes, num_pipes);
     m_esb_addr.num_pipes = num_pipes;
@@ -1446,69 +1499,87 @@ uint32_t nrf_esb_set_prefixes(uint8_t const * p_prefixes, uint8_t num_pipes)
 
     update_radio_addresses(NRF_ESB_ADDR_UPDATE_MASK_PREFIX);
 
+#ifdef NRF52832_XXAA
     return apply_address_workarounds();
+#else
+    return NRF_SUCCESS;
+#endif
 }
 
 
 uint32_t nrf_esb_update_prefix(uint8_t pipe, uint8_t prefix)
 {
     VERIFY_TRUE(m_nrf_esb_mainstate == NRF_ESB_STATE_IDLE, NRF_ERROR_BUSY);
-    VERIFY_TRUE(pipe < 8, NRF_ERROR_INVALID_PARAM);
+    VERIFY_TRUE(pipe < NRF_ESB_PIPE_COUNT, NRF_ERROR_INVALID_PARAM);
     
-    /*
-    Workaround for nRF52832 Rev 1 Errata 107
-    Check if pipe 0 or pipe 1-7 has a 'zero address'.
-    Avoid using access addresses in the following pattern (where X is don't care): 
-    ADDRLEN=5 
-    BASE0 = 0x0000XXXX, PREFIX0 = 0xXXXXXX00 
-    BASE1 = 0x0000XXXX, PREFIX0 = 0xXXXX00XX 
-    BASE1 = 0x0000XXXX, PREFIX0 = 0xXX00XXXX 
-    BASE1 = 0x0000XXXX, PREFIX0 = 0x00XXXXXX 
-    BASE1 = 0x0000XXXX, PREFIX1 = 0xXXXXXX00 
-    BASE1 = 0x0000XXXX, PREFIX1 = 0xXXXX00XX 
-    BASE1 = 0x0000XXXX, PREFIX1 = 0xXX00XXXX 
-    BASE1 = 0x0000XXXX, PREFIX1 = 0x00XXXXXX 
-
-    ADDRLEN=4 
-    BASE0 = 0x00XXXXXX, PREFIX0 = 0xXXXXXX00 
-    BASE1 = 0x00XXXXXX, PREFIX0 = 0xXXXX00XX 
-    BASE1 = 0x00XXXXXX, PREFIX0 = 0xXX00XXXX 
-    BASE1 = 0x00XXXXXX, PREFIX0 = 0x00XXXXXX 
-    BASE1 = 0x00XXXXXX, PREFIX1 = 0xXXXXXX00 
-    BASE1 = 0x00XXXXXX, PREFIX1 = 0xXXXX00XX 
-    BASE1 = 0x00XXXXXX, PREFIX1 = 0xXX00XXXX 
-    BASE1 = 0x00XXXXXX, PREFIX1 = 0x00XXXXXX
-    */
-    uint32_t base_address_mask = m_esb_addr.addr_length == 5 ? 0xFFFF0000 : 0xFF000000;
-    if (pipe == 0)
+#ifdef NRF52832_XXAA
+    if ((NRF_FICR->INFO.VARIANT & 0x0000FF00) == 0x00004200)  //Check if the device is an nRF52832 Rev. 1.
     {
-        if((NRF_RADIO->BASE0 & base_address_mask) == 0 && prefix == 0)
+        /*
+        Workaround for nRF52832 Rev 1 Errata 107
+        Check if pipe 0 or pipe 1-7 has a 'zero address'.
+        Avoid using access addresses in the following pattern (where X is don't care): 
+        ADDRLEN=5 
+        BASE0 = 0x0000XXXX, PREFIX0 = 0xXXXXXX00 
+        BASE1 = 0x0000XXXX, PREFIX0 = 0xXXXX00XX 
+        BASE1 = 0x0000XXXX, PREFIX0 = 0xXX00XXXX 
+        BASE1 = 0x0000XXXX, PREFIX0 = 0x00XXXXXX 
+        BASE1 = 0x0000XXXX, PREFIX1 = 0xXXXXXX00 
+        BASE1 = 0x0000XXXX, PREFIX1 = 0xXXXX00XX 
+        BASE1 = 0x0000XXXX, PREFIX1 = 0xXX00XXXX 
+        BASE1 = 0x0000XXXX, PREFIX1 = 0x00XXXXXX 
+
+        ADDRLEN=4 
+        BASE0 = 0x00XXXXXX, PREFIX0 = 0xXXXXXX00 
+        BASE1 = 0x00XXXXXX, PREFIX0 = 0xXXXX00XX 
+        BASE1 = 0x00XXXXXX, PREFIX0 = 0xXX00XXXX 
+        BASE1 = 0x00XXXXXX, PREFIX0 = 0x00XXXXXX 
+        BASE1 = 0x00XXXXXX, PREFIX1 = 0xXXXXXX00 
+        BASE1 = 0x00XXXXXX, PREFIX1 = 0xXXXX00XX 
+        BASE1 = 0x00XXXXXX, PREFIX1 = 0xXX00XXXX 
+        BASE1 = 0x00XXXXXX, PREFIX1 = 0x00XXXXXX
+        */
+        uint32_t base_address_mask = m_esb_addr.addr_length == 5 ? 0xFFFF0000 : 0xFF000000;
+        if (pipe == 0)
         {
-            return NRF_ERROR_INVALID_PARAM;
+            if ((NRF_RADIO->BASE0 & base_address_mask) == 0 && prefix == 0)
+            {
+                return NRF_ERROR_INVALID_PARAM;
+            }
+        }
+        else
+        {
+            if ((NRF_RADIO->BASE1 & base_address_mask) == 0 && prefix == 0)
+            {
+                return NRF_ERROR_INVALID_PARAM;
+            }
         }
     }
-    else{
-        if((NRF_RADIO->BASE1 & base_address_mask) == 0 && prefix == 0)
-        {
-            return NRF_ERROR_INVALID_PARAM;
-        }
-    }
-    
+#endif
     m_esb_addr.pipe_prefixes[pipe] = prefix;
 
     update_radio_addresses(NRF_ESB_ADDR_UPDATE_MASK_PREFIX);
 
+#ifdef NRF52832_XXAA
     return apply_address_workarounds();
+#else
+    return NRF_SUCCESS;
+#endif
 }
 
 
 uint32_t nrf_esb_enable_pipes(uint8_t enable_mask)
 {
     VERIFY_TRUE(m_nrf_esb_mainstate == NRF_ESB_STATE_IDLE, NRF_ERROR_BUSY);
+    VERIFY_TRUE((enable_mask | BIT_MASK_UINT_8(NRF_ESB_PIPE_COUNT)) == BIT_MASK_UINT_8(NRF_ESB_PIPE_COUNT), NRF_ERROR_INVALID_PARAM);
 
     m_esb_addr.rx_pipes_enabled = enable_mask;
 
+#ifdef NRF52832_XXAA
     return apply_address_workarounds();
+#else
+    return NRF_SUCCESS;
+#endif
 }
 
 
@@ -1578,23 +1649,23 @@ uint32_t nrf_esb_set_bitrate(nrf_esb_bitrate_t bitrate)
 uint32_t nrf_esb_reuse_pid(uint8_t pipe)
 {
     VERIFY_TRUE(m_nrf_esb_mainstate == NRF_ESB_STATE_IDLE, NRF_ERROR_BUSY);
-    VERIFY_TRUE(pipe < 8, NRF_ERROR_INVALID_PARAM);
+    VERIFY_TRUE(pipe < NRF_ESB_PIPE_COUNT, NRF_ERROR_INVALID_PARAM);
 
     m_pids[pipe] = (m_pids[pipe] + NRF_ESB_PID_MAX) % (NRF_ESB_PID_MAX + 1);
     return NRF_SUCCESS;
 }
 
 
-// Handler for 
-#ifdef NRF52
+#ifdef NRF52832_XXAA
+// Workaround neccessary on nRF52832 Rev. 1.
 void NRF_ESB_BUGFIX_TIMER_IRQHandler(void)
 {
-    if(NRF_ESB_BUGFIX_TIMER->EVENTS_COMPARE[0])
+    if (NRF_ESB_BUGFIX_TIMER->EVENTS_COMPARE[0])
     {
         NRF_ESB_BUGFIX_TIMER->EVENTS_COMPARE[0] = 0;
 
         // If the timeout timer fires and we are in the PTX receive ACK state, disable the radio
-        if(m_nrf_esb_mainstate == NRF_ESB_STATE_PTX_RX_ACK)
+        if (m_nrf_esb_mainstate == NRF_ESB_STATE_PTX_RX_ACK)
         {
             NRF_RADIO->TASKS_DISABLE = 1;
         }

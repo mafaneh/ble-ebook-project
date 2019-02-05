@@ -1,3 +1,581 @@
+nRF5 SDK v15.2.0
+------------------------
+Release Date: Week 37, 2018
+ 
+This SDK release is an update replacing the non-published nRF5 SDK release v15.1.0.
+The main updates compared to v15.1.0 are summarized in the last three points of the Highlights section.
+
+Highlights:
+ - Added support for the new SoftDevices S140, S132, and S112 v6.1.0.
+ - Added new targets for running S112 on nRF52832 (PCA10040).
+ - Updated ESB library to support all nRF52 devices (nRF52810, nRF52832 (Rev.1 & Rev.2), and nRF52840).
+ - Updated SDFU to include nRF52810 target (PCA10040E).
+ - Released nrf_log in production quality.
+ - Removed the workaround in nrf_sdh.c overriding the default priority level on SWI interrupt SD_EVT_IRQn and RADIO_NOTIFICATION_IRQn used by the SoftDevice.
+ - Changed the default interrupt priority level for the peripherals from 7 to 6. This is done to be aligned with the priority of the SWI coming from the SoftDevice.
+ - Fixed an interoperability issue with some Windows 10 versions when bonded and using directed advertising.
+
+Note: Due to compatibility issues, you must run the upgrade using nRF Connect Desktop v2.5.0 or later when testing the Bluetooth examples in nRF5 SDK v15.2.0.
+
+The following toolchains/devices have been used for testing and verification:
+ - ARM: MDK-ARM version 5.18a
+ - GCC: GCC ARM Embedded 6.3 2017-q2-update
+ - IAR: IAR Workbench 7.80.4 (IAR 8 - see note below)
+ - SES: SES 3.40
+
+*****
+Note for IAR 8 users:
+(Libraries for IAR 8 require wchar_t to be of size 32 bits while IAR 7 requires 16 bits).
+ 
+To run a project using IAR 8, follow these intructions:
+ - Open the IAR project in IAR 8. The IAR workbench will automatically generate an IAR 8 compatible project file.
+ - If the project contains one of the precompiled libraries listed below, replace it with the IAR 8 compatible alternative
+   (there are no projects targeting nRF51 in this SDK).
+ - Save the project.
+ - When building the project, you might get the warning: "The header file 'cmsis_iar.h' is obsolete and should not be used. [...]".
+    - The problem is described in DevZone post: https://devzone.nordicsemi.com/f/nordic-q-a/31123/iar-ewarm-8-22-1-complains-about-cmsis_iar-h
+      The solution is to remove all occurrences of #include <cmsis_iar.h>.
+    
+The affected libraries are:
+ - micro-ecc crypto:
+    - IAR7: Includes library located in the folder named “…_iar\…”.
+    - IAR8: Switch to using the library from the folder named “…_armgcc\…”.
+ - nrf_cc310, nrf_cc310_bl, and nrf_oberon:
+    - IAR7: Includes the library where “_short_wchar_” is part of the file name.
+    - IAR8: Switch to using the library with similar naming, but where the “short_wchar” is removed.
+ - Gazell, NFC Tag, and 802.15.4:
+    - IAR7: Includes the library where the file name ends with “_iar”.
+    - IAR8: Switch to using the library with similar file name that ends with “_gcc”.
+*****
+ 
+Supported SoftDevices:
+ - S112 v6.1.x
+ - S132 v6.1.x
+ - S140 v6.1.x
+ - S212 v5.0.x
+     
+Supported boards:
+ - PCA10040
+ - PCA10040E (nRF52810 emulation on PCA10040)
+ - PCA10056
+ - PCA10059 (support in selected examples)
+ - D52DK1 from Garmin Canada (only for ANT examples)
+     
+For other devices and boards, see the SDK documentation, section "Using
+the SDK with other boards".
+     
+ 
+*** New features
+*****************
+ 
+** BLE **
+ - Added new targets to demonstrate the use of S112 on nRF52832 (PCA10040).
+ - Added "Property Read" for the Object Transfer Service client (ble_app_ots_c).
+ - Added a Scanning Module to simplify scanning for BLE devices in central role.
+ - Peer Manager:
+    - peer_manager_handler.h: There are now standard event handlers available to users of the Peer Manager.
+       The event handlers provide features like logging, automatically securing the link, and automatically
+       deleting the oldest bond if the flash is full.
+    - PM_RA_PROTECTION_ENABLED: The Peer Manager can now be configured to reject repeated security requests
+       from peers that failed pairing.
+    - PM_LESC_ENABLED: Improved LESC support.
+    - PM_LOG_ENABLED: Added error and warning level logging messages to the Peer Manager.
+    - PM_EVT_FLASH_GARBAGE_COLLECTION_FAILED: Added new event.
+    - PM_PEER_DATA_ID_CENTRAL_ADDR_RES: Added automatic storing of the peer's Central Address Resolution value during bonding.
+    - pm_peer_id_list(): Added a new function for creating lists of Peer IDs, including some filtering.
+ - Added LESC support to the following examples: ble_app_hrs, ble_app_hrs_c, and ble_app_gls.
+ - Added support for nRF52840 (PCA10056) in the beacon example (ble_app_beacon).
+ - Added Swift Pair support to the HID mouse example (ble_app_hids_mouse).
+ - Battery Service: Added the possibility to notify a reconnected, bonded peer of an updated battery level.
+    This feature is demonstrated in the Immediate Alert Server example.
+ 
+** Crypto **
+ - EdDSA: Added support for Edwards-curve Digital Signature Algorithm (Ed25519).
+ - In documentation, added a table showing supported nrf_crypto backends for different examples:
+    http://infocenter.nordicsemi.com/topic/com.nordic.infocenter.sdk5.v15.2.0/nrf_crypto_default_backends.html
+     
+** DFU/Bootloader **
+ - Added a new target to the SDFU example to demonstrate SDFU running on nRF52810 (PCA10040E). In a single bank update, there is only
+    about 60 kB of flash available. This restricts what can be updated.
+ - The bootloader settings page is now backed up before being updated. This increases protection from corruption caused by chance events
+    (for example, power failure) and malicious apps.
+ - The advertising interval of BLE DFU can now be configured in sdk_config (NRF_DFU_BLE_ADV_INTERVAL).
+ - The size of the application data area that is left alone by the bootloader can now be configured
+    in sdk_config (NRF_DFU_APP_DATA_AREA_SIZE).
+ - The bootloader code now supports most of nrf_crypto backends. However, the size of the binary will likely be too large if other backends
+    are used, so you will need to accomodate by increasing the size of the bootloader.
+ 
+** USB **
+ - Added response/no response to an IN token on ISO IN endpoint with a ZLP when no data is ready. This can be set with USBD_CONFIG_ISO_IN_ZLP.
+ - Added support for configuration string ID.
+ - Added an option to give priority to isochronous transfers using USBD_CONFIG_DMASCHEDULER_ISO_BOOST.
+ - Implemented SOF event callback in interrupt for classes.
+ - Added an enum and get function for a selected protocol (boot or report) in HID. Implemented a SET_PROTOCOL propagation mechanism using
+    on_set_protocol methods. Buffers can now be cleared after the SET_PROTOCOL command using clear_buffer methods.
+ - Redesigned the idle report mechanism in HID. It now allows a callback function and handles multiple report IDs.
+ - Added an option to send a ZLP on write with the same size as the endpoint in CDC ACM class using APP_USBD_CDC_ACM_ZLP_ON_EPSIZE_WRITE.
+ - Implemented macros to set interval for individual endpoints. See APP_USBD_EP_WITH_INTERVAL.
+ - Transfers in Audio class can now be started in SOF interrupt set in the app_usbd_audio_sof_interrupt_register function.
+ 
+ 
+*** Changes
+************
+ 
+** BLE **
+ - Increased the length of the advertising name for the Running Speed and Cadence sensor example (ble_app_rscs) to make it easy to verify
+    that it is using the extended advertising.
+ - Included the Scanning module into all BLE examples. This aligns how scanning is performed in these examples.
+ - Updated the NFC pairing examples (ble_app_hids_keyboard_pairing_nfc, ble_app_hrs_nfc_pairing, ble_nfc_pairing_reference) to start using
+    the LESC functionality in the Peer Manager (which uses the nrf_ble_lesc module).
+ - Removed the manual handling of credits for the Object Transfer Service (ble_app_ots and ble_app_ots_c). Most use cases now work faster
+    and simpler when the SoftDevice is controlling it.
+ - Updated the API documentation for advertising_init in the Advertising module (ble_advertising). It was clarified that UUID arrays were not
+    copied into the Advertising module.
+ - Advertising module (ble_advertising) is no longer dependent on the fstorage module.
+ - Changed the ANCS example (ble_app_ancs_c) so that it no longer performs service discovery after connecting to an already bonded peer.
+ - Lowered the advertising interval in the Eddystone example (ble_app_eddystone), because some advertising packets would be lost when combined
+    with the timeslot API.
+ - Reduced the maximum supported value for advertising interval in Eddystone from 20000 to 16384. If a higher value is set, the SoftDevice returns
+    an error code that asserts the application.
+ - Peer Manager:
+    - Various improvements to documentation.
+    - The Peer Manager will now take less space for the same features.
+    - To decrease complexity, the Peer Manager no longer uses the 'reserve' functionality in FDS, meaning that PM_EVT_STORAGE_FULL
+      events will come slightly later if bonds cannot be stored during bonding.
+    - Error event parameters now specify whether the error code is to be interpreted as an FDS_ error or an NRF_ error.
+    - Peers without a stored rank are now never returned from pm_peer_ranks_get().
+    - The function pm_peer_data_load() now fills the array even when returning NRF_ERROR_DATA_SIZE.
+    - Enabled internal LESC key handling through PM_LESC_ENABLED. Function pm_lesc_public_key_set() is now deprecated because of this change.
+ - All examples using the Peer Manager now use the new standard event handlers.
+    While some examples implement custom behavior, all examples do the following:
+    - Log Peer Manager events (at different log levels).
+    - Encrypt immediately on connection with bonded peers.
+    - Delete old bonds to make room for new peer data.
+ - Some examples supporting central mode disconnect when link encryption fails. Look for functions calling pm_handler_disconnect_on_sec_failure().
+ - The ble_app_bms example will now request for security procedure to be initiated if the Central does not initiate it.
+ - Updated examples with directed advertisement to take into account Central Address Resolution value.
+ 
+** IEEE 802.15.4 **
+ - Updated the radio test example to support 802.15.4 radio modes.
+ 
+** Crypto **
+ - Updated documentation about RAM requirements on mbed TLS.
+ - Added endianness change Curve25519 (to little endian).
+ - Removed the following defines. A compile error is shown if they are enabled in a configuration:
+    - NRF_CRYPTO_BACKEND_CC310_BL_HASH_LITTLE_ENDIAN_DIGEST_ENABLED
+    - NRF_CRYPTO_BACKEND_CC310_BL_ECC_LITTLE_ENDIAN_ENABLED
+    - NRF_CRYPTO_BACKEND_MICRO_ECC_LITTLE_ENDIAN_ENABLED
+    - NRF_CRYPTO_BACKEND_NRF_SW_HASH_LITTLE_ENDIAN_DIGEST_ENABLED
+ - nrf_crypto micro-ecc backend: Moved ECDH public key validation from the key convert function to ECDH compute
+    (moved from nrf_crypto_backend_micro_ecc_public_key_from_raw to nrf_crypto_backend_micro_ecc_ecdh_compute).
+ - Upgraded nrf_cc310 and nrf_cc310_bl to version 0.9.10 including minor changes to some default configurations.
+ - Removed micro-ecc library/mbed TLS from BLE LESC examples for better user experience.
+    - micro-ecc library prevented a working compilation in a fresh LESC example (requires external download).
+    - mbed TLS significantly increases compilation time in the project, even if it is not configured as the enabled nrf_crypto backend.
+ 
+** DFU and Bootloader **
+ - Updated documentation about how to change the existing SDFU project, so that the application can be uploaded without signature verification,
+    but at the same time to keep the signature verification when updating a SoftDevice and/or bootloader.
+ - The bootloader now does not use app_timer, which saves flash space.
+ - The bootloader now does the endian-conversion in code, instead of relying on endian-conversion in nrf_crypto.
+ 
+** Drivers and libraries **
+ - Changed the peripherals' default interrupt priority level from 7 to 6.
+ - Included new version of nrfx (v1.1.0). For the nrfx changelog, see https://github.com/NordicSemiconductor/nrfx/blob/master/CHANGELOG.md
+ - nrf_log:
+     - Updated to production quality.
+     - You can now store/load the filtering configuration in FDS.
+     - You can now control one backend from another.
+ - nrf_cli: Added support for terminal meta keys.
+ 
+** Proprietary **
+ - Updated ESB library to support all current variants of nRF52. This mainly involves adding proper handling of Errata related to the radio.
+ - Added a function to skip the next packet in the TX queue. This was previously a function used internally in the module under another name.
+ 
+** USB **
+ - Moved USBD strings configuration to sdk_config.
+ - Rebuilt MSC class write procedure.
+ - Moved APP_USBD_CONFIG_LOG_ENABLED to nrf_log settings.
+ - HID report protocol is now default after reset.
+ - HID default idle rate after reset can now be defined.
+ - OUT transfers are now dropped when clearing stall on endpoint.
+ - SET_ADDRESS command is now defined as a separate event in app_usbd. It does not change the state of the device anymore.
+ - EP0 is now disabled until USB RESET condition is detected.
+ - HID OUT reports are now limited to 63 bytes of data + 1 byte reserved for report ID.
+ 
+ 
+*** Bug fixes
+****************
+ 
+** BLE **
+ - Fixed a bug in the BLE UART client (ble_app_uart_c) where it would check the wrong error code when issuing multiple write commands.
+ - Fixed a bug in the ANCS example (ble_app_ancs) where app_timer was included too many times.
+ - Fixed a bug in the Advertising module (ble_advertising) where a comment referred to seconds instead of 10 ms.
+ - Fixed a bug in the LESC connection example (ble_app_multirole_lesc) where the procedure for connection parameter update would not be started
+    immediately upon connection.
+ - Fixed a bug where a precompiled hex was missing for Immediate Alert Server (ble_app_ias) and Service Changed server (ble_app_gatts) examples.
+ - Fixed a bug in the Radio Notification Event Handler (ble_radio_notification) where a missing include stopped it from compiling.
+ - Fixed a bug in the BLE Interactive Command Line Interface Example in service discovery procedure.
+ - Fixed a bug in the Alert Notification Service, where it was not possible to enable notifications for an unread alert.
+ - Peer Manager:
+    - Fixed a bug where the event PM_EVT_FLASH_GARBAGE_COLLECTED was also sent when garbage collection failed.
+    - Fixed a bug in pm_next_peer_id_get() where it could report a peer with no data attached to it if used during bonding.
+    - Fixed a bug where peer data would not be written because the internal retry mechanism failed after two attempts.
+    - Fixed a bug where pairing (no bonding) could happen with an already bonded peer without triggering a PM_EVT_CONN_SEC_CONFIG_REQ event.
+    - Fixed several documentation bugs related to error codes.
+ - Eddystone:
+    - Fixed a bug where the default TX power was set to 0 instead of using the DEFAULT_FRAME_TX_POWER define.
+    - Fixed a bug where an invalid reference of a variable could cause incorrect data to be sent.
+   
+** IEEE 802.15.4 **
+ - Adjusted CCA threshold value to be correct for nRF52840 Rev. 1 (different from what was available on the Engineering sample).
+ - Implemented a fix for Anomaly 153 (temperature correction of RSSI measurement): added an API in RAL module for calculating the corrected RSSI value.
+ 
+** Drivers and libraries **
+ - Fixed a bug in the SPI manager where app_timer was included too many times.
+ - Fixed a wrapping issue in the Ring Buffer library.
+ 
+** DFU/Bootloader **
+ - Fixed a bug where the watchdog feeding in the bootloader did not happen during a certain FW activation.
+ 
+** DTM **
+ - Added support for 8 dB on nRF52840 targets.
+ - Implemented the workaround for nRF52840 Anomaly 172 which caused the device to fail a test with interference in co-channels (RF-PHY/RCV/BV-29-C).
+ 
+** Proprietary **
+ - Fixed a bug in bytewise_bit_swap where it was harder to backport the implementation to nRF51.
+ - Fixed a bug in nrf_esb_pop_tx where the packet queue would occasionally be corrupted.
+ - Added shutdown of the system timer as the workaround for Anomaly 78 and to save energy.
+ 
+** NFC **
+ - Integrated fixes from EMVCo test suite (improved interoperability).
+ - Added automatic fix for Anomaly 181.
+ - Fixed a bug where HFCLK was requested too early for nRF52840 Rev. 1 chip.
+ - Changed the way the fixes for chip errata are switched: use chip defines from MDK instead of board defines (simplifying usage of custom boards).
+ 
+** USB **
+ - Removed redundant barriers in USBD HAL.
+ - Fixed a bug in HID library where the report descriptor was limited to 64 bytes.
+ - Fixed a bug where USBD was not able to wake up after SOF event.
+ - Fixed a bug where the SET_ADDRESS command was not processed in time.
+ - USB application library (stack) now properly supports a situation when the HOST requests a descriptor but sets wLength Setup field to 0.
+ 
+ 
+*** Known Issues
+****************
+ 
+** BLE **
+ - Peer Manager:
+    - When a link is already secured and the peer sends a slave security request for a higher level of security, the request will not be honored.
+    - Service Changed indications might be silently dropped without being sent if the attempt to send them happens during an ATT MTU exchange.
+    - Service Changed indications might be silently dropped if the flash is full when the Service Changed flag is being stored in flash.
+ 
+** BLE IOT **
+ - Neighbor discovery module for lwIP requires the on-link flag in the router advertisement to be set to create a SLAAC address from the prefix.
+    However, RFC 7668 (https://tools.ietf.org/html/rfc7668) requires this bit to be zero. Therefore, the nd6.c from lwIP source has been modified
+    to relax this check.
+ - There are some issues when using the IoT examples against Linux Kernel 4.12+ that cause the kernel to only work with one 6LoWPAN connection.
+    If more than one kit is connected using 6LoWPAN, none of the nodes will be accessible.
+ - Scheduler has been included in most IoT examples to avoid race conditions found when using the lwIP stack, more precisely the TCP examples.
+    The issue was that the TCP client would stop working after about 15 hours. However, when using mbed TLS, the use of scheduler is not possible.
+    Therefore, the MQTT client examples might be affected by this issue.
+ - The use of security, both with TLS and DTLS, should be treated as experimental.
+ - MQTT examples cannot be used with commissioning on nRF52832. There is not enough RAM to accommodate both TLS and the commissioning service.
+ - If enabled, RTT logs in IoT bootloader might not be printed before resetting.
+ - The background_dfu example does not work.
+ 
+** Drivers and libraries **
+ - SAADC driver is not handling detection limits: high and low correctly if SAADC resolution is greater than 10 bits.
+ - In the radio test example, modulated packets will only have the requested content in the first two bytes.
+    Further bytes have random values.
+ - In the radio test example, start_duty_cycle_modulated_tx is not working as intended.
+    The actual duty cycle on air is not what was requested in the command.
+  
+** USBD **
+ - Due to Anomaly 199, the USBD driver blocks code execution during EasyDMA transfer (for stability).
+
+
+========================================================================
+
+nRF5 SDK v15.1.0
+------------------------
+Release Date: Week 34, 2018
+
+Highlights: 
+ - Added support for the new SoftDevices S140, S132, and S112 v6.1.0.
+ - Added new targets for running S112 on nRF52832 (PCA10040).
+ - Updated ESB library to support all nRF52 devices (nRF52810, nRF52832 (Rev.1 & Rev.2), and nRF52840).
+ - Updated SDFU to include nRF52810 target (PCA10040E).
+ - Released nrf_log in production quality.
+
+Note: Due to compatibility issues, you must run the upgrade using nRF Connect Desktop v2.5.0 or later when testing the Bluetooth examples in nRF5 SDK v15.1.0.
+ 
+The following toolchains/devices have been used for testing and verification:
+ - ARM: MDK-ARM version 5.18a
+ - GCC: GCC ARM Embedded 6.3 2017-q2-update
+ - IAR: IAR Workbench 7.80.4 (IAR 8 - see note below)
+ - SES: SES 3.40
+
+*****
+Note for IAR 8 users:
+(Libraries for IAR 8 require wchar_t to be of size 32 bits while IAR 7 requires 16 bits).
+
+To run a project using IAR 8, follow these intructions:
+ - Open the IAR project in IAR 8. The IAR workbench will automatically generate an IAR 8 compatible project file.
+ - If the project contains one of the precompiled libraries listed below, replace it with the IAR 8 compatible alternative
+   (there are no projects targeting nRF51 in this SDK).
+ - Save the project.
+ - When building the project, you might get the warning: "The header file 'cmsis_iar.h' is obsolete and should not be used. [...]".
+	- The problem is described in DevZone post: https://devzone.nordicsemi.com/f/nordic-q-a/31123/iar-ewarm-8-22-1-complains-about-cmsis_iar-h
+	  The solution is to remove all occurrences of #include <cmsis_iar.h>.
+   
+The affected libraries are:
+ - micro-ecc crypto:
+    - IAR7: Includes library located in the folder named “…_iar\…”.
+    - IAR8: Switch to using the library from the folder named “…_armgcc\…”.
+ - nrf_cc310, nrf_cc310_bl, and nrf_oberon:
+    - IAR7: Includes the library where “_short_wchar_” is part of the file name.
+    - IAR8: Switch to using the library with similar naming, but where the “short_wchar” is removed.
+ - Gazell, NFC Tag, and 802.15.4:
+    - IAR7: Includes the library where the file name ends with “_iar”.
+    - IAR8: Switch to using the library with similar file name that ends with “_gcc”.
+*****
+
+Supported SoftDevices:
+ - S112 v6.1.x
+ - S132 v6.1.x
+ - S140 v6.1.x
+ - S212 v5.0.x
+    
+Supported boards:
+ - PCA10040
+ - PCA10040E (nRF52810 emulation on PCA10040)
+ - PCA10056
+ - PCA10059 (support in selected examples)
+ - D52DK1 from Garmin Canada (only for ANT examples)
+    
+For other devices and boards, see the SDK documentation, section "Using
+the SDK with other boards".
+    
+
+*** New features
+***************** 
+
+** BLE **
+ - Added new targets to demonstrate the use of S112 on nRF52832 (PCA10040).
+ - Added "Property Read" for the Object Transfer Service client (ble_app_ots_c).
+ - Added a Scanning Module to simplify scanning for BLE devices in central role.
+ - Peer Manager:
+	- peer_manager_handler.h: There are now standard event handlers available to users of the Peer Manager.
+       The event handlers provide features like logging, automatically securing the link, and automatically
+       deleting the oldest bond if the flash is full.
+    - PM_RA_PROTECTION_ENABLED: The Peer Manager can now be configured to reject repeated security requests
+       from peers that failed pairing.
+    - PM_LESC_ENABLED: Improved LESC support.
+    - PM_LOG_ENABLED: Added error and warning level logging messages to the Peer Manager.
+    - PM_EVT_FLASH_GARBAGE_COLLECTION_FAILED: Added new event.
+ - Added LESC support to the following examples: ble_app_hrs, ble_app_hrs_c, and ble_app_gls.
+ - Added support for nRF52840 (PCA10056) in the beacon example (ble_app_beacon).
+ - Added Swift Pair support to the HID mouse example (ble_app_hids_mouse).
+ - Battery Service: Added the possibility to notify a reconnected, bonded peer of an updated battery level.
+    This feature is demonstrated in the Immediate Alert Server example.
+
+** Crypto **
+ - EdDSA: Added support for Edwards-curve Digital Signature Algorithm (Ed25519).
+ - In documentation, added a table showing supported nrf_crypto backends for different examples:
+    http://infocenter.nordicsemi.com/topic/com.nordic.infocenter.sdk5.v15.1.0/nrf_crypto_default_backends.html
+	
+** DFU/Bootloader ** 
+ - Added a new target to the SDFU example to demonstrate SDFU running on nRF52810 (PCA10040E). In a single bank update, there is only
+    about 60 kB of flash available. This restricts what can be updated.
+ - The bootloader settings page is now backed up before being updated. This increases protection from corruption caused by chance events
+	(for example, power failure) and malicious apps.
+ - The advertising interval of BLE DFU can now be configured in sdk_config (NRF_DFU_BLE_ADV_INTERVAL).
+ - The size of the application data area that is left alone by the bootloader can now be configured
+    in sdk_config (NRF_DFU_APP_DATA_AREA_SIZE).
+ - The bootloader code now supports most of nrf_crypto backends. However, the size of the binary will likely be too large if other backends
+    are used, so you will need to accomodate by increasing the size of the bootloader.
+
+** USB **
+ - Added response/no response to an IN token on ISO IN endpoint with a ZLP when no data is ready. This can be set with USBD_CONFIG_ISO_IN_ZLP.
+ - Added support for configuration string ID.
+ - Added an option to give priority to isochronous transfers using USBD_CONFIG_DMASCHEDULER_ISO_BOOST.
+ - Implemented SOF event callback in interrupt for classes.
+ - Added an enum and get function for a selected protocol (boot or report) in HID. Implemented a SET_PROTOCOL propagation mechanism using
+	on_set_protocol methods. Buffers can now be cleared after the SET_PROTOCOL command using clear_buffer methods.
+ - Redesigned the idle report mechanism in HID. It now allows a callback function and handles multiple report IDs.
+ - Added an option to send a ZLP on write with the same size as the endpoint in CDC ACM class using APP_USBD_CDC_ACM_ZLP_ON_EPSIZE_WRITE.
+ - Implemented macros to set interval for individual endpoints. See APP_USBD_EP_WITH_INTERVAL.
+ - Transfers in Audio class can now be started in SOF interrupt set in the app_usbd_audio_sof_interrupt_register function.
+
+
+*** Changes
+************
+
+** BLE **
+ - Increased the length of the advertising name for the Running Speed and Cadence sensor example (ble_app_rscs) to make it easy to verify
+	that it is using the extended advertising.
+ - Included the Scanning module into all BLE examples. This aligns how scanning is performed in these examples.
+ - Updated the NFC pairing examples (ble_app_hids_keyboard_pairing_nfc, ble_app_hrs_nfc_pairing, ble_nfc_pairing_reference) to start using
+	the LESC functionality in the Peer Manager (which uses the nrf_ble_lesc module).
+ - Removed the manual handling of credits for the Object Transfer Service (ble_app_ots and ble_app_ots_c). Most use cases now work faster
+	and simpler when the SoftDevice is controlling it.
+ - Updated the API documentation for advertising_init in the Advertising module (ble_advertising). It was clarified that UUID arrays were not
+	copied into the Advertising module.
+ - Advertising module (ble_advertising) is no longer dependent on the fstorage module.
+ - Changed the ANCS example (ble_app_ancs_c) so that it no longer performs service discovery after connecting to an already bonded peer.
+ - Lowered the advertising interval in the Eddystone example (ble_app_eddystone), because some advertising packets would be lost when combined
+	with the timeslot API.
+ - Reduced the maximum supported value for advertising interval in Eddystone from 20000 to 16384. If a higher value is set, the SoftDevice returns
+	an error code that asserts the application.
+ - Peer Manager:
+	- Various improvements to documentation.
+	- The Peer Manager will now take less space for the same features.
+	- To decrease complexity, the Peer Manager no longer uses the 'reserve' functionality in FDS, meaning that PM_EVT_STORAGE_FULL
+      events will come slightly later if bonds cannot be stored during bonding.
+	- Error event parameters now specify whether the error code is to be interpreted as an FDS_ error or an NRF_ error.
+	- Peers without a stored rank are now never returned from pm_peer_ranks_get().
+	- The function pm_peer_data_load() now fills the array even when returning NRF_ERROR_DATA_SIZE.
+	- Enabled internal LESC key handling through PM_LESC_ENABLED. Function pm_lesc_public_key_set() is now deprecated because of this change.
+ - All examples using the Peer Manager now use the new standard event handlers.
+    While some examples implement custom behavior, all examples do the following:
+    - Log Peer Manager events (at different log levels).
+    - Encrypt immediately on connection with bonded peers.
+    - Delete old bonds to make room for new peer data.
+ - Some examples supporting central mode disconnect when link encryption fails. Look for functions calling pm_handler_disconnect_on_sec_failure().
+ - The ble_app_bms example will now request for security procedure to be initiated if the Central does not initiate it.
+
+** IEEE 802.15.4 **
+ - Updated the radio test example to support 802.15.4 radio modes.
+
+** Crypto **
+ - Updated documentation about RAM requirements on mbed TLS.
+ - Added endianness change Curve25519 (to little endian).
+ - Removed the following defines. A compile error is shown if they are enabled in a configuration:
+	- NRF_CRYPTO_BACKEND_CC310_BL_HASH_LITTLE_ENDIAN_DIGEST_ENABLED
+	- NRF_CRYPTO_BACKEND_CC310_BL_ECC_LITTLE_ENDIAN_ENABLED
+	- NRF_CRYPTO_BACKEND_MICRO_ECC_LITTLE_ENDIAN_ENABLED
+	- NRF_CRYPTO_BACKEND_NRF_SW_HASH_LITTLE_ENDIAN_DIGEST_ENABLED
+ - nrf_crypto micro-ecc backend: Moved ECDH public key validation from the key convert function to ECDH compute
+	(moved from nrf_crypto_backend_micro_ecc_public_key_from_raw to nrf_crypto_backend_micro_ecc_ecdh_compute).
+ - Upgraded nrf_cc310 and nrf_cc310_bl to version 0.9.10 including minor changes to some default configurations.
+
+** DFU and Bootloader **
+ - Updated documentation about how to change the existing SDFU project, so that the application can be uploaded without signature verification,
+	but at the same time to keep the signature verification when updating a SoftDevice and/or bootloader.
+ - The bootloader now does not use app_timer, which saves flash space.
+ - The bootloader now does the endian-conversion in code, instead of relying on endian-conversion in nrf_crypto.
+
+** Drivers and libraries **
+ - Included new version of nrfx (v1.1.0). For the nrfx changelog, see https://github.com/NordicSemiconductor/nrfx/blob/master/CHANGELOG.md
+ - nrf_log: 
+     - Updated to production quality.
+     - You can now store/load the filtering configuration in FDS.
+	 - You can now control one backend from another.
+ - nrf_cli: Added support for terminal meta keys.
+
+** Proprietary **
+ - Updated ESB library to support all current variants of nRF52. This mainly involves adding proper handling of Errata related to the radio.
+ - Added a function to skip the next packet in the TX queue. This was previously a function used internally in the module under another name.
+
+** USB **
+ - Moved USBD strings configuration to sdk_config.
+ - Rebuilt MSC class write procedure.
+ - Moved APP_USBD_CONFIG_LOG_ENABLED to nrf_log settings.
+ - HID report protocol is now default after reset.
+ - HID default idle rate after reset can now be defined.
+ - OUT transfers are now dropped when clearing stall on endpoint.
+ - SET_ADDRESS command is now defined as a separate event in app_usbd. It does not change the state of the device anymore.
+ - EP0 is now disabled until USB RESET condition is detected.
+ - HID OUT reports are now limited to 63 bytes of data + 1 byte reserved for report ID.
+
+
+*** Bug fixes
+****************
+
+** BLE **
+ - Fixed a bug in the BLE UART client (ble_app_uart_c) where it would check the wrong error code when issuing multiple write commands.
+ - Fixed a bug in the Eddystone example (ble_app_eddystone) where the default TX power was set to 0 directly
+	instead of using the DEFAULT_FRAME_TX_POWER define.
+ - Fixed a bug in the ANCS example (ble_app_ancs) where app_timer was included too many times.
+ - Fixed a bug in the Advertising module (ble_advertising) where a comment referred to seconds instead of 10 ms.
+ - Fixed a bug in the LESC connection example (ble_app_multirole_lesc) where the procedure for connection parameter update would not be started
+	immediately upon connection.
+ - Fixed a bug where a precompiled hex was missing for Immediate Alert Server (ble_app_ias) and Service Changed server (ble_app_gatts) examples.
+ - Fixed a bug in the Radio Notification Event Handler (ble_radio_notification) where a missing include stopped it from compiling.
+ - Fixed a bug in the BLE Interactive Command Line Interface Example in service discovery procedure.
+ - Fixed a bug in the Alert Notification Service, where it was not possible to enable notifications for an unread alert.
+ - Peer Manager:
+    - Fixed a bug where the event PM_EVT_FLASH_GARBAGE_COLLECTED was also sent when garbage collection failed.
+    - Fixed a bug in pm_next_peer_id_get() where it could report a peer with no data attached to it if used during bonding.
+	- Fixed a bug where peer data would not be written because the internal retry mechanism failed after two attempts.
+    - Fixed several documentation bugs related to error codes.
+  
+** IEEE 802.15.4 **
+ - Adjusted CCA threshold value to be correct for nRF52840 Rev. 1 (different from what was available on the Engineering sample).
+ - Implemented a fix for Anomaly 153 (temperature correction of RSSI measurement): added an API in RAL module for calculating the corrected RSSI value.
+
+** Drivers and libraries **
+ - Fixed a bug in the SPI manager where app_timer was included too many times.
+ - Fixed a wrapping issue in the Ring Buffer library.
+
+** DTM **
+ - Added support for 8 dB on nRF52840 targets.
+ - Implemented the workaround for nRF52840 Anomaly 172 which caused the device to fail a test with interference in co-channels (RF-PHY/RCV/BV-29-C).
+
+** Proprietary **
+ - Fixed a bug in bytewise_bit_swap where it was harder to backport the implementation to nRF51.
+ - Fixed a bug in nrf_esb_pop_tx where the packet queue would occasionally be corrupted.
+ - Added shutdown of the system timer as the workaround for Anomaly 78 and to save energy.
+
+** NFC **
+ - Integrated fixes from EMVCo test suite (improved interoperability).
+ - Added automatic fix for Anomaly 181.
+ - Fixed a bug where HFCLK was requested too early for nRF52840 Rev. 1 chip.
+ - Changed the way the fixes for chip errata are switched: use chip defines from MDK instead of board defines (simplifying usage of custom boards).
+
+** USB **
+ - Removed redundant barriers in USBD HAL.
+ - Fixed a bug in HID library where the report descriptor was limited to 64 bytes.
+ - Fixed a bug where USBD was not able to wake up after SOF event.
+ - Fixed a bug where the SET_ADDRESS command was not processed in time.
+
+
+*** Known Issues
+****************
+
+** BLE **
+ - Peer Manager:
+	- When a link is already secured and the peer sends a slave security request for a higher level of security, the request will not be honored.
+	- Service Changed indications might be silently dropped without being sent if the attempt to send them happens during an ATT MTU exchange. 
+
+** BLE IOT **
+ - Neighbor discovery module for lwIP requires the on-link flag in the router advertisement to be set to create a SLAAC address from the prefix.
+	However, RFC 7668 (https://tools.ietf.org/html/rfc7668) requires this bit to be zero. Therefore, the nd6.c from lwIP source has been modified
+	to relax this check.
+ - There are some issues when using the IoT examples against Linux Kernel 4.12+ that cause the kernel to only work with one 6LoWPAN connection.
+	If more than one kit is connected using 6LoWPAN, none of the nodes will be accessible.
+ - Scheduler has been included in most IoT examples to avoid race conditions found when using the lwIP stack, more precisely the TCP examples.
+	The issue was that the TCP client would stop working after about 15 hours. However, when using mbed TLS, the use of scheduler is not possible.
+	Therefore, the MQTT client examples might be affected by this issue.
+ - The use of security, both with TLS and DTLS, should be treated as experimental.
+ - MQTT examples cannot be used with commissioning on nRF52832. There is not enough RAM to accommodate both TLS and the commissioning service.
+ - If enabled, RTT logs in IoT bootloader might not be printed before resetting.
+ - The background_dfu example does not work.
+
+** Drivers and libraries **
+ - SAADC driver is not handling detection limits: high and low correctly if SAADC resolution is greater than 10 bits.
+ - In the radio test example, modulated packets will only have the requested content in the first two bytes.
+    Further bytes have random values.
+ - In the radio test example, start_duty_cycle_modulated_tx is not working as intended.
+    The actual duty cycle on air is not what was requested in the command.
+ 
+** USBD **
+ - Due to Anomaly 199, the USBD driver blocks code execution during EasyDMA transfer (for stability).
+
+ 
+========================================================================
+
 nRF5 SDK v15.0.0
 ------------------------
 Release Date: Week 12, 2018

@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2012 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 /* Attention!
  * To maintain compliance with Nordic Semiconductor ASA's Bluetooth profile
@@ -134,63 +134,29 @@ void ble_bas_on_ble_evt(ble_evt_t const * p_ble_evt, void * p_context)
  */
 static ret_code_t battery_level_char_add(ble_bas_t * p_bas, const ble_bas_init_t * p_bas_init)
 {
-    ret_code_t          err_code;
-    ble_gatts_char_md_t char_md;
-    ble_gatts_attr_md_t cccd_md;
-    ble_gatts_attr_t    attr_char_value;
-    ble_uuid_t          ble_uuid;
-    ble_gatts_attr_md_t attr_md;
-    uint8_t             initial_battery_level;
-    uint8_t             encoded_report_ref[BLE_SRV_ENCODED_REPORT_REF_LEN];
-    uint8_t             init_len;
+    ret_code_t             err_code;
+    ble_add_char_params_t  add_char_params;
+    ble_add_descr_params_t add_descr_params;
+    uint8_t                initial_battery_level;
+    uint8_t                init_len;
+    uint8_t                encoded_report_ref[BLE_SRV_ENCODED_REPORT_REF_LEN];
 
-    // Add Battery Level characteristic
-    if (p_bas->is_notification_supported)
-    {
-        memset(&cccd_md, 0, sizeof(cccd_md));
-
-        // According to BAS_SPEC_V10, the read operation on cccd should be possible without
-        // authentication.
-        BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cccd_md.read_perm);
-        cccd_md.write_perm = p_bas_init->battery_level_char_attr_md.cccd_write_perm;
-        cccd_md.vloc       = BLE_GATTS_VLOC_STACK;
-    }
-
-    memset(&char_md, 0, sizeof(char_md));
-
-    char_md.char_props.read   = 1;
-    char_md.char_props.notify = (p_bas->is_notification_supported) ? 1 : 0;
-    char_md.p_char_user_desc  = NULL;
-    char_md.p_char_pf         = NULL;
-    char_md.p_user_desc_md    = NULL;
-    char_md.p_cccd_md         = (p_bas->is_notification_supported) ? &cccd_md : NULL;
-    char_md.p_sccd_md         = NULL;
-
-    BLE_UUID_BLE_ASSIGN(ble_uuid, BLE_UUID_BATTERY_LEVEL_CHAR);
-
-    memset(&attr_md, 0, sizeof(attr_md));
-
-    attr_md.read_perm  = p_bas_init->battery_level_char_attr_md.read_perm;
-    attr_md.write_perm = p_bas_init->battery_level_char_attr_md.write_perm;
-    attr_md.vloc       = BLE_GATTS_VLOC_STACK;
-    attr_md.rd_auth    = 0;
-    attr_md.wr_auth    = 0;
-    attr_md.vlen       = 0;
-
+    // Add battery level characteristic
     initial_battery_level = p_bas_init->initial_batt_level;
 
-    memset(&attr_char_value, 0, sizeof(attr_char_value));
+    memset(&add_char_params, 0, sizeof(add_char_params));
+    add_char_params.uuid              = BLE_UUID_BATTERY_LEVEL_CHAR;
+    add_char_params.max_len           = sizeof(uint8_t);
+    add_char_params.init_len          = sizeof(uint8_t);
+    add_char_params.p_init_value      = &initial_battery_level;
+    add_char_params.char_props.notify = p_bas->is_notification_supported;
+    add_char_params.char_props.read   = 1;
+    add_char_params.cccd_write_access = p_bas_init->bl_cccd_wr_sec;
+    add_char_params.read_access       = p_bas_init->bl_rd_sec;
 
-    attr_char_value.p_uuid    = &ble_uuid;
-    attr_char_value.p_attr_md = &attr_md;
-    attr_char_value.init_len  = sizeof(uint8_t);
-    attr_char_value.init_offs = 0;
-    attr_char_value.max_len   = sizeof(uint8_t);
-    attr_char_value.p_value   = &initial_battery_level;
-
-    err_code = sd_ble_gatts_characteristic_add(p_bas->service_handle, &char_md,
-                                               &attr_char_value,
-                                               &p_bas->battery_level_handles);
+    err_code = characteristic_add(p_bas->service_handle,
+                                  &add_char_params,
+                                  &(p_bas->battery_level_handles));
     if (err_code != NRF_SUCCESS)
     {
         return err_code;
@@ -199,36 +165,19 @@ static ret_code_t battery_level_char_add(ble_bas_t * p_bas, const ble_bas_init_t
     if (p_bas_init->p_report_ref != NULL)
     {
         // Add Report Reference descriptor
-        BLE_UUID_BLE_ASSIGN(ble_uuid, BLE_UUID_REPORT_REF_DESCR);
-
-        memset(&attr_md, 0, sizeof(attr_md));
-
-        attr_md.read_perm = p_bas_init->battery_level_report_read_perm;
-        BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&attr_md.write_perm);
-
-        attr_md.vloc    = BLE_GATTS_VLOC_STACK;
-        attr_md.rd_auth = 0;
-        attr_md.wr_auth = 0;
-        attr_md.vlen    = 0;
-
         init_len = ble_srv_report_ref_encode(encoded_report_ref, p_bas_init->p_report_ref);
 
-        memset(&attr_char_value, 0, sizeof(attr_char_value));
+        memset(&add_descr_params, 0, sizeof(add_descr_params));
+        add_descr_params.uuid        = BLE_UUID_REPORT_REF_DESCR;
+        add_descr_params.read_access = p_bas_init->bl_report_rd_sec;
+        add_descr_params.init_len    = init_len;
+        add_descr_params.max_len     = add_descr_params.init_len;
+        add_descr_params.p_value     = encoded_report_ref;
 
-        attr_char_value.p_uuid    = &ble_uuid;
-        attr_char_value.p_attr_md = &attr_md;
-        attr_char_value.init_len  = init_len;
-        attr_char_value.init_offs = 0;
-        attr_char_value.max_len   = attr_char_value.init_len;
-        attr_char_value.p_value   = encoded_report_ref;
-
-        err_code = sd_ble_gatts_descriptor_add(p_bas->battery_level_handles.value_handle,
-                                               &attr_char_value,
-                                               &p_bas->report_ref_handle);
-        if (err_code != NRF_SUCCESS)
-        {
-            return err_code;
-        }
+        err_code = descriptor_add(p_bas->battery_level_handles.value_handle,
+                                  &add_descr_params,
+                                  &p_bas->report_ref_handle);
+        return err_code;
     }
     else
     {
@@ -378,6 +327,38 @@ ret_code_t ble_bas_battery_level_update(ble_bas_t * p_bas,
     }
 
     return err_code;
+}
+
+
+ret_code_t ble_bas_battery_lvl_on_reconnection_update(ble_bas_t * p_bas,
+                                                      uint16_t    conn_handle)
+{
+    if (p_bas == NULL)
+    {
+        return NRF_ERROR_NULL;
+    }
+
+    ret_code_t err_code;
+
+    if (p_bas->is_notification_supported)
+    {
+        ble_gatts_hvx_params_t hvx_params;
+        uint16_t               len = sizeof(uint8_t);
+
+        memset(&hvx_params, 0, sizeof(hvx_params));
+
+        hvx_params.handle = p_bas->battery_level_handles.value_handle;
+        hvx_params.type   = BLE_GATT_HVX_NOTIFICATION;
+        hvx_params.offset = 0;
+        hvx_params.p_len  = &len;
+        hvx_params.p_data = &p_bas->battery_level_last;
+
+        err_code = battery_notification_send(&hvx_params, conn_handle);
+
+        return err_code;
+    }
+
+    return NRF_ERROR_INVALID_STATE;
 }
 
 

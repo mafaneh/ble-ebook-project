@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2012 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 /* Attention!
  * To maintain compliance with Nordic Semiconductor ASA's Bluetooth profile
@@ -166,191 +166,14 @@ static uint8_t gls_meas_encode(const ble_gls_meas_t * p_meas, uint8_t * p_encode
 }
 
 
-/**@brief Function for adding the characteristic for a glucose measurement.
- *
- * @param[in] p_gls  Service instance.
- *
- * @return NRF_SUCCESS if characteristic was successfully added, otherwise an error code.
- */
-static uint32_t glucose_measurement_char_add(ble_gls_t * p_gls)
-{
-    ble_gatts_char_md_t char_md;
-    ble_gatts_attr_md_t cccd_md;
-    ble_gatts_attr_t    attr_char_value;
-    ble_uuid_t          ble_uuid;
-    ble_gatts_attr_md_t attr_md;
-    ble_gls_rec_t       initial_gls_rec_value;
-    uint8_t             encoded_gls_meas[MAX_GLM_LEN];
-    uint8_t             num_recs;
-    memset(&cccd_md, 0, sizeof(cccd_md));
-
-    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cccd_md.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&cccd_md.write_perm);
-    cccd_md.vloc = BLE_GATTS_VLOC_STACK;
-
-    memset(&char_md, 0, sizeof(char_md));
-
-    char_md.char_props.notify = 1;
-    char_md.p_char_user_desc  = NULL;
-    char_md.p_char_pf         = NULL;
-    char_md.p_user_desc_md    = NULL;
-    char_md.p_cccd_md         = &cccd_md;
-    char_md.p_sccd_md         = NULL;
-
-    BLE_UUID_BLE_ASSIGN(ble_uuid, BLE_UUID_GLUCOSE_MEASUREMENT_CHAR);
-    memset(&attr_md, 0, sizeof(attr_md));
-
-    BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&attr_md.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&attr_md.write_perm);
-
-    attr_md.vloc    = BLE_GATTS_VLOC_STACK;
-    attr_md.rd_auth = 0;
-    attr_md.wr_auth = 0;
-    attr_md.vlen    = 1;
-
-    memset(&attr_char_value, 0, sizeof(attr_char_value));
-    memset(&initial_gls_rec_value, 0, sizeof(initial_gls_rec_value));
-
-    num_recs = ble_gls_db_num_records_get();
-    if (num_recs > 0)
-    {
-        uint32_t err_code = ble_gls_db_record_get(num_recs - 1, &initial_gls_rec_value);
-        if (err_code != NRF_SUCCESS)
-        {
-            return err_code;
-        }
-    }
-
-    attr_char_value.p_uuid    = &ble_uuid;
-    attr_char_value.p_attr_md = &attr_md;
-    attr_char_value.init_len  = gls_meas_encode(&initial_gls_rec_value.meas, encoded_gls_meas);
-    attr_char_value.init_offs = 0;
-    attr_char_value.max_len   = MAX_GLM_LEN;
-    attr_char_value.p_value   = encoded_gls_meas;
-
-    return sd_ble_gatts_characteristic_add(p_gls->service_handle,
-                                           &char_md,
-                                           &attr_char_value,
-                                           &p_gls->glm_handles);
-}
-
-
-/**@brief Function for adding the characteristic for a glucose feature.
- *
- * @param[in] p_gls  Service instance.
- *
- * @return NRF_SUCCESS if characteristic was successfully added, otherwise an error code.
- */
-static uint32_t glucose_feature_char_add(ble_gls_t * p_gls)
-{
-    ble_gatts_char_md_t char_md;
-    ble_gatts_attr_t    attr_char_value;
-    ble_uuid_t          ble_uuid;
-    ble_gatts_attr_md_t attr_md;
-    uint8_t             encoded_initial_feature[2];
-
-    memset(&char_md, 0, sizeof(char_md));
-
-    char_md.char_props.read  = 1;
-    char_md.p_char_user_desc = NULL;
-    char_md.p_char_pf        = NULL;
-    char_md.p_user_desc_md   = NULL;
-    char_md.p_cccd_md        = NULL;
-    char_md.p_sccd_md        = NULL;
-
-    BLE_UUID_BLE_ASSIGN(ble_uuid, BLE_UUID_GLUCOSE_FEATURE_CHAR);
-
-    memset(&attr_md, 0, sizeof(attr_md));
-
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&attr_md.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&attr_md.write_perm);
-
-    attr_md.vloc    = BLE_GATTS_VLOC_STACK;
-    attr_md.rd_auth = 0;
-    attr_md.wr_auth = 0;
-    attr_md.vlen    = 0;
-
-    memset(&attr_char_value, 0, sizeof(attr_char_value));
-
-    encoded_initial_feature[0] = (uint8_t)(p_gls->feature);
-    encoded_initial_feature[1] = (uint8_t)((p_gls->feature) >> 8);
-
-    attr_char_value.p_uuid    = &ble_uuid;
-    attr_char_value.p_attr_md = &attr_md;
-    attr_char_value.init_len  = sizeof (uint16_t);
-    attr_char_value.init_offs = 0;
-    attr_char_value.max_len   = sizeof (uint16_t);
-    attr_char_value.p_value   = encoded_initial_feature;
-
-    return sd_ble_gatts_characteristic_add(p_gls->service_handle,
-                                           &char_md,
-                                           &attr_char_value,
-                                           &p_gls->glf_handles);
-}
-
-
-/**@brief Function for adding the characteristic for a record access control point.
- *
- * @param[in] p_gls  Service instance.
- *
- * @return NRF_SUCCESS if characteristic was successfully added, otherwise an error code.
- */
-static uint32_t record_access_control_point_char_add(ble_gls_t * p_gls)
-{
-    ble_gatts_char_md_t char_md;
-    ble_gatts_attr_md_t cccd_md;
-    ble_gatts_attr_t    attr_char_value;
-    ble_uuid_t          ble_uuid;
-    ble_gatts_attr_md_t attr_md;
-
-    memset(&cccd_md, 0, sizeof(cccd_md));
-
-    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cccd_md.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&cccd_md.write_perm);
-    cccd_md.vloc = BLE_GATTS_VLOC_STACK;
-
-    memset(&char_md, 0, sizeof(char_md));
-
-    char_md.char_props.indicate = 1;
-    char_md.char_props.write    = 1;
-    char_md.p_char_user_desc    = NULL;
-    char_md.p_char_pf           = NULL;
-    char_md.p_user_desc_md      = NULL;
-    char_md.p_cccd_md           = &cccd_md;
-    char_md.p_sccd_md           = NULL;
-
-    BLE_UUID_BLE_ASSIGN(ble_uuid, BLE_UUID_RECORD_ACCESS_CONTROL_POINT_CHAR);
-
-    memset(&attr_md, 0, sizeof(attr_md));
-
-    BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&attr_md.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&attr_md.write_perm);
-
-    attr_md.vloc    = BLE_GATTS_VLOC_STACK;
-    attr_md.rd_auth = 0;
-    attr_md.wr_auth = 1;
-    attr_md.vlen    = 1;
-
-    memset(&attr_char_value, 0, sizeof(attr_char_value));
-
-    attr_char_value.p_uuid    = &ble_uuid;
-    attr_char_value.p_attr_md = &attr_md;
-    attr_char_value.init_len  = 0;
-    attr_char_value.init_offs = 0;
-    attr_char_value.max_len   = BLE_GATT_ATT_MTU_DEFAULT;
-    attr_char_value.p_value   = 0;
-
-    return sd_ble_gatts_characteristic_add(p_gls->service_handle,
-                                           &char_md,
-                                           &attr_char_value,
-                                           &p_gls->racp_handles);
-}
-
-
 uint32_t ble_gls_init(ble_gls_t * p_gls, const ble_gls_init_t * p_gls_init)
 {
-    uint32_t   err_code;
-    ble_uuid_t ble_uuid;
+    uint32_t              err_code;
+    uint8_t               num_recs;
+    uint8_t               init_value_encoded[MAX_GLM_LEN];
+    ble_uuid_t            ble_uuid;
+    ble_add_char_params_t add_char_params;
+    ble_gls_rec_t         initial_gls_rec_value;
 
     // Initialize data base
     err_code = ble_gls_db_init();
@@ -387,21 +210,63 @@ uint32_t ble_gls_init(ble_gls_t * p_gls, const ble_gls_init_t * p_gls_init)
     }
 
     // Add glucose measurement characteristic
-    err_code = glucose_measurement_char_add(p_gls);
+    memset(&add_char_params, 0, sizeof(add_char_params));
+    memset(&initial_gls_rec_value, 0, sizeof(initial_gls_rec_value));
+
+    num_recs = ble_gls_db_num_records_get();
+    if (num_recs > 0)
+    {
+        err_code = ble_gls_db_record_get(num_recs - 1, &initial_gls_rec_value);
+        if (err_code != NRF_SUCCESS)
+        {
+            return err_code;
+        }
+    }
+
+    add_char_params.uuid              = BLE_UUID_GLUCOSE_MEASUREMENT_CHAR;
+    add_char_params.max_len           = MAX_GLM_LEN;
+    add_char_params.init_len          = gls_meas_encode(&initial_gls_rec_value.meas, init_value_encoded);
+    add_char_params.is_var_len        = true;
+    add_char_params.char_props.notify = 1;
+    add_char_params.cccd_write_access = p_gls_init->gl_meas_cccd_wr_sec;
+    add_char_params.p_init_value      = init_value_encoded;
+
+    err_code = characteristic_add(p_gls->service_handle, &add_char_params, &p_gls->glm_handles);
     if (err_code != NRF_SUCCESS)
     {
         return err_code;
     }
 
     // Add glucose measurement feature characteristic
-    err_code = glucose_feature_char_add(p_gls);
+    memset(&add_char_params, 0, sizeof(add_char_params));
+
+    add_char_params.uuid              = BLE_UUID_GLUCOSE_FEATURE_CHAR;
+    add_char_params.max_len           = sizeof (uint16_t);
+    add_char_params.init_len          = uint16_encode(p_gls->feature, init_value_encoded);
+    add_char_params.p_init_value      = init_value_encoded;
+    add_char_params.char_props.read   = 1;
+    add_char_params.read_access       = p_gls_init->gl_feature_rd_sec;
+
+    err_code = characteristic_add(p_gls->service_handle, &add_char_params, &p_gls->glf_handles);
     if (err_code != NRF_SUCCESS)
     {
         return err_code;
     }
 
     // Add record control access point characteristic
-    err_code = record_access_control_point_char_add(p_gls);
+    memset(&add_char_params, 0, sizeof(add_char_params));
+    add_char_params.uuid                = BLE_UUID_RECORD_ACCESS_CONTROL_POINT_CHAR;
+    add_char_params.max_len             = BLE_GATT_ATT_MTU_DEFAULT;
+    add_char_params.is_var_len          = true;
+    add_char_params.char_props.indicate = 1;
+    add_char_params.char_props.write    = 1;
+    add_char_params.cccd_write_access   = p_gls_init->racp_cccd_wr_sec;
+    add_char_params.write_access        = p_gls_init->racp_wr_sec;
+    add_char_params.is_defered_write    = true;
+
+    err_code = characteristic_add(p_gls->service_handle,
+                                  &add_char_params,
+                                  &p_gls->racp_handles);
     if (err_code != NRF_SUCCESS)
     {
         return err_code;

@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2017 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #include "ble_ots_l2cap.h"
 
@@ -49,7 +49,7 @@
 #include "nrf_log.h"
 NRF_LOG_MODULE_REGISTER();
 
-#define SDU_SIZE 256
+#define SDU_SIZE 1024
 
 
 static uint8_t data[SDU_SIZE];
@@ -106,39 +106,65 @@ uint32_t ble_ots_l2cap_init(ble_ots_l2cap_t * p_ots_l2cap, ble_ots_l2cap_init_t 
     return NRF_SUCCESS;
 }
 
-
-
-/**@brief This function resumes sending data after an interrupt in the transfer.
+/**@brief This function receives the next MTU of the object.
  *
- * @param[in] p_ots_l2cap  Object Transfer Service structure.
+ * @param[in] p_ots_l2cap Object Transfer Service structure.
  */
-static void ble_ots_l2cap_resume_send(ble_ots_l2cap_t * p_ots_l2cap)
+static void receive_resume(ble_ots_l2cap_t * p_ots_l2cap)
 {
-    uint16_t transmit_size;
-    ble_data_t data_buf;
+    ret_code_t err_code;
+    ble_data_t sdu_buf;
 
-    transmit_size = MIN(p_ots_l2cap->tx_params.tx_mtu, p_ots_l2cap->remaining_bytes);
+    sdu_buf.p_data = &p_ots_l2cap->rx_params.sdu_buf.p_data[p_ots_l2cap->received_bytes];
+    sdu_buf.len    = p_ots_l2cap->rx_params.sdu_buf.len - p_ots_l2cap->received_bytes;
 
-    data_buf.p_data = &p_ots_l2cap->tx_transfer_buffer.p_data[p_ots_l2cap->transfer_len - p_ots_l2cap->remaining_bytes];
-    data_buf.len    = transmit_size;
+    err_code = sd_ble_l2cap_ch_rx(p_ots_l2cap->p_ots_oacp->p_ots->conn_handle,
+                                  p_ots_l2cap->local_cid,
+                                  &sdu_buf);
 
-
-    uint32_t err_code = sd_ble_l2cap_ch_tx(p_ots_l2cap->p_ots_oacp->p_ots->conn_handle,
-                                            p_ots_l2cap->local_cid,
-                                            &data_buf);
-
-    if (err_code != NRF_SUCCESS && err_code != NRF_ERROR_BUSY)
+    if (err_code == NRF_ERROR_RESOURCES)
     {
-        if (p_ots_l2cap->p_ots_oacp->p_ots->error_handler != NULL)
-        {
+        return; // Too many SDUs queued for transmission, the transmission will be tried again on the next BLE_L2CAP_EVT_CH_RX event.
+    }
+
+    if (err_code != NRF_SUCCESS && p_ots_l2cap->p_ots_oacp->p_ots->error_handler != NULL)
+    {
             p_ots_l2cap->p_ots_oacp->p_ots->error_handler(err_code);
-            return;
-        }
+    }
+}
+
+/**@brief This function sends the next MTU of the object.
+ *
+ * @param[in] p_ots_l2cap Object Transfer Service structure.
+ */
+static void send_resume(ble_ots_l2cap_t * p_ots_l2cap)
+{
+    ret_code_t err_code;
+    uint16_t   tx_size;
+
+    tx_size = MIN(p_ots_l2cap->transfer_len - p_ots_l2cap->transmitted_bytes,
+                  p_ots_l2cap->tx_params.tx_mtu);
+
+    ble_data_t obj;
+    obj.p_data = &p_ots_l2cap->tx_transfer_buffer.p_data[p_ots_l2cap->transmitted_bytes];
+    obj.len    = tx_size;
+
+    err_code = sd_ble_l2cap_ch_tx(p_ots_l2cap->p_ots_oacp->p_ots->conn_handle,
+                                  p_ots_l2cap->local_cid,
+                                  &obj);
+    if (err_code == NRF_ERROR_RESOURCES)
+    {
+        return; // Too many SDUs queued for transmission, the transmission will be tried again on the next BLE_L2CAP_EVT_CH_TX event.
+    }
+
+    if (err_code != NRF_SUCCESS && p_ots_l2cap->p_ots_oacp->p_ots->error_handler != NULL)
+    {
+            p_ots_l2cap->p_ots_oacp->p_ots->error_handler(err_code);
     }
 }
 
 
-uint32_t ble_ots_l2cap_start_send(ble_ots_l2cap_t * p_ots_l2cap, uint8_t * p_data, uint16_t data_len)
+uint32_t ble_ots_l2cap_obj_send(ble_ots_l2cap_t * p_ots_l2cap, uint8_t * p_data, uint16_t data_len)
 {
     if (p_ots_l2cap == NULL)
     {
@@ -164,12 +190,12 @@ uint32_t ble_ots_l2cap_start_send(ble_ots_l2cap_t * p_ots_l2cap, uint8_t * p_dat
     p_ots_l2cap->tx_transfer_buffer.p_data = p_data;
     p_ots_l2cap->tx_transfer_buffer.len    = data_len;
 
-    p_ots_l2cap->remaining_bytes = data_len;
-    p_ots_l2cap->transfer_len    = data_len;
+    p_ots_l2cap->transmitted_bytes = 0;
+    p_ots_l2cap->transfer_len      = data_len;
 
     p_ots_l2cap->state = SENDING;
 
-    ble_ots_l2cap_resume_send(p_ots_l2cap);
+    send_resume(p_ots_l2cap);
 
     return NRF_SUCCESS;
 }
@@ -190,8 +216,7 @@ uint32_t ble_ots_l2cap_start_recv(ble_ots_l2cap_t * p_ots_l2cap, uint16_t len)
     {
         return NRF_ERROR_INVALID_STATE;
     }
-    p_ots_l2cap->transfered_bytes = 0;
-    p_ots_l2cap->remaining_bytes = len;
+    p_ots_l2cap->received_bytes  = 0;
     p_ots_l2cap->transfer_len    = len;
 
     err_code = sd_ble_l2cap_ch_rx(p_ots_l2cap->p_ots_oacp->p_ots->conn_handle,
@@ -250,7 +275,6 @@ static inline void on_l2cap_ch_setup_request(ble_ots_l2cap_t * p_ots_l2cap, ble_
         {
             p_ots_l2cap->p_ots_oacp->p_ots->error_handler(err_code);
         }
-
     }
     NRF_LOG_INFO("Accepted L2CAP Channel");
 }
@@ -300,21 +324,32 @@ static inline void on_l2cap_ch_released(ble_ots_l2cap_t * p_ots_l2cap, ble_evt_t
 }
 
 
-/**@brief This function ois called tx is completet. It continues to send if necessary.
+/**@brief Function for handling the BLE_L2CAP_EVT_CH_TX event.
  *
  * @param[in] p_ots_l2cap Object transfer service l2cap module structure.
  * @param[in] p_ble_evt   Pointer to the event received from BLE stack.
  */
-static void on_tx_complete(ble_ots_l2cap_t * p_ots_l2cap, ble_evt_t const * p_ble_evt)
+static void on_l2cap_ch_tx(ble_ots_l2cap_t * p_ots_l2cap, ble_evt_t const * p_ble_evt)
 {
     if(p_ots_l2cap->local_cid != p_ble_evt->evt.l2cap_evt.local_cid)
     {
         return;
     }
 
-    p_ots_l2cap->remaining_bytes -= p_ble_evt->evt.l2cap_evt.params.tx.sdu_buf.len;
+    NRF_LOG_DEBUG("Bytes sent in the previous PDU: %i",
+                  p_ble_evt->evt.l2cap_evt.params.tx.sdu_buf.len);
+    NRF_LOG_HEXDUMP_DEBUG(p_ble_evt->evt.l2cap_evt.params.tx.sdu_buf.p_data,
+                          p_ble_evt->evt.l2cap_evt.params.tx.sdu_buf.len);
 
-    if (p_ots_l2cap->remaining_bytes == 0)
+    p_ots_l2cap->transmitted_bytes += p_ble_evt->evt.l2cap_evt.params.tx.sdu_buf.len;
+    uint16_t remaining_tx_bytes = p_ots_l2cap->tx_transfer_buffer.len - p_ots_l2cap->transmitted_bytes;
+
+    NRF_LOG_DEBUG("Total bytes transmitted: %i ",
+                  (p_ots_l2cap->transmitted_bytes));
+    NRF_LOG_DEBUG("Total bytes remaining: %i",
+                  (remaining_tx_bytes));
+
+    if (remaining_tx_bytes == 0)
     {
         ble_ots_l2cap_evt_t evt;
 
@@ -327,11 +362,11 @@ static void on_tx_complete(ble_ots_l2cap_t * p_ots_l2cap, ble_evt_t const * p_bl
 
         p_ots_l2cap->state = CONNECTED;
 
-        p_ots_l2cap->transfer_len   = 0;
+        p_ots_l2cap->transfer_len = 0;
     }
     else
     {
-        ble_ots_l2cap_resume_send(p_ots_l2cap);
+        send_resume(p_ots_l2cap);
     }
 }
 
@@ -343,46 +378,34 @@ static void on_l2cap_ch_rx(ble_ots_l2cap_t * p_ots_l2cap, ble_evt_t const * p_bl
         return;
     }
 
+    NRF_LOG_DEBUG("Bytes received: %i", p_ble_evt->evt.l2cap_evt.params.rx.sdu_len);
+    NRF_LOG_HEXDUMP_DEBUG(p_ble_evt->evt.l2cap_evt.params.rx.sdu_buf.p_data,
+                          p_ble_evt->evt.l2cap_evt.params.rx.sdu_len);
+
     ble_ots_l2cap_evt_t evt;
 
-    memcpy(&p_ots_l2cap->p_ots_oacp->p_ots->p_current_object->data[p_ots_l2cap->transfered_bytes],
+    memcpy(&p_ots_l2cap->p_ots_oacp->p_ots->p_current_object->data[p_ots_l2cap->received_bytes],
            p_ble_evt->evt.l2cap_evt.params.rx.sdu_buf.p_data,
            p_ble_evt->evt.l2cap_evt.params.rx.sdu_len);
-    NRF_LOG_DEBUG("Object buffer dump");
-    NRF_LOG_HEXDUMP_DEBUG(p_ots_l2cap->rx_params.sdu_buf.p_data , p_ots_l2cap->rx_params.sdu_buf.len);
-    p_ots_l2cap->transfered_bytes += p_ble_evt->evt.l2cap_evt.params.rx.sdu_len;
-    p_ots_l2cap->remaining_bytes  -= p_ble_evt->evt.l2cap_evt.params.rx.sdu_len;
-    NRF_LOG_INFO("Bytes remaining to receive: %i", p_ots_l2cap->remaining_bytes);
-    p_ots_l2cap->state = CONNECTED;
 
-    p_ots_l2cap->transfer_len   = 0;
+    p_ots_l2cap->received_bytes += p_ble_evt->evt.l2cap_evt.params.rx.sdu_len;
 
-    if(p_ots_l2cap->remaining_bytes <= 0)
+    uint16_t remaining_bytes = (p_ots_l2cap->transfer_len - p_ots_l2cap->received_bytes);
+
+    NRF_LOG_DEBUG("Remaining bytes to receive: %i", remaining_bytes);
+
+    if(remaining_bytes == 0)
     {
         evt.type         = BLE_OTS_L2CAP_EVT_RECV_COMPLETE;
         evt.param.len    = p_ots_l2cap->rx_params.sdu_buf.len;
         evt.param.p_data = p_ots_l2cap->rx_params.sdu_buf.p_data;
         p_ots_l2cap->evt_handler(p_ots_l2cap, &evt);
+        p_ots_l2cap->state = CONNECTED;
+        p_ots_l2cap->transfer_len = 0;
     }
     else
     {
-        ret_code_t err_code;
-
-        ble_data_t sdu_buf;
-        sdu_buf.p_data = &p_ots_l2cap->rx_params.sdu_buf.p_data[p_ots_l2cap->transfered_bytes];
-        sdu_buf.len    = p_ots_l2cap->rx_params.sdu_buf.len;
-
-        err_code = sd_ble_l2cap_ch_rx(p_ots_l2cap->p_ots_oacp->p_ots->conn_handle,
-                                      p_ots_l2cap->local_cid,
-                                      &sdu_buf);
-        if (err_code == NRF_SUCCESS)
-        {
-            p_ots_l2cap->state = RECEIVING;
-        }
-        else
-        {
-            p_ots_l2cap->state = CONNECTED;
-        }
+        receive_resume(p_ots_l2cap);
     }
 }
 
@@ -416,22 +439,23 @@ void ble_ots_l2cap_on_ble_evt(ble_ots_l2cap_t * p_ots_l2cap, ble_evt_t const * p
         case BLE_L2CAP_EVT_CH_RELEASED:
             on_l2cap_ch_released(p_ots_l2cap, p_ble_evt);
             break;
+
         case BLE_L2CAP_EVT_CH_SDU_BUF_RELEASED:
             break;
+
         case BLE_L2CAP_EVT_CH_CREDIT:
             break;
+
         case BLE_L2CAP_EVT_CH_RX:
             on_l2cap_ch_rx(p_ots_l2cap, p_ble_evt);
             break;
 
         case BLE_L2CAP_EVT_CH_TX:
-            on_tx_complete(p_ots_l2cap, p_ble_evt);
+            on_l2cap_ch_tx(p_ots_l2cap, p_ble_evt);
             break;
+
         default:
             // No implementation needed.
             break;
     }
 }
-
-
-

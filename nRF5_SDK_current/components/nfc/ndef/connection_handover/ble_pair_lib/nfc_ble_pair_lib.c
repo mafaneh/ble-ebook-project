@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2016 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #include "sdk_common.h"
 #if NRF_MODULE_ENABLED(NFC_BLE_PAIR_LIB)
@@ -46,8 +46,8 @@
 #include "nrf_drv_rng.h"
 #include "nfc_t2t_lib.h"
 #include "nfc_ble_pair_msg.h"
-#include "ecc.h"
 #include "nrf_sdh_ble.h"
+#include "nrf_ble_lesc.h"
 
 #define NRF_LOG_MODULE_NAME nfc_ble_pair
 #if NFC_BLE_PAIR_LIB_LOG_ENABLED
@@ -98,12 +98,6 @@ static ble_gap_lesc_oob_data_t   m_ble_lesc_oob_data;                   /**< LES
 static ble_gap_sec_params_t      m_sec_param;                           /**< Current Peer Manager secure parameters configuration. */
 
 static uint8_t                   m_connections = 0;                     /**< Number of active connections. */
-
-__ALIGN(4) static ble_gap_lesc_p256_pk_t m_lesc_pk;                     /**< LESC ECC Public Key. */
-__ALIGN(4) static ble_gap_lesc_p256_sk_t m_lesc_sk;                     /**< LESC ECC Secret Key. */
-__ALIGN(4) static ble_gap_lesc_dhkey_t   m_lesc_dhkey;                  /**< LESC ECC DH Key. */
-__ALIGN(4) static ble_gap_lesc_p256_pk_t m_lesc_peer_pk;                /**< LESC Peer ECC Public Key. */
-
 
 static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context);
 
@@ -298,6 +292,7 @@ static ret_code_t pm_secure_mode_set(nfc_pairing_mode_t mode)
 ret_code_t nfc_ble_pair_data_set(nfc_pairing_mode_t mode)
 {
     ret_code_t err_code = NRF_SUCCESS;
+    ble_gap_lesc_p256_pk_t const * p_pk_own;
 
     // Check if pairing mode is valid
     VERIFY_PAIRING_MODE(mode);
@@ -328,9 +323,13 @@ ret_code_t nfc_ble_pair_data_set(nfc_pairing_mode_t mode)
             break;
 
         case NFC_PAIRING_MODE_LESC_OOB:
+            // Get the local LESC public key
+            p_pk_own = nrf_ble_lesc_public_key_get();
+            VERIFY_PARAM_NOT_NULL(p_pk_own);
+
             // Generate LESC OOB data
             err_code = sd_ble_gap_lesc_oob_data_get(BLE_CONN_HANDLE_INVALID,
-                                                    &m_lesc_pk,
+                                                    p_pk_own,
                                                     &m_ble_lesc_oob_data);
             VERIFY_SUCCESS(err_code);
 
@@ -351,9 +350,13 @@ ret_code_t nfc_ble_pair_data_set(nfc_pairing_mode_t mode)
             break;
 
         case NFC_PAIRING_MODE_GENERIC_OOB:
+            // Get the local LESC public key
+            p_pk_own = nrf_ble_lesc_public_key_get();
+            VERIFY_PARAM_NOT_NULL(p_pk_own);
+
             // Generate LESC OOB data
             err_code = sd_ble_gap_lesc_oob_data_get(BLE_CONN_HANDLE_INVALID,
-                                                    &m_lesc_pk,
+                                                    p_pk_own,
                                                     &m_ble_lesc_oob_data);
             VERIFY_SUCCESS(err_code);
 
@@ -388,19 +391,21 @@ ret_code_t nfc_ble_pair_init(ble_advertising_t * const p_advertising, nfc_pairin
 
     // Check if pointer to the advertising module instance is not NULL
     VERIFY_PARAM_NOT_NULL(p_advertising);
-    
+
     m_p_advertising = p_advertising;
     m_pairing_mode = mode;
 
+    // Initialize LESC module.
+    err_code = nrf_ble_lesc_init();
+    APP_ERROR_CHECK(err_code);
+
     // Initialize RNG peripheral for authentication OOB data generation
     err_code = nrf_drv_rng_init(NULL);
-    if (err_code != NRF_ERROR_INVALID_STATE)
+    if (err_code != NRF_ERROR_INVALID_STATE &&
+        err_code != NRF_ERROR_MODULE_ALREADY_INITIALIZED)
     {
         VERIFY_SUCCESS(err_code);
     }
-
-    // Initialize encryption module with random number generator use
-    ecc_init(true);
 
     // Start NFC
     err_code = nfc_t2t_setup(nfc_callback, NULL);
@@ -414,12 +419,7 @@ ret_code_t nfc_ble_pair_init(ble_advertising_t * const p_advertising, nfc_pairin
         (mode == NFC_PAIRING_MODE_LESC_JUST_WORKS) ||
         (mode == NFC_PAIRING_MODE_GENERIC_OOB))
     {
-        // Generate new LESC keys
-        err_code = ecc_p256_keypair_gen(m_lesc_sk.sk, m_lesc_pk.pk);
-        VERIFY_SUCCESS(err_code);
-
-        // Update Peer Manager with new LESC Public Key
-        err_code = pm_lesc_public_key_set(&m_lesc_pk);
+        err_code = nrf_ble_lesc_keypair_generate();
         VERIFY_SUCCESS(err_code);
     }
 
@@ -448,12 +448,7 @@ ret_code_t nfc_ble_pair_mode_set(nfc_pairing_mode_t mode)
             (mode == NFC_PAIRING_MODE_LESC_JUST_WORKS) ||
             (mode == NFC_PAIRING_MODE_GENERIC_OOB))
         {
-            // Generate new LESC keys
-            err_code = ecc_p256_keypair_gen(m_lesc_sk.sk, m_lesc_pk.pk);
-            VERIFY_SUCCESS(err_code);
-
-            // Update Peer Manager with new LESC Public Key
-            err_code = pm_lesc_public_key_set(&m_lesc_pk);
+            err_code = nrf_ble_lesc_keypair_generate();
             VERIFY_SUCCESS(err_code);
         }
 
@@ -495,21 +490,22 @@ nfc_pairing_mode_t nfc_ble_pair_mode_get(void)
 static ret_code_t generate_lesc_keys(void)
 {
     ret_code_t err_code = NRF_SUCCESS;
+    ble_gap_lesc_p256_pk_t const * p_pk_own;
 
     // Generate new LESC keys
-    err_code = ecc_p256_keypair_gen(m_lesc_sk.sk, m_lesc_pk.pk);
-    VERIFY_SUCCESS(err_code);
-
-    // Update Peer Manager with new LESC Public Key
-    err_code = pm_lesc_public_key_set(&m_lesc_pk);
+    err_code = nrf_ble_lesc_keypair_generate();
     VERIFY_SUCCESS(err_code);
 
     if ((m_pairing_mode == NFC_PAIRING_MODE_LESC_OOB) ||
         (m_pairing_mode == NFC_PAIRING_MODE_GENERIC_OOB))
     {
+        // Get the local LESC public key
+        p_pk_own = nrf_ble_lesc_public_key_get();
+        VERIFY_PARAM_NOT_NULL(p_pk_own);
+
         // Generate LESC OOB data.
         err_code = sd_ble_gap_lesc_oob_data_get(BLE_CONN_HANDLE_INVALID,
-                                                &m_lesc_pk,
+                                                p_pk_own,
                                                 &m_ble_lesc_oob_data);
         VERIFY_SUCCESS(err_code);
 
@@ -555,22 +551,6 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
                                                         NULL);
                 APP_ERROR_CHECK(err_code);
             }
-
-            // Buffer peer Public Key because ECC module arguments must be word aligned
-            memcpy(&m_lesc_peer_pk.pk[0],
-                   &p_ble_evt->evt.gap_evt.params.lesc_dhkey_request.p_pk_peer->pk[0],
-                   BLE_GAP_LESC_P256_PK_LEN);
-
-            // Compute D-H key
-            err_code = ecc_p256_shared_secret_compute(&m_lesc_sk.sk[0],
-                                                      &m_lesc_peer_pk.pk[0],
-                                                      &m_lesc_dhkey.key[0]);
-            APP_ERROR_CHECK(err_code);
-
-            // Reply with obtained result
-            err_code = sd_ble_gap_lesc_dhkey_reply(p_ble_evt->evt.gap_evt.conn_handle,
-                                                   &m_lesc_dhkey);
-            APP_ERROR_CHECK(err_code);
             break;
 
         case BLE_GAP_EVT_CONNECTED:
@@ -588,7 +568,10 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
                 (m_pairing_mode == NFC_PAIRING_MODE_GENERIC_OOB))
             {
                 err_code = generate_lesc_keys();
-                APP_ERROR_CHECK(err_code);
+                if (err_code != NRF_ERROR_BUSY)
+                {
+                    APP_ERROR_CHECK(err_code);
+                }
             }
             break;
 

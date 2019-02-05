@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2014 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #include "ble_gap_struct_serialization.h"
 #include "ble_struct_serialization.h"
@@ -1722,9 +1722,14 @@ uint32_t ble_gap_evt_adv_set_terminated_t_enc(void const * const p_void_struct,
     SER_PUSH_uint8(&p_struct->adv_handle);
     SER_PUSH_uint8(&p_struct->num_completed_adv_events);
     SER_PUSH_uint16(&p_struct->adv_data.adv_data.len);
-    SER_PUSH_COND(&p_struct->adv_data.adv_data.p_data, NULL);
+
+    uint32_t addr = (uint32_t)p_struct->adv_data.adv_data.p_data;
+    SER_PUSH_uint32(&addr);
+
     SER_PUSH_uint16(&p_struct->adv_data.scan_rsp_data.len);
-    SER_PUSH_COND(&p_struct->adv_data.scan_rsp_data.p_data, NULL);
+
+    addr = (uint32_t)p_struct->adv_data.scan_rsp_data.p_data;
+    SER_PUSH_uint32(&addr);
 
     SER_STRUCT_ENC_END;
 }
@@ -1740,9 +1745,9 @@ uint32_t ble_gap_evt_adv_set_terminated_t_dec(uint8_t const * const p_buf,
     SER_PULL_uint8(&p_struct->adv_handle);
     SER_PULL_uint8(&p_struct->num_completed_adv_events);
     SER_PULL_uint16(&p_struct->adv_data.adv_data.len);
-    SER_PULL_COND(&p_struct->adv_data.adv_data.p_data, NULL);
+    SER_PULL_uint32(&p_struct->adv_data.adv_data.p_data);
     SER_PULL_uint16(&p_struct->adv_data.scan_rsp_data.len);
-    SER_PULL_COND(&p_struct->adv_data.scan_rsp_data.p_data, NULL);
+    SER_PULL_uint32(&p_struct->adv_data.scan_rsp_data.p_data);
 
     SER_STRUCT_DEC_END;
 }

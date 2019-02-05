@@ -1,30 +1,30 @@
 /**
- * Copyright (c) 2018 - 2018, Nordic Semiconductor ASA
- * 
+ * Copyright (c) 2018, Nordic Semiconductor ASA
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 
 #include "sdk_config.h"
@@ -50,6 +50,7 @@
 #include "nrf_crypto_ecdh.h"
 #include "nrf_crypto_mem.h"
 #include "nrf_crypto_rng.h"
+#include "nrf_crypto_shared.h"
 #include "nrf_assert.h"
 #include "mbedtls_backend_ecc.h"
 
@@ -195,13 +196,29 @@ ret_code_t nrf_crypto_backend_mbedtls_private_key_from_raw(
 
     nrf_crypto_ecc_curve_info_t const * p_info = p_prv->header.p_info;
 
+    uint8_t const * p_input = p_raw_data;
+
+#if NRF_CRYPTO_ECC_CURVE25519_ENABLED && !NRF_MODULE_ENABLED(NRF_CRYPTO_CURVE25519_BIG_ENDIAN)
+
+    uint8_t temp[NRF_CRYPTO_ECC_CURVE25519_RAW_PRIVATE_KEY_SIZE];
+
+    if (p_info == &g_nrf_crypto_ecc_curve25519_curve_info)
+    {
+        nrf_crypto_internal_swap_endian(temp,
+                                        p_raw_data,
+                                        NRF_CRYPTO_ECC_CURVE25519_RAW_PRIVATE_KEY_SIZE);
+        p_input = temp;
+    }
+
+#endif
+
     if (!nrf_crypto_backend_mbedtls_ecc_group_load(&group, p_info))
     {
         return NRF_ERROR_CRYPTO_INTERNAL;
     }
 
     mbedtls_mpi_init(&p_prv->key);
-    result = mbedtls_mpi_read_binary(&p_prv->key, p_raw_data, p_info->raw_private_key_size);
+    result = mbedtls_mpi_read_binary(&p_prv->key, p_input, p_info->raw_private_key_size);
 
     if (result == 0)
     {
@@ -251,6 +268,16 @@ ret_code_t nrf_crypto_backend_mbedtls_private_key_to_raw(
 
     result = mbedtls_mpi_write_binary(&p_prv->key, p_raw_data, p_info->raw_private_key_size);
 
+#if NRF_CRYPTO_ECC_CURVE25519_ENABLED && !NRF_MODULE_ENABLED(NRF_CRYPTO_CURVE25519_BIG_ENDIAN)
+
+    if (p_info == &g_nrf_crypto_ecc_curve25519_curve_info)
+    {
+        nrf_crypto_internal_swap_endian_in_place(p_raw_data,
+                                                 NRF_CRYPTO_ECC_CURVE25519_RAW_PRIVATE_KEY_SIZE);
+    }
+
+#endif
+
     if (result != 0)
     {
         return NRF_ERROR_CRYPTO_INTERNAL;
@@ -271,11 +298,28 @@ ret_code_t nrf_crypto_backend_mbedtls_public_key_from_raw(
 
     nrf_crypto_ecc_curve_info_t const * p_info = p_pub->header.p_info;
 
+    uint8_t const * p_input = p_raw_data;
+
+#if NRF_CRYPTO_ECC_CURVE25519_ENABLED && !NRF_MODULE_ENABLED(NRF_CRYPTO_CURVE25519_BIG_ENDIAN)
+
+    uint8_t temp[NRF_CRYPTO_ECC_CURVE25519_RAW_PUBLIC_KEY_SIZE];
+
+    if (p_info == &g_nrf_crypto_ecc_curve25519_curve_info)
+    {
+        nrf_crypto_internal_swap_endian(temp,
+                                        p_raw_data,
+                                        NRF_CRYPTO_ECC_CURVE25519_RAW_PUBLIC_KEY_SIZE);
+        p_input = temp;
+    }
+
+#endif
+
     mbedtls_ecp_point_init(&p_pub->key);
 
     result = mbedtls_mpi_read_binary(&p_pub->key.X,
-                                     p_raw_data,
+                                     p_input,
                                      p_info->raw_private_key_size);
+
     if (result != 0)
     {
         goto error_exit;
@@ -342,6 +386,16 @@ ret_code_t nrf_crypto_backend_mbedtls_public_key_to_raw(
                                           &p_raw_data[p_info->raw_private_key_size],
                                           p_info->raw_private_key_size);
     }
+
+#if NRF_CRYPTO_ECC_CURVE25519_ENABLED && !NRF_MODULE_ENABLED(NRF_CRYPTO_CURVE25519_BIG_ENDIAN)
+
+    if (p_info == &g_nrf_crypto_ecc_curve25519_curve_info)
+    {
+        nrf_crypto_internal_swap_endian_in_place(p_raw_data,
+                                                 NRF_CRYPTO_ECC_CURVE25519_RAW_PUBLIC_KEY_SIZE);
+    }
+
+#endif
 
     if (result != 0)
     {

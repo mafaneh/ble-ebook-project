@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2014 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 /** @file
  *
@@ -81,13 +81,14 @@
 #include "nrf_ble_gatt.h"
 #include "nrf_ble_qwr.h"
 #include "nrf_pwr_mgmt.h"
+#include "peer_manager_handler.h"
 
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
 
 
-#define DEVICE_NAME                     "Nordic_Mouse"                              /**< Name of device. Will be included in the advertising data. */
+#define DEVICE_NAME                     "nRF5_Mouse"                                /**< Name of device. Will be included in the advertising data. */
 #define MANUFACTURER_NAME               "NordicSemiconductor"                       /**< Manufacturer. Will be passed to Device Information Service. */
 
 #define APP_BLE_OBSERVER_PRIO           3                                           /**< Application's BLE observer priority. You shouldn't need to modify this value. */
@@ -122,6 +123,14 @@
 #define SEC_PARAM_MIN_KEY_SIZE          7                                           /**< Minimum encryption key size. */
 #define SEC_PARAM_MAX_KEY_SIZE          16                                          /**< Maximum encryption key size. */
 
+#define SWIFT_PAIR_SUPPORTED            1                                           /**< Swift Pair feature is supported. */
+#if SWIFT_PAIR_SUPPORTED == 1
+#define MICROSOFT_VENDOR_ID             0x0006                                      /**< Microsoft Vendor ID.*/
+#define MICROSOFT_BEACON_ID             0x03                                        /**< Microsoft Beacon ID, used to indicate that Swift Pair feature is supported. */
+#define MICROSOFT_BEACON_SUB_SCENARIO   0x00                                        /**< Microsoft Beacon Sub Scenario, used to indicate how the peripheral will pair using Swift Pair feature. */
+#define RESERVED_RSSI_BYTE              0x80                                        /**< Reserved RSSI byte, used to maintain forwards and backwards compatibility. */
+#endif
+
 #define MOVEMENT_SPEED                  5                                           /**< Number of pixels by which the cursor is moved each time a button is pushed. */
 #define INPUT_REPORT_COUNT              3                                           /**< Number of input reports in this application. */
 #define INPUT_REP_BUTTONS_LEN           3                                           /**< Length of Mouse Input Report containing button data. */
@@ -146,7 +155,7 @@
 #define DEAD_BEEF                       0xDEADBEEF                                  /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
 
 #define APP_ADV_FAST_INTERVAL           0x0028                                      /**< Fast advertising interval (in units of 0.625 ms. This value corresponds to 25 ms.). */
-#define APP_ADV_SLOW_INTERVAL           0x0C80                                      /**< Slow advertising interval (in units of 0.625 ms. This value corrsponds to 2 seconds). */
+#define APP_ADV_SLOW_INTERVAL           0x00A0                                      /**< Slow advertising interval (in units of 0.625 ms. This value corresponds to 100 ms.). */
 
 #define APP_ADV_FAST_DURATION           3000                                        /**< The advertising duration of fast advertising in units of 10 milliseconds. */
 #define APP_ADV_SLOW_DURATION           18000                                       /**< The advertising duration of slow advertising in units of 10 milliseconds. */
@@ -168,13 +177,37 @@ static uint16_t          m_conn_handle  = BLE_CONN_HANDLE_INVALID;              
 static pm_peer_id_t      m_peer_id;                                                 /**< Device reference handle to the current bonded central. */
 static sensorsim_cfg_t   m_battery_sim_cfg;                                         /**< Battery Level sensor simulator configuration. */
 static sensorsim_state_t m_battery_sim_state;                                       /**< Battery Level sensor simulator state. */
-static pm_peer_id_t      m_whitelist_peers[BLE_GAP_WHITELIST_ADDR_MAX_COUNT];       /**< List of peers currently in the whitelist. */
-static uint32_t          m_whitelist_peer_cnt;                                      /**< Number of peers currently in the whitelist. */
 static ble_uuid_t        m_adv_uuids[] =                                            /**< Universally unique service identifiers. */
 {
     {BLE_UUID_HUMAN_INTERFACE_DEVICE_SERVICE, BLE_UUID_TYPE_BLE}
 };
 
+#if SWIFT_PAIR_SUPPORTED == 1
+static uint8_t m_sp_payload[] =                                                     /**< Payload of advertising data structure for Microsoft Swift Pair feature. */
+{
+    MICROSOFT_BEACON_ID,
+    MICROSOFT_BEACON_SUB_SCENARIO,
+    RESERVED_RSSI_BYTE
+};
+static ble_advdata_manuf_data_t m_sp_manuf_advdata =                                /**< Advertising data structure for Microsoft Swift Pair feature. */
+{
+    .company_identifier = MICROSOFT_VENDOR_ID,
+    .data               =
+    {
+        .size   = sizeof(m_sp_payload),
+        .p_data = &m_sp_payload[0]
+    }
+};
+static uint8_t            m_sp_enc_advdata[BLE_GAP_ADV_SET_DATA_SIZE_MAX];          /**< Advertising data buffer. */
+static ble_gap_adv_data_t m_sp_advdata_buf =                                        /**< Advertising data buffer descriptor. */
+{
+    .adv_data =
+    {
+        .p_data = m_sp_enc_advdata,
+        .len    = sizeof(m_sp_enc_advdata)
+    }
+};
+#endif
 
 static void on_hids_evt(ble_hids_t * p_hids, ble_hids_evt_t * p_evt);
 
@@ -196,28 +229,41 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
 }
 
 
-/**@brief Fetch the list of peer manager peer IDs.
+/**@brief Function for setting filtered whitelist.
  *
- * @param[inout] p_peers   The buffer where to store the list of peer IDs.
- * @param[inout] p_size    In: The size of the @p p_peers buffer.
- *                         Out: The number of peers copied in the buffer.
+ * @param[in] skip  Filter passed to @ref pm_peer_id_list.
  */
-static void peer_list_get(pm_peer_id_t * p_peers, uint32_t * p_size)
+static void whitelist_set(pm_peer_id_list_skip_t skip)
 {
-    pm_peer_id_t peer_id;
-    uint32_t     peers_to_copy;
+    pm_peer_id_t peer_ids[BLE_GAP_WHITELIST_ADDR_MAX_COUNT];
+    uint32_t     peer_id_count = BLE_GAP_WHITELIST_ADDR_MAX_COUNT;
 
-    peers_to_copy = (*p_size < BLE_GAP_WHITELIST_ADDR_MAX_COUNT) ?
-                     *p_size : BLE_GAP_WHITELIST_ADDR_MAX_COUNT;
+    ret_code_t err_code = pm_peer_id_list(peer_ids, &peer_id_count, PM_PEER_ID_INVALID, skip);
+    APP_ERROR_CHECK(err_code);
 
-    peer_id = pm_next_peer_id_get(PM_PEER_ID_INVALID);
-    *p_size = 0;
+    NRF_LOG_INFO("\tm_whitelist_peer_cnt %d, MAX_PEERS_WLIST %d",
+                   peer_id_count + 1,
+                   BLE_GAP_WHITELIST_ADDR_MAX_COUNT);
 
-    while ((peer_id != PM_PEER_ID_INVALID) && (peers_to_copy--))
-    {
-        p_peers[(*p_size)++] = peer_id;
-        peer_id = pm_next_peer_id_get(peer_id);
-    }
+    err_code = pm_whitelist_set(peer_ids, peer_id_count);
+    APP_ERROR_CHECK(err_code);
+}
+
+
+/**@brief Function for setting filtered device identities.
+ *
+ * @param[in] skip  Filter passed to @ref pm_peer_id_list.
+ */
+static void identities_set(pm_peer_id_list_skip_t skip)
+{
+    pm_peer_id_t peer_ids[BLE_GAP_DEVICE_IDENTITIES_MAX_COUNT];
+    uint32_t     peer_id_count = BLE_GAP_DEVICE_IDENTITIES_MAX_COUNT;
+
+    ret_code_t err_code = pm_peer_id_list(peer_ids, &peer_id_count, PM_PEER_ID_INVALID, skip);
+    APP_ERROR_CHECK(err_code);
+
+    err_code = pm_device_identities_list_set(peer_ids, peer_id_count);
+    APP_ERROR_CHECK(err_code);
 }
 
 
@@ -245,25 +291,9 @@ static void advertising_start(bool erase_bonds)
     }
     else
     {
-        ret_code_t ret;
+        whitelist_set(PM_PEER_ID_LIST_SKIP_NO_ID_ADDR);
 
-        memset(m_whitelist_peers, PM_PEER_ID_INVALID, sizeof(m_whitelist_peers));
-        m_whitelist_peer_cnt = (sizeof(m_whitelist_peers) / sizeof(pm_peer_id_t));
-
-        peer_list_get(m_whitelist_peers, &m_whitelist_peer_cnt);
-
-        ret = pm_whitelist_set(m_whitelist_peers, m_whitelist_peer_cnt);
-        APP_ERROR_CHECK(ret);
-
-        // Setup the device identies list.
-        // Some SoftDevices do not support this feature.
-        ret = pm_device_identities_list_set(m_whitelist_peers, m_whitelist_peer_cnt);
-        if (ret != NRF_ERROR_NOT_SUPPORTED)
-        {
-            APP_ERROR_CHECK(ret);
-        }
-
-        ret = ble_advertising_start(&m_advertising, BLE_ADV_MODE_FAST);
+        ret_code_t ret = ble_advertising_start(&m_advertising, BLE_ADV_MODE_FAST);
         APP_ERROR_CHECK(ret);
     }
 }
@@ -275,121 +305,26 @@ static void advertising_start(bool erase_bonds)
  */
 static void pm_evt_handler(pm_evt_t const * p_evt)
 {
-    ret_code_t err_code;
+    pm_handler_on_pm_evt(p_evt);
+    pm_handler_flash_clean(p_evt);
 
     switch (p_evt->evt_id)
     {
-        case PM_EVT_BONDED_PEER_CONNECTED:
-        {
-            NRF_LOG_INFO("Connected to a previously bonded device.");
-        } break;
-
-        case PM_EVT_CONN_SEC_SUCCEEDED:
-        {
-            NRF_LOG_INFO("Connection secured: role: %d, conn_handle: 0x%x, procedure: %d.",
-                         ble_conn_state_role(p_evt->conn_handle),
-                         p_evt->conn_handle,
-                         p_evt->params.conn_sec_succeeded.procedure);
-
-            m_peer_id = p_evt->peer_id;
-        } break;
-
-        case PM_EVT_CONN_SEC_FAILED:
-        {
-            /* Often, when securing fails, it shouldn't be restarted, for security reasons.
-             * Other times, it can be restarted directly.
-             * Sometimes it can be restarted, but only after changing some Security Parameters.
-             * Sometimes, it cannot be restarted until the link is disconnected and reconnected.
-             * Sometimes it is impossible, to secure the link, or the peer device does not support it.
-             * How to handle this error is highly application dependent. */
-        } break;
-
-        case PM_EVT_CONN_SEC_CONFIG_REQ:
-        {
-            // Reject pairing request from an already bonded peer.
-            pm_conn_sec_config_t conn_sec_config = {.allow_repairing = false};
-            pm_conn_sec_config_reply(p_evt->conn_handle, &conn_sec_config);
-        } break;
-
-        case PM_EVT_STORAGE_FULL:
-        {
-            // Run garbage collection on the flash.
-            err_code = fds_gc();
-            if (err_code == FDS_ERR_NO_SPACE_IN_QUEUES)
-            {
-                // Retry.
-            }
-            else
-            {
-                APP_ERROR_CHECK(err_code);
-            }
-        } break;
-
         case PM_EVT_PEERS_DELETE_SUCCEEDED:
-        {
             advertising_start(false);
-        } break;
+            break;
 
         case PM_EVT_PEER_DATA_UPDATE_SUCCEEDED:
-        {
             if (     p_evt->params.peer_data_update_succeeded.flash_changed
                  && (p_evt->params.peer_data_update_succeeded.data_id == PM_PEER_DATA_ID_BONDING))
             {
                 NRF_LOG_INFO("New Bond, add the peer to the whitelist if possible");
-                NRF_LOG_INFO("\tm_whitelist_peer_cnt %d, MAX_PEERS_WLIST %d",
-                               m_whitelist_peer_cnt + 1,
-                               BLE_GAP_WHITELIST_ADDR_MAX_COUNT);
                 // Note: You should check on what kind of white list policy your application should use.
 
-                if (m_whitelist_peer_cnt < BLE_GAP_WHITELIST_ADDR_MAX_COUNT)
-                {
-                    // Bonded to a new peer, add it to the whitelist.
-                    m_whitelist_peers[m_whitelist_peer_cnt++] = m_peer_id;
-
-                    // The whitelist has been modified, update it in the Peer Manager.
-                    err_code = pm_whitelist_set(m_whitelist_peers, m_whitelist_peer_cnt);
-                    APP_ERROR_CHECK(err_code);
-
-                    err_code = pm_device_identities_list_set(m_whitelist_peers, m_whitelist_peer_cnt);
-                    if (err_code != NRF_ERROR_NOT_SUPPORTED)
-                    {
-                        APP_ERROR_CHECK(err_code);
-                    }
-                }
+                whitelist_set(PM_PEER_ID_LIST_SKIP_NO_ID_ADDR);
             }
-        } break;
+            break;
 
-        case PM_EVT_PEER_DATA_UPDATE_FAILED:
-        {
-            // Assert.
-            APP_ERROR_CHECK(p_evt->params.peer_data_update_failed.error);
-        } break;
-
-        case PM_EVT_PEER_DELETE_FAILED:
-        {
-            // Assert.
-            APP_ERROR_CHECK(p_evt->params.peer_delete_failed.error);
-        } break;
-
-        case PM_EVT_PEERS_DELETE_FAILED:
-        {
-            // Assert.
-            APP_ERROR_CHECK(p_evt->params.peers_delete_failed_evt.error);
-        } break;
-
-        case PM_EVT_ERROR_UNEXPECTED:
-        {
-            // Assert.
-            APP_ERROR_CHECK(p_evt->params.error_unexpected.error);
-        } break;
-
-        case PM_EVT_CONN_SEC_START:
-        case PM_EVT_PEER_DELETE_SUCCEEDED:
-        case PM_EVT_LOCAL_DB_CACHE_APPLIED:
-        case PM_EVT_LOCAL_DB_CACHE_APPLY_FAILED:
-            // This can happen when the local DB has changed.
-        case PM_EVT_SERVICE_CHANGED_IND_SENT:
-        case PM_EVT_SERVICE_CHANGED_IND_CONFIRMED:
         default:
             break;
     }
@@ -562,8 +497,7 @@ static void dis_init(void)
     ble_srv_ascii_to_utf8(&dis_init_obj.manufact_name_str, MANUFACTURER_NAME);
     dis_init_obj.p_pnp_id = &pnp_id;
 
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&dis_init_obj.dis_attr_md.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&dis_init_obj.dis_attr_md.write_perm);
+    dis_init_obj.dis_char_rd_sec = SEC_JUST_WORKS;
 
     err_code = ble_dis_init(&dis_init_obj);
     APP_ERROR_CHECK(err_code);
@@ -584,11 +518,9 @@ static void bas_init(void)
     bas_init_obj.p_report_ref         = NULL;
     bas_init_obj.initial_batt_level   = 100;
 
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&bas_init_obj.battery_level_char_attr_md.cccd_write_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&bas_init_obj.battery_level_char_attr_md.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&bas_init_obj.battery_level_char_attr_md.write_perm);
-
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&bas_init_obj.battery_level_report_read_perm);
+    bas_init_obj.bl_rd_sec        = SEC_JUST_WORKS;
+    bas_init_obj.bl_cccd_wr_sec   = SEC_JUST_WORKS;
+    bas_init_obj.bl_report_rd_sec = SEC_JUST_WORKS;
 
     err_code = ble_bas_init(&m_bas, &bas_init_obj);
     APP_ERROR_CHECK(err_code);
@@ -692,27 +624,27 @@ static void hids_init(void)
     p_input_report->rep_ref.report_id   = INPUT_REP_REF_BUTTONS_ID;
     p_input_report->rep_ref.report_type = BLE_HIDS_REP_TYPE_INPUT;
 
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&p_input_report->security_mode.cccd_write_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&p_input_report->security_mode.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&p_input_report->security_mode.write_perm);
+    p_input_report->sec.cccd_wr = SEC_JUST_WORKS;
+    p_input_report->sec.wr      = SEC_JUST_WORKS;
+    p_input_report->sec.rd      = SEC_JUST_WORKS;
 
     p_input_report                      = &inp_rep_array[INPUT_REP_MOVEMENT_INDEX];
     p_input_report->max_len             = INPUT_REP_MOVEMENT_LEN;
     p_input_report->rep_ref.report_id   = INPUT_REP_REF_MOVEMENT_ID;
     p_input_report->rep_ref.report_type = BLE_HIDS_REP_TYPE_INPUT;
 
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&p_input_report->security_mode.cccd_write_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&p_input_report->security_mode.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&p_input_report->security_mode.write_perm);
+    p_input_report->sec.cccd_wr = SEC_JUST_WORKS;
+    p_input_report->sec.wr      = SEC_JUST_WORKS;
+    p_input_report->sec.rd      = SEC_JUST_WORKS;
 
     p_input_report                      = &inp_rep_array[INPUT_REP_MPLAYER_INDEX];
     p_input_report->max_len             = INPUT_REP_MEDIA_PLAYER_LEN;
     p_input_report->rep_ref.report_id   = INPUT_REP_REF_MPLAYER_ID;
     p_input_report->rep_ref.report_type = BLE_HIDS_REP_TYPE_INPUT;
 
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&p_input_report->security_mode.cccd_write_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&p_input_report->security_mode.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&p_input_report->security_mode.write_perm);
+    p_input_report->sec.cccd_wr = SEC_JUST_WORKS;
+    p_input_report->sec.wr      = SEC_JUST_WORKS;
+    p_input_report->sec.rd      = SEC_JUST_WORKS;
 
     hid_info_flags = HID_INFO_FLAG_REMOTE_WAKE_MSK | HID_INFO_FLAG_NORMALLY_CONNECTABLE_MSK;
 
@@ -736,22 +668,16 @@ static void hids_init(void)
     hids_init_obj.included_services_count        = 0;
     hids_init_obj.p_included_services_array      = NULL;
 
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&hids_init_obj.rep_map.security_mode.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&hids_init_obj.rep_map.security_mode.write_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&hids_init_obj.hid_information.security_mode.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&hids_init_obj.hid_information.security_mode.write_perm);
+    hids_init_obj.rep_map.rd_sec         = SEC_JUST_WORKS;
+    hids_init_obj.hid_information.rd_sec = SEC_JUST_WORKS;
 
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(
-        &hids_init_obj.security_mode_boot_mouse_inp_rep.cccd_write_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(
-        &hids_init_obj.security_mode_boot_mouse_inp_rep.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(
-        &hids_init_obj.security_mode_boot_mouse_inp_rep.write_perm);
+    hids_init_obj.boot_mouse_inp_rep_sec.cccd_wr = SEC_JUST_WORKS;
+    hids_init_obj.boot_mouse_inp_rep_sec.wr      = SEC_JUST_WORKS;
+    hids_init_obj.boot_mouse_inp_rep_sec.rd      = SEC_JUST_WORKS;
 
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&hids_init_obj.security_mode_protocol.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&hids_init_obj.security_mode_protocol.write_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&hids_init_obj.security_mode_ctrl_point.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&hids_init_obj.security_mode_ctrl_point.write_perm);
+    hids_init_obj.protocol_mode_rd_sec = SEC_JUST_WORKS;
+    hids_init_obj.protocol_mode_wr_sec = SEC_JUST_WORKS;
+    hids_init_obj.ctrl_point_wr_sec    = SEC_JUST_WORKS;
 
     err_code = ble_hids_init(&m_hids, &hids_init_obj);
     APP_ERROR_CHECK(err_code);
@@ -896,6 +822,10 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
 
         case BLE_ADV_EVT_FAST:
             NRF_LOG_INFO("Fast advertising.");
+#if SWIFT_PAIR_SUPPORTED == 1
+            err_code = ble_advertising_advdata_update(&m_advertising, &m_sp_advdata_buf, false);
+            APP_ERROR_CHECK(err_code);
+#endif
             err_code = bsp_indication_set(BSP_INDICATE_ADVERTISING);
             APP_ERROR_CHECK(err_code);
             break;
@@ -940,6 +870,9 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
                            addr_cnt,
                            irk_cnt);
 
+            // Set the correct identities list (no excluding peers with no Central Address Resolution).
+            identities_set(PM_PEER_ID_LIST_SKIP_NO_IRK);
+
             // Apply the whitelist.
             err_code = ble_advertising_whitelist_reply(&m_advertising,
                                                        whitelist_addrs,
@@ -962,6 +895,9 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
                 if (err_code != NRF_ERROR_NOT_FOUND)
                 {
                     APP_ERROR_CHECK(err_code);
+
+                    // Manipulate identities to exclude peers with no Central Address Resolution.
+                    identities_set(PM_PEER_ID_LIST_SKIP_ALL);
 
                     ble_gap_addr_t * p_peer_addr = &(peer_bonding_data.peer_ble_id.id_addr_info);
                     err_code = ble_advertising_peer_addr_reply(&m_advertising, p_peer_addr);
@@ -1102,6 +1038,32 @@ static void peer_manager_init(void)
 }
 
 
+#if SWIFT_PAIR_SUPPORTED == 1
+/**@brief Function for encoding Swift Pair advertising data set, which should be used in Swift Pair
+ *        mode.
+ *
+ * @param[in]   p_new_advdata      Pointer to the structure which specifies content of encoded data.
+ * @param[out]  p_new_advdata_buf  Pointer to the buffer where encoded data will be stored.
+ */
+static void sp_advdata_prepare(ble_advdata_t const * const p_new_advdata,
+                               ble_gap_adv_data_t  * const p_new_advdata_buf)
+{
+    ret_code_t ret = ble_advdata_encode(p_new_advdata,
+                                        p_new_advdata_buf->adv_data.p_data,
+                                        &p_new_advdata_buf->adv_data.len);
+    APP_ERROR_CHECK(ret);
+
+    if (p_new_advdata_buf->scan_rsp_data.p_data != NULL)
+    {
+        ret = ble_advdata_encode(p_new_advdata,
+                                 p_new_advdata_buf->scan_rsp_data.p_data,
+                                 &p_new_advdata_buf->scan_rsp_data.len);
+        APP_ERROR_CHECK(ret);
+    }
+}
+#endif
+
+
 /**@brief Function for initializing the Advertising functionality.
  */
 static void advertising_init(void)
@@ -1138,6 +1100,11 @@ static void advertising_init(void)
     APP_ERROR_CHECK(err_code);
 
     ble_advertising_conn_cfg_tag_set(&m_advertising, APP_BLE_CONN_CFG_TAG);
+
+#if SWIFT_PAIR_SUPPORTED == 1
+    init.advdata.p_manuf_specific_data = &m_sp_manuf_advdata;
+    sp_advdata_prepare(&init.advdata, &m_sp_advdata_buf);
+#endif
 }
 
 

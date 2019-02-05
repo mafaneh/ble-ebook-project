@@ -30,7 +30,6 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "app_util.h"
-#include "nrf_log.h"
 
 #ifdef SOFTDEVICE_PRESENT
 #include "nrf_soc.h"

@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2015 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #include "sdk_common.h"
 #if NRF_MODULE_ENABLED(PEER_MANAGER)
@@ -48,6 +48,22 @@
 #include "ble_conn_state.h"
 #include "id_manager.h"
 #include "sdk_common.h"
+
+#if PM_LESC_ENABLED
+#include "nrf_ble_lesc.h"
+#endif
+#define NRF_LOG_MODULE_NAME peer_manager_sm
+#if PM_LOG_ENABLED
+    #define NRF_LOG_LEVEL       PM_LOG_LEVEL
+    #define NRF_LOG_INFO_COLOR  PM_LOG_INFO_COLOR
+    #define NRF_LOG_DEBUG_COLOR PM_LOG_DEBUG_COLOR
+#else
+    #define NRF_LOG_LEVEL       0
+#endif // PM_LOG_ENABLED
+#include "nrf_log.h"
+#include "nrf_log_ctrl.h"
+NRF_LOG_MODULE_REGISTER();
+#include "nrf_strerror.h"
 
 
 // The number of registered event handlers.
@@ -79,14 +95,14 @@ static ble_gap_sec_params_t            m_sec_params;              //!< The buffe
 static ble_gap_sec_params_t          * mp_sec_params = NULL;      //!< The default security parameters set by @ref sm_sec_params_set.
 static bool                            m_sec_params_set = false;  //!< Whether @ref sm_sec_params_set has been called.
 
+#if PM_LESC_ENABLED == 0
 static ble_gap_lesc_p256_pk_t        * m_p_public_key;            //!< Pointer, provided by the user, to the public key to use for LESC procedures.
+#endif
 
 static ble_conn_state_user_flag_id_t   m_flag_link_secure_pending_busy        = BLE_CONN_STATE_USER_FLAG_INVALID;  //!< User flag indicating whether a connection has a pending call to @ref sm_link_secure because it returned @ref NRF_ERROR_BUSY.
-static ble_conn_state_user_flag_id_t   m_flag_link_secure_pending_flash_full  = BLE_CONN_STATE_USER_FLAG_INVALID;  //!< User flag indicating whether a connection has a pending call to @ref sm_link_secure because it returned @ref NRF_ERROR_STORAGE_FULL.
 static ble_conn_state_user_flag_id_t   m_flag_link_secure_force_repairing     = BLE_CONN_STATE_USER_FLAG_INVALID;  //!< User flag indicating whether a pending call to @ref sm_link_secure should be called with true for the force_repairing parameter.
 static ble_conn_state_user_flag_id_t   m_flag_link_secure_null_params         = BLE_CONN_STATE_USER_FLAG_INVALID;  //!< User flag indicating whether a pending call to @ref sm_link_secure should be called with NULL security parameters.
 static ble_conn_state_user_flag_id_t   m_flag_params_reply_pending_busy       = BLE_CONN_STATE_USER_FLAG_INVALID;  //!< User flag indicating whether a connection has a pending call to @ref sm_sec_params_reply because it returned @ref NRF_ERROR_BUSY.
-static ble_conn_state_user_flag_id_t   m_flag_params_reply_pending_flash_full = BLE_CONN_STATE_USER_FLAG_INVALID;  //!< User flag indicating whether a connection has a pending call to @ref sm_sec_params_reply because it returned @ref NRF_ERROR_STORAGE_FULL.
 
 
 /**@brief Function for sending an SM event to all registered event handlers.
@@ -112,45 +128,28 @@ static void evt_send(pm_evt_t * p_event)
  */
 static void flags_set_from_err_code(uint16_t conn_handle, ret_code_t err_code, bool params_reply)
 {
-    bool flag_value_flash_full = false;
     bool flag_value_busy       = false;
 
-    if ((err_code == NRF_ERROR_STORAGE_FULL))
-    {
-        flag_value_busy       = false;
-        flag_value_flash_full = true;
-    }
-    else if (err_code == NRF_ERROR_BUSY)
+    if (err_code == NRF_ERROR_BUSY)
     {
         flag_value_busy       = true;
-        flag_value_flash_full = false;
     }
     else
     {
         flag_value_busy       = false;
-        flag_value_flash_full = false;
     }
 
     if (params_reply)
     {
         ble_conn_state_user_flag_set(conn_handle,
-                                     m_flag_params_reply_pending_flash_full,
-                                     flag_value_flash_full);
-        ble_conn_state_user_flag_set(conn_handle,
                                      m_flag_params_reply_pending_busy,
                                      flag_value_busy);
-        ble_conn_state_user_flag_set(conn_handle,
-                                     m_flag_link_secure_pending_flash_full,
-                                     false);
         ble_conn_state_user_flag_set(conn_handle,
                                      m_flag_link_secure_pending_busy,
                                      false);
     }
     else
     {
-        ble_conn_state_user_flag_set(conn_handle,
-                                     m_flag_link_secure_pending_flash_full,
-                                     flag_value_flash_full);
         ble_conn_state_user_flag_set(conn_handle,
                                      m_flag_link_secure_pending_busy,
                                      flag_value_busy);
@@ -180,6 +179,10 @@ static void events_send_from_err_code(uint16_t               conn_handle,
         };
         if (err_code == NRF_ERROR_TIMEOUT)
         {
+            NRF_LOG_WARNING("Cannot secure link because a previous security procedure ended in timeout. "\
+                            "Disconnect and retry. smd_params_reply() or smd_link_secure() returned "\
+                            "NRF_ERROR_TIMEOUT. conn_handle: %d",
+                            conn_handle);
             evt.evt_id = PM_EVT_CONN_SEC_FAILED;
             evt.params.conn_sec_failed.procedure = ((p_sec_params != NULL) && p_sec_params->bond)
                                                  ? PM_CONN_SEC_PROCEDURE_BONDING
@@ -187,14 +190,15 @@ static void events_send_from_err_code(uint16_t               conn_handle,
             evt.params.conn_sec_failed.error_src = BLE_GAP_SEC_STATUS_SOURCE_LOCAL;
             evt.params.conn_sec_failed.error     = PM_CONN_SEC_ERROR_SMP_TIMEOUT;
         }
-        else if (err_code == NRF_ERROR_STORAGE_FULL)
-        {
-            evt.evt_id = PM_EVT_STORAGE_FULL;
-        }
         else
         {
+            NRF_LOG_ERROR("Could not perform security procedure. smd_params_reply() or "\
+                          "smd_link_secure() returned %s. conn_handle: %d",
+                          nrf_strerror_get(err_code),
+                          conn_handle);
             evt.evt_id = PM_EVT_ERROR_UNEXPECTED;
-            evt.params.error_unexpected.error = err_code;
+            evt.params.error_unexpected.error     = err_code;
+            evt.params.error_unexpected.fds_error = false;
         }
         evt_send(&evt);
     }
@@ -285,10 +289,6 @@ static ret_code_t link_secure(uint16_t conn_handle,
             ble_conn_state_user_flag_set(conn_handle, m_flag_link_secure_force_repairing, force_repairing);
             return_err_code = NRF_SUCCESS;
             break;
-        case NRF_ERROR_STORAGE_FULL:
-            ble_conn_state_user_flag_set(conn_handle, m_flag_link_secure_null_params, null_params);
-            ble_conn_state_user_flag_set(conn_handle, m_flag_link_secure_force_repairing, force_repairing);
-            /* fallthrough */
         case NRF_SUCCESS:
         case NRF_ERROR_TIMEOUT:
         case BLE_ERROR_INVALID_CONN_HANDLE:
@@ -297,6 +297,10 @@ static ret_code_t link_secure(uint16_t conn_handle,
             return_err_code = err_code;
             break;
         default:
+            NRF_LOG_ERROR("Could not perform security procedure. smd_link_secure() returned %s. "\
+                          "conn_handle: %d",
+                          nrf_strerror_get(err_code),
+                          conn_handle);
             return_err_code = NRF_ERROR_INTERNAL;
             break;
     }
@@ -318,11 +322,17 @@ static ret_code_t link_secure(uint16_t conn_handle,
 static void smd_params_reply_perform(uint16_t conn_handle, ble_gap_sec_params_t const * p_peer_params)
 {
     ret_code_t                 err_code;
+    ble_gap_lesc_p256_pk_t   * p_public_key;
     sec_params_reply_context_t context = new_context_get();
 
     params_req_send(conn_handle, p_peer_params, &context);
 
-    err_code = smd_params_reply(conn_handle, context.p_sec_params, m_p_public_key);
+#if PM_LESC_ENABLED
+    p_public_key = nrf_ble_lesc_public_key_get();
+#else
+    p_public_key = m_p_public_key;
+#endif // PM_LESC_ENABLED
+    err_code = smd_params_reply(conn_handle, context.p_sec_params, p_public_key);
 
     flags_set_from_err_code(conn_handle, err_code, true);
     events_send_from_err_code(conn_handle, err_code, context.p_sec_params);
@@ -435,13 +445,6 @@ void sm_pdb_evt_handler(pm_evt_t * p_event)
     switch (p_event->evt_id)
     {
         case PM_EVT_FLASH_GARBAGE_COLLECTED:
-            (void) ble_conn_state_for_each_set_user_flag(m_flag_params_reply_pending_flash_full,
-                                                         params_reply_pending_handle,
-                                                         NULL);
-            (void) ble_conn_state_for_each_set_user_flag(m_flag_link_secure_pending_flash_full,
-                                                         link_secure_pending_handle,
-                                                         NULL);
-            /* fallthrough */
         case PM_EVT_PEER_DATA_UPDATE_SUCCEEDED:
         case PM_EVT_PEER_DATA_UPDATE_FAILED:
         case PM_EVT_PEER_DELETE_SUCCEEDED:
@@ -477,15 +480,23 @@ ret_code_t sm_init(void)
 {
     NRF_PM_DEBUG_CHECK(!m_module_initialized);
 
+#if PM_LESC_ENABLED
+    ret_code_t err_code = nrf_ble_lesc_init();
+    if (err_code != NRF_SUCCESS)
+    {
+        return err_code;
+    }
+#endif
+
     flag_id_init(&m_flag_link_secure_pending_busy);
-    flag_id_init(&m_flag_link_secure_pending_flash_full);
     flag_id_init(&m_flag_link_secure_force_repairing);
     flag_id_init(&m_flag_link_secure_null_params);
     flag_id_init(&m_flag_params_reply_pending_busy);
-    flag_id_init(&m_flag_params_reply_pending_flash_full);
 
-    if (m_flag_params_reply_pending_flash_full == BLE_CONN_STATE_USER_FLAG_INVALID)
+    if (m_flag_params_reply_pending_busy == BLE_CONN_STATE_USER_FLAG_INVALID)
     {
+        NRF_LOG_ERROR("Could not acquire conn_state user flags. Increase "\
+                      "BLE_CONN_STATE_USER_FLAG_COUNT in the ble_conn_state module.");
         return NRF_ERROR_INTERNAL;
     }
 
@@ -500,6 +511,12 @@ void sm_ble_evt_handler(ble_evt_t const * p_ble_evt)
     NRF_PM_DEBUG_CHECK(p_ble_evt != NULL);
 
     smd_ble_evt_handler(p_ble_evt);
+#if PM_LESC_ENABLED
+    nrf_ble_lesc_on_ble_evt(p_ble_evt);
+#endif
+    (void) ble_conn_state_for_each_set_user_flag(m_flag_params_reply_pending_busy,
+                                                 params_reply_pending_handle,
+                                                 NULL);
     (void) ble_conn_state_for_each_set_user_flag(m_flag_link_secure_pending_busy,
                                                  link_secure_pending_handle,
                                                  NULL);
@@ -657,9 +674,13 @@ ret_code_t sm_lesc_public_key_set(ble_gap_lesc_p256_pk_t * p_public_key)
 {
     NRF_PM_DEBUG_CHECK(m_module_initialized);
 
+#if PM_LESC_ENABLED
+    return NRF_ERROR_FORBIDDEN;
+#else
     m_p_public_key = p_public_key;
 
     return NRF_SUCCESS;
+#endif // PM_LESC_ENABLED
 }
 
 

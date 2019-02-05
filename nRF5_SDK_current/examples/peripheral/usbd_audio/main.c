@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2017 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #include <stdint.h>
 #include <stdbool.h>
@@ -142,7 +142,7 @@ static void mic_audio_user_ev_handler(app_usbd_class_inst_t const * p_inst,
 /**
  * @brief   Audio class specific format descriptor
  */
-APP_USBD_AUDIO_FORMAT_DESCRIPTOR(mic_form_desc, 
+APP_USBD_AUDIO_FORMAT_DESCRIPTOR(m_mic_form_desc, 
                                  APP_USBD_AUDIO_AS_FORMAT_I_DSC(    /* Format type 1 descriptor */
                                     2,                              /* Number of channels */
                                     2,                              /* Subframe size */
@@ -154,7 +154,7 @@ APP_USBD_AUDIO_FORMAT_DESCRIPTOR(mic_form_desc,
 /**
  * @brief   Audio class input terminal descriptor
  */
-APP_USBD_AUDIO_INPUT_DESCRIPTOR(mic_inp_desc, 
+APP_USBD_AUDIO_INPUT_DESCRIPTOR(m_mic_inp_desc, 
                                 APP_USBD_AUDIO_INPUT_TERMINAL_DSC(
                                     1,                                     /* Terminal ID */
                                     APP_USBD_AUDIO_TERMINAL_IN_MICROPHONE, /* Terminal type */
@@ -165,7 +165,7 @@ APP_USBD_AUDIO_INPUT_DESCRIPTOR(mic_inp_desc,
 /**
  * @brief   Audio class output terminal descriptor
  */
-APP_USBD_AUDIO_OUTPUT_DESCRIPTOR(mic_out_desc, 
+APP_USBD_AUDIO_OUTPUT_DESCRIPTOR(m_mic_out_desc, 
                                  APP_USBD_AUDIO_OUTPUT_TERMINAL_DSC(
                                     3,                                     /* Terminal ID */
                                     APP_USBD_AUDIO_TERMINAL_USB_STREAMING, /* Terminal type */
@@ -175,7 +175,7 @@ APP_USBD_AUDIO_OUTPUT_DESCRIPTOR(mic_out_desc,
 /**
  * @brief   Audio class feature unit descriptor
  */
-APP_USBD_AUDIO_FEATURE_DESCRIPTOR(mic_fea_desc, 
+APP_USBD_AUDIO_FEATURE_DESCRIPTOR(m_mic_fea_desc, 
                                   APP_USBD_AUDIO_FEATURE_UNIT_DSC(
                                     2,                      /* Unit ID */
                                     1,                      /* Source ID */
@@ -187,8 +187,8 @@ APP_USBD_AUDIO_FEATURE_DESCRIPTOR(mic_fea_desc,
 /**
  * @brief   Audio class specific format III descriptor
  */
-APP_USBD_AUDIO_FORMAT_DESCRIPTOR(hp_form_desc, 
-                                    APP_USBD_AUDIO_AS_FORMAT_III_DSC( /* Format type 3 descriptor */
+APP_USBD_AUDIO_FORMAT_DESCRIPTOR(m_hp_form_desc, 
+                                 APP_USBD_AUDIO_AS_FORMAT_III_DSC(    /* Format type 3 descriptor */
                                     2,                                /* Number of channels */
                                     2,                                /* Subframe size */
                                     16,                               /* Bit resolution */
@@ -199,7 +199,7 @@ APP_USBD_AUDIO_FORMAT_DESCRIPTOR(hp_form_desc,
 /**
  * @brief   Audio class input terminal descriptor
  */
-APP_USBD_AUDIO_INPUT_DESCRIPTOR(hp_inp_desc, 
+APP_USBD_AUDIO_INPUT_DESCRIPTOR(m_hp_inp_desc, 
                                 APP_USBD_AUDIO_INPUT_TERMINAL_DSC(
                                     1,                                     /* Terminal ID */
                                     APP_USBD_AUDIO_TERMINAL_USB_STREAMING, /* Terminal type */
@@ -210,7 +210,7 @@ APP_USBD_AUDIO_INPUT_DESCRIPTOR(hp_inp_desc,
 /**
  * @brief   Audio class output terminal descriptor
  */
-APP_USBD_AUDIO_OUTPUT_DESCRIPTOR(hp_out_desc, 
+APP_USBD_AUDIO_OUTPUT_DESCRIPTOR(m_hp_out_desc, 
                                  APP_USBD_AUDIO_OUTPUT_TERMINAL_DSC(
                                     3,                                      /* Terminal ID */
                                     APP_USBD_AUDIO_TERMINAL_OUT_HEADPHONES, /* Terminal type */
@@ -220,7 +220,7 @@ APP_USBD_AUDIO_OUTPUT_DESCRIPTOR(hp_out_desc,
 /**
  * @brief   Audio class feature unit descriptor
  */
-APP_USBD_AUDIO_FEATURE_DESCRIPTOR(hp_fea_desc, 
+APP_USBD_AUDIO_FEATURE_DESCRIPTOR(m_hp_fea_desc, 
                                   APP_USBD_AUDIO_FEATURE_UNIT_DSC(
                                     2,                     /* Unit ID */
                                     1,                     /* Source ID */
@@ -248,10 +248,10 @@ APP_USBD_AUDIO_FEATURE_DESCRIPTOR(hp_fea_desc,
 APP_USBD_AUDIO_GLOBAL_DEF(m_app_audio_headphone,
                           HP_INTERFACES_CONFIG(),
                           hp_audio_user_ev_handler,
-                          &hp_form_desc,
-                          &hp_inp_desc,
-                          &hp_out_desc,
-                          &hp_fea_desc,
+                          &m_hp_form_desc,
+                          &m_hp_inp_desc,
+                          &m_hp_out_desc,
+                          &m_hp_fea_desc,
                           0,
                           APP_USBD_AUDIO_AS_IFACE_FORMAT_PCM,
                           192,
@@ -266,10 +266,10 @@ APP_USBD_AUDIO_GLOBAL_DEF(m_app_audio_headphone,
 APP_USBD_AUDIO_GLOBAL_DEF(m_app_audio_microphone,
                           MIC_INTERFACES_CONFIG(),
                           mic_audio_user_ev_handler,
-                          &mic_form_desc,
-                          &mic_inp_desc,
-                          &mic_out_desc,
-                          &mic_fea_desc,
+                          &m_mic_form_desc,
+                          &m_mic_inp_desc,
+                          &m_mic_out_desc,
+                          &m_mic_fea_desc,
                           0,
                           APP_USBD_AUDIO_AS_IFACE_FORMAT_PCM,
                           192,
@@ -458,6 +458,27 @@ static void mic_audio_user_ev_handler(app_usbd_class_inst_t const * p_inst,
     }
 }
 
+static void hp_sof_ev_handler(uint16_t framecnt)
+{
+    UNUSED_VARIABLE(framecnt);
+    if (APP_USBD_STATE_Configured != app_usbd_core_state_get())
+    {
+        return;
+    }
+    size_t rx_size = app_usbd_audio_class_rx_size_get(&m_app_audio_headphone.base);
+    m_temp_buffer_size = rx_size;
+    if (rx_size > 0)
+    {
+        ASSERT(rx_size <= sizeof(m_temp_buffer));
+        ret_code_t ret;
+        ret = app_usbd_audio_class_rx_start(&m_app_audio_headphone.base, m_temp_buffer, rx_size);
+        if (NRF_SUCCESS != ret)
+        {
+            NRF_LOG_ERROR("Cannot start RX transfer from headphone\r\n");
+        }
+    }
+}
+
 /**
  * @brief USBD library specific event handler.
  *
@@ -468,25 +489,7 @@ static void usbd_user_ev_handler(app_usbd_event_type_t event)
     switch (event)
     {
         case APP_USBD_EVT_DRV_SOF:
-        {
-            if (APP_USBD_STATE_Configured != app_usbd_core_state_get())
-            {
-                break;
-            }
-            size_t rx_size = app_usbd_audio_class_rx_size_get(&m_app_audio_headphone.base);
-            m_temp_buffer_size = rx_size;
-            if (rx_size > 0)
-            {
-                ASSERT(rx_size <= sizeof(m_temp_buffer));
-                ret_code_t ret;
-                ret = app_usbd_audio_class_rx_start(&m_app_audio_headphone.base, m_temp_buffer, rx_size);
-                if (NRF_SUCCESS != ret)
-                {
-                    NRF_LOG_ERROR("Cannot start RX transfer from headphone\r\n");
-                }
-            }
             break;
-        }
         case APP_USBD_EVT_DRV_SUSPEND:
             bsp_board_leds_off();
             break;
@@ -546,6 +549,10 @@ int main(void)
 
     app_usbd_class_inst_t const * class_inst_hp =
         app_usbd_audio_class_inst_get(&m_app_audio_headphone);
+
+    ret = app_usbd_audio_sof_interrupt_register(class_inst_hp, hp_sof_ev_handler);
+    APP_ERROR_CHECK(ret);
+
     ret = app_usbd_class_append(class_inst_hp);
     APP_ERROR_CHECK(ret);
 
@@ -553,7 +560,7 @@ int main(void)
         app_usbd_audio_class_inst_get(&m_app_audio_microphone);
     ret = app_usbd_class_append(class_inst_mic);
     APP_ERROR_CHECK(ret);
-    
+
     if (USBD_POWER_DETECTION)
     {
         ret = app_usbd_power_events_enable();

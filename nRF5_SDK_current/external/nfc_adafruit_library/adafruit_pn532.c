@@ -45,12 +45,11 @@
 #if ADAFRUIT_PN532_LOG_ENABLED
 #define NRF_LOG_LEVEL       ADAFRUIT_PN532_LOG_LEVEL
 #define NRF_LOG_INFO_COLOR  ADAFRUIT_PN532_INFO_COLOR
-#include "nrf_log.h"
-NRF_LOG_MODULE_REGISTER();
 #else // ADAFRUIT_PN532_LOG_ENABLED
 #define NRF_LOG_LEVEL       0
-#include "nrf_log.h"
 #endif // ADAFRUIT_PN532_LOG_ENABLED
+#include "nrf_log.h"
+NRF_LOG_MODULE_REGISTER();
 
 // Type 2 Tag page/block read/write restrictions.
 #define T2T_MAX_READ_PAGE_NUMBER                          255

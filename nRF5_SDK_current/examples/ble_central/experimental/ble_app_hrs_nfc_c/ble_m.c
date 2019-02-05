@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2016 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #include "ble_m.h"
 #include "nordic_common.h"
@@ -50,68 +50,35 @@
 #include "ble_hrs_c.h"
 #include "ble_bas_c.h"
 #include "nrf_ble_gatt.h"
+#include "nrf_ble_scan.h"
 
 #define NRF_LOG_MODULE_NAME BLE_M
 #include "nrf_log.h"
 NRF_LOG_MODULE_REGISTER();
 
-#define APP_BLE_CONN_CFG_TAG        1                                   /**< A tag for a configuration of the BLE stack. */
-#define APP_BLE_OBSERVER_PRIO       3                                   /**< Applications' BLE observer priority. You shoulnd't need to modify this value. */
-#define APP_SOC_OBSERVER_PRIO       1                                   /**< Applications' SoC observer priority. You shoulnd't need to modify this value. */
-
-#define MIN_CONNECTION_INTERVAL     MSEC_TO_UNITS(7.5, UNIT_1_25_MS)    /**< Determines minimum connection interval in milliseconds. */
-#define MAX_CONNECTION_INTERVAL     MSEC_TO_UNITS(30, UNIT_1_25_MS)     /**< Determines maximum connection interval in milliseconds. */
-#define SLAVE_LATENCY               0                                   /**< Determines slave latency in terms of connection events. */
-#define SUPERVISION_TIMEOUT         MSEC_TO_UNITS(4000, UNIT_10_MS)     /**< Determines supervision time-out in units of 10 milliseconds. */
-
-#define SCAN_INTERVAL               0x00A0                              /**< Determines scan interval in units of 0.625 millisecond. */
-#define SCAN_WINDOW                 0x0050                              /**< Determines scan window in units of 0.625 millisecond. */
-#define SCAN_TIMEOUT                0x0000                              /**< Timout when scanning. 0x0000 disables the time-out. */
+#define APP_BLE_CONN_CFG_TAG        1                                   /**< Tag for the configuration of the BLE stack. */
+#define APP_BLE_OBSERVER_PRIO       3                                   /**< BLE observer priority of the application. There is no need to modify this value. */
+#define APP_SOC_OBSERVER_PRIO       1                                   /**< SoC observer priority of the application. There is no need to modify this value. */
 
 #define DEV_NAME_LEN                ((BLE_GAP_ADV_SET_DATA_SIZE_MAX + 1) - \
-                                    AD_DATA_OFFSET)                     /**< Determines device name length. */
+                                    AD_DATA_OFFSET)                     /**< Determines the device name length. */
 
-BLE_HRS_C_DEF(m_hrs_c);                                                 /**< Heart rate service client module instance. */
+BLE_HRS_C_DEF(m_hrs_c);                                                 /**< Heart Rate Service client module instance. */
 BLE_BAS_C_DEF(m_bas_c);                                                 /**< Battery Service client module instance. */
 NRF_BLE_GATT_DEF(m_gatt);                                               /**< GATT module instance. */
-BLE_DB_DISCOVERY_DEF(m_db_discovery);                                   /**< DB Discovery module instance. */
+BLE_DB_DISCOVERY_DEF(m_db_discovery);                                   /**< Database Discovery module instance. */
+NRF_BLE_SCAN_DEF(m_scan);                                               /**< Scanning Module instance. */
 
-static bool     m_is_connected              = false;                    /**< Flag to keep track of BLE connections with peripheral devices */
+static bool     m_is_connected              = false;                    /**< Flag to keep track of the BLE connections with peripheral devices. */
 static uint16_t m_conn_handle               = BLE_CONN_HANDLE_INVALID;  /**< Current connection handle. */
-static bool     m_memory_access_in_progress = false;                    /**< Flag to keep track of ongoing operations on persistent memory. */
-
-/**@brief Connection parameters requested for connection. */
-static ble_gap_conn_params_t const m_connection_param =
-{
-    .min_conn_interval = (uint16_t)MIN_CONNECTION_INTERVAL,
-    .max_conn_interval = (uint16_t)MAX_CONNECTION_INTERVAL,
-    .slave_latency     = (uint16_t)SLAVE_LATENCY,
-    .conn_sup_timeout  = (uint16_t)SUPERVISION_TIMEOUT
-};
-
-/**@brief Parameters used when scanning. */
- ble_gap_scan_params_t const m_scan_params =
-{
-    .active   = 1,
-    .interval = SCAN_INTERVAL,
-    .window   = SCAN_WINDOW,
-    .timeout  = SCAN_TIMEOUT,
-};
-
-static uint8_t m_scan_buffer_data[BLE_GAP_SCAN_BUFFER_MIN]; /**< buffer where advertising reports will be stored by the SoftDevice. */
-
-/**@brief Pointer to the buffer where advertising reports will be stored by the SoftDevice. */
-static ble_data_t m_scan_buffer =
-{
-    m_scan_buffer_data,
-    BLE_GAP_SCAN_BUFFER_MIN
-};
+static bool     m_memory_access_in_progress = false;                    /**< Flag to keep track of the ongoing operations on persistent memory. */
+static bool     m_hrs_notif_enabled         = false;                    /**< Flag indicating that HRS notification has been enabled. */
 
 
 /**@brief Function for handling database discovery events.
  *
  * @details This function is a callback function to handle events from the database discovery module.
- *          Depending on the UUIDs that are discovered, this function will forward the events
+ *          Depending on the UUIDs that are discovered, this function forwards the events
  *          to their respective services.
  *
  * @param[in] p_event  Pointer to the database discovery event.
@@ -161,15 +128,7 @@ void scan_start(void)
         return;
     }
 
-    err_code = sd_ble_gap_scan_stop();
-
-    // It is okay to ignore this error since the scan is being stopped anyway.
-    if (err_code != NRF_ERROR_INVALID_STATE)
-    {
-        APP_ERROR_CHECK(err_code);
-    }
-
-    err_code = sd_ble_gap_scan_start(&m_scan_params, &m_scan_buffer);
+    err_code = nrf_ble_scan_start(&m_scan);
     APP_ERROR_CHECK(err_code);
 }
 
@@ -205,10 +164,7 @@ static void on_adv_report(ble_gap_evt_adv_report_t const * p_adv_report)
                                        BLE_GAP_AD_TYPE_SHORT_LOCAL_NAME);
         if (field_len == 0)
         {
-            // If we can't parse the data, then exit.
-            err_code = sd_ble_gap_scan_start(NULL, &m_scan_buffer);
-            APP_ERROR_CHECK(err_code);
-
+            // Exit if the data cannot be parsed.
             return;
         }
     }
@@ -222,18 +178,12 @@ static void on_adv_report(ble_gap_evt_adv_report_t const * p_adv_report)
     if (nfc_oob_pairing_tag_match(&p_adv_report->peer_addr))
     {
         // If the address is correct, stop scanning and initiate a connection with the peripheral device.
-        err_code = sd_ble_gap_scan_stop();
-        APP_ERROR_CHECK(err_code);
+        nrf_ble_scan_stop();
 
         err_code = sd_ble_gap_connect(&p_adv_report->peer_addr,
-                                      &m_scan_params,
-                                      &m_connection_param, 
+                                      &m_scan.scan_params,
+                                      &m_scan.conn_params,
                                       APP_BLE_CONN_CFG_TAG);
-        APP_ERROR_CHECK(err_code);
-    }
-    else
-    {
-        err_code = sd_ble_gap_scan_start(NULL, &m_scan_buffer);
         APP_ERROR_CHECK(err_code);
     }
 }
@@ -255,7 +205,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
         case BLE_GAP_EVT_CONNECTED:
             NRF_LOG_INFO("Connected.");
 
-            // Discover the peer's services.
+            // Discover the peer services.
             err_code = ble_db_discovery_start(&m_db_discovery,
                                               p_ble_evt->evt.gap_evt.conn_handle);
             APP_ERROR_CHECK(err_code);
@@ -264,12 +214,16 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             m_conn_handle  = p_ble_evt->evt.gap_evt.conn_handle;
             break;
 
-        // Upon disconnection, reset the connection handle of the peer which disconnected
+        // Upon disconnection, reset the connection handle of the peer that disconnected
         // and invalidate data taken from the NFC tag.
         case BLE_GAP_EVT_DISCONNECTED:
-            NRF_LOG_INFO("Disconnected.");
-            m_conn_handle  = BLE_CONN_HANDLE_INVALID;
-            m_is_connected = false;
+            NRF_LOG_INFO("Disconnected. conn_handle: 0x%x, reason: 0x%x",
+                         p_gap_evt->conn_handle,
+                         p_gap_evt->params.disconnected.reason);
+
+            m_conn_handle       = BLE_CONN_HANDLE_INVALID;
+            m_is_connected      = false;
+            m_hrs_notif_enabled = false;
             nfc_oob_pairing_tag_invalidate();
             break;
 
@@ -278,12 +232,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             break;
 
         case BLE_GAP_EVT_TIMEOUT:
-            if (p_gap_evt->params.timeout.src == BLE_GAP_TIMEOUT_SRC_SCAN)
-            {
-                NRF_LOG_DEBUG("Scan timed out.");
-                scan_start();
-            }
-            else if (p_gap_evt->params.timeout.src == BLE_GAP_TIMEOUT_SRC_CONN)
+            if (p_gap_evt->params.timeout.src == BLE_GAP_TIMEOUT_SRC_CONN)
             {
                 NRF_LOG_INFO("Connection Request timed out.");
             }
@@ -345,10 +294,6 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             if (p_ble_evt->evt.gap_evt.params.conn_sec_update.conn_sec.sec_mode.lv >= SECURITY_LEVEL_THR)
             {
                 NRF_LOG_INFO("Security level high enough to enable HRS notifications.");
-
-                // Enable notifications of Heart Rate Measurement.
-                err_code = ble_hrs_c_hrm_notif_enable(&m_hrs_c);
-                APP_ERROR_CHECK(err_code);
             }
             else
             {
@@ -408,16 +353,17 @@ static void hrs_c_evt_handler(ble_hrs_c_t * p_hrs_c, ble_hrs_c_evt_t * p_hrs_c_e
 
             // Initiate bonding.
             err_code = pm_conn_secure(p_hrs_c_evt->conn_handle, false);
-            if (err_code != NRF_ERROR_INVALID_STATE)
+            if (err_code != NRF_ERROR_BUSY)
             {
                 APP_ERROR_CHECK(err_code);
             }
 
-            NRF_LOG_DEBUG("Heart rate service discovered ");
+            NRF_LOG_DEBUG("Heart Rate Service discovered ");
             break;
 
         case BLE_HRS_C_EVT_HRM_NOTIFICATION:
             NRF_LOG_INFO("Heart Rate = %d", p_hrs_c_evt->params.hrm.hr_value);
+            m_hrs_notif_enabled = true;
             break;
 
         default:
@@ -443,8 +389,8 @@ static void bas_c_evt_handler(ble_bas_c_t * p_bas_c, ble_bas_c_evt_t * p_bas_c_e
                                                 &p_bas_c_evt->params.bas_db);
             APP_ERROR_CHECK(err_code);
 
-            // Batttery service discovered. Enable notification of Battery Level.
-            NRF_LOG_DEBUG("Battery Service discovered. Reading battery level.");
+            // Battery Service discovered. Enable notification of Battery Level.
+            NRF_LOG_DEBUG("Battery Service discovered. Reading Battery Level.");
 
             err_code = ble_bas_c_bl_read(p_bas_c);
             APP_ERROR_CHECK(err_code);
@@ -456,15 +402,38 @@ static void bas_c_evt_handler(ble_bas_c_t * p_bas_c, ble_bas_c_evt_t * p_bas_c_e
 
         case BLE_BAS_C_EVT_BATT_NOTIFICATION:
             NRF_LOG_DEBUG("Battery Level received %d %%", p_bas_c_evt->params.battery_level);
+            if (!m_hrs_notif_enabled)
+            {
+                // Enable notifications of Heart Rate Measurement.
+                err_code = ble_hrs_c_hrm_notif_enable(&m_hrs_c);
+                APP_ERROR_CHECK(err_code);
+            }
             break;
 
         case BLE_BAS_C_EVT_BATT_READ_RESP:
-            NRF_LOG_INFO("Battery Level Read as %d %%", p_bas_c_evt->params.battery_level);
+            NRF_LOG_INFO("Battery Level read as %d %%", p_bas_c_evt->params.battery_level);
             break;
 
         default:
             break;
     }
+}
+
+
+static void scan_evt_handler(scan_evt_t const * p_scan_evt)
+{
+    switch(p_scan_evt->scan_evt_id)
+    {
+        case NRF_BLE_SCAN_EVT_SCAN_TIMEOUT:
+            NRF_LOG_DEBUG("Scan timed out.");
+            scan_start();
+
+            break;
+
+        default:
+            break;
+    }
+
 }
 
 
@@ -515,6 +484,17 @@ static void gatt_init(void)
 }
 
 
+/**@brief Function for initializing scanning.
+ */
+static void scan_init(void)
+{
+    ret_code_t err_code;
+
+    err_code = nrf_ble_scan_init(&m_scan, NULL, scan_evt_handler);
+    APP_ERROR_CHECK(err_code);
+}
+
+
 void ble_stack_init(void)
 {
     ret_code_t err_code;
@@ -540,4 +520,5 @@ void ble_stack_init(void)
     db_discovery_init();
     hrs_c_init();
     bas_c_init();
+    scan_init();
 }

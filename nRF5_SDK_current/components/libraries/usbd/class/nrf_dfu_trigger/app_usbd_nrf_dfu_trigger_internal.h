@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2017 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #ifndef APP_USBD_NRF_DFU_TRIGGER_INTERNAL_H__
 #define APP_USBD_NRF_DFU_TRIGGER_INTERNAL_H__
@@ -53,7 +53,7 @@ extern "C" {
  */
 
 /**
- * @brief Forward declaration of Nordic DFU Trigger Class type
+ * @brief Forward declaration of Nordic DFU Trigger Class type.
  *
  */
 APP_USBD_CLASS_FORWARD(app_usbd_nrf_dfu_trigger);
@@ -68,10 +68,10 @@ enum app_usbd_nrf_dfu_trigger_user_event_e;
 /*lint -restore*/
 
 /**
- * @brief User event handler
+ * @brief User event handler.
  *
- * @param[in] p_inst    Class instance
- * @param[in] event     User event
+ * @param[in] p_inst    Class instance.
+ * @param[in] event     User event.
  *
  * */
 typedef void (*app_usbd_nrf_dfu_trigger_user_ev_handler_t)(
@@ -79,7 +79,7 @@ typedef void (*app_usbd_nrf_dfu_trigger_user_ev_handler_t)(
         enum app_usbd_nrf_dfu_trigger_user_event_e event);
 
 /**
- * @brief Nordic DFU Trigger part of class instance data
+ * @brief Nordic DFU Trigger part of class instance data.
  */
 typedef struct {
     size_t const    sem_ver_size;   //!< Semantic string size
@@ -94,7 +94,7 @@ typedef struct {
 } app_usbd_nrf_dfu_trigger_inst_t;
 
 /**
- * @brief Internal module state
+ * @brief Internal module state.
  *
  * @note For future compatibility with DFU class.
  */
@@ -104,7 +104,7 @@ typedef enum {
 } app_usbd_nrf_dfu_trigger_state_t;
 
 /**
- * @brief Nordic DFU Trigger context
+ * @brief Nordic DFU Trigger context.
  *
  * */
 typedef struct {
@@ -113,17 +113,17 @@ typedef struct {
 
 
 /**
- * @brief Nordic DFU Trigger configuration macro
+ * @brief Nordic DFU Trigger configuration macro.
  *
  * Used by @ref APP_USBD_NRF_DFU_TRIGGER_GLOBAL_DEF
  *
- * @param iface Interface number
+ * @param iface Interface number.
  * */
 #define APP_USBD_NRF_DFU_TRIGGER_CONFIG(iface) (iface)
 
 
 /**
- * @brief Specific class constant data for Nordic DFU Trigger
+ * @brief Specific class constant data for Nordic DFU Trigger.
  *
  * @ref app_usbd_nrf_dfu_trigger_inst_t
  */
@@ -131,11 +131,11 @@ typedef struct {
 
 
 /**
- * @brief Configures Nordic DFU Trigger instance
+ * @brief Configures Nordic DFU Trigger instance.
  *
- * @param user_event_handler    User event handler
- * @param p_nordic_dfu          Pointer to @ref app_usbd_nrf_dfu_trigger_nordic_info_t structure
- * @param sem_ver_str           Semantic version string
+ * @param user_event_handler    User event handler.
+ * @param p_nordic_dfu          Pointer to @ref app_usbd_nrf_dfu_trigger_nordic_info_t structure.
+ * @param sem_ver_str           Semantic version string.
  * @param timeout               Detach timeout in ms - left for compatibility with USB DFU spec.
  * @param size                  Transfer size in bytes - left for compatibility with USB DFU spec.
  * @param bcd                   USB DFU specification version.
@@ -157,7 +157,7 @@ typedef struct {
     }
 
 /**
- * @brief Specific class data for Nordic DFU Trigger
+ * @brief Specific class data for Nordic DFU Trigger.
  *
  * @ref app_usbd_nrf_dfu_trigger_ctx_t
  * */
@@ -165,12 +165,12 @@ typedef struct {
 
 
 /**
- * @brief Public Nordic DFU Trigger class interface
+ * @brief Public Nordic DFU Trigger class interface.
  */
 extern const app_usbd_class_methods_t app_usbd_nrf_dfu_trigger_class_methods;
 
 /**
- * @brief Global definition of Nordic DFU Trigger instance
+ * @brief Global definition of Nordic DFU Trigger instance.
  */
 #define APP_USBD_NRF_DFU_TRIGGER_GLOBAL_DEF_INTERNAL(instance_name,                                \
                                                      interface_number,                             \

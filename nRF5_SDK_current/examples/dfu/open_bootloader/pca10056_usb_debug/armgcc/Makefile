@@ -12,12 +12,12 @@ $(OUTPUT_DIRECTORY)/nrf52840_xxaa_debug.out: \
 SRC_FILES += \
   $(SDK_ROOT)/modules/nrfx/mdk/gcc_startup_nrf52840.S \
   $(SDK_ROOT)/components/libraries/bootloader/serial_dfu/nrf_dfu_serial_usb.c \
-  $(SDK_ROOT)/components/libraries/experimental_log/src/nrf_log_backend_rtt.c \
-  $(SDK_ROOT)/components/libraries/experimental_log/src/nrf_log_backend_serial.c \
-  $(SDK_ROOT)/components/libraries/experimental_log/src/nrf_log_backend_uart.c \
-  $(SDK_ROOT)/components/libraries/experimental_log/src/nrf_log_default_backends.c \
-  $(SDK_ROOT)/components/libraries/experimental_log/src/nrf_log_frontend.c \
-  $(SDK_ROOT)/components/libraries/experimental_log/src/nrf_log_str_formatter.c \
+  $(SDK_ROOT)/components/libraries/log/src/nrf_log_backend_rtt.c \
+  $(SDK_ROOT)/components/libraries/log/src/nrf_log_backend_serial.c \
+  $(SDK_ROOT)/components/libraries/log/src/nrf_log_backend_uart.c \
+  $(SDK_ROOT)/components/libraries/log/src/nrf_log_default_backends.c \
+  $(SDK_ROOT)/components/libraries/log/src/nrf_log_frontend.c \
+  $(SDK_ROOT)/components/libraries/log/src/nrf_log_str_formatter.c \
   $(SDK_ROOT)/components/boards/boards.c \
   $(SDK_ROOT)/modules/nrfx/mdk/system_nrf52840.c \
   $(SDK_ROOT)/components/libraries/crypto/backend/cc310_bl/cc310_bl_backend_ecc.c \
@@ -47,8 +47,9 @@ SRC_FILES += \
   $(SDK_ROOT)/external/fprintf/nrf_fprintf_format.c \
   $(SDK_ROOT)/components/libraries/fstorage/nrf_fstorage.c \
   $(SDK_ROOT)/components/libraries/fstorage/nrf_fstorage_nvmc.c \
-  $(SDK_ROOT)/components/libraries/experimental_memobj/nrf_memobj.c \
+  $(SDK_ROOT)/components/libraries/memobj/nrf_memobj.c \
   $(SDK_ROOT)/components/libraries/queue/nrf_queue.c \
+  $(SDK_ROOT)/components/libraries/ringbuf/nrf_ringbuf.c \
   $(SDK_ROOT)/components/libraries/sortlist/nrf_sortlist.c \
   $(SDK_ROOT)/components/libraries/strerror/nrf_strerror.c \
   $(SDK_ROOT)/components/libraries/slip/slip.c \
@@ -75,6 +76,13 @@ SRC_FILES += \
   $(SDK_ROOT)/external/segger_rtt/SEGGER_RTT.c \
   $(SDK_ROOT)/external/segger_rtt/SEGGER_RTT_Syscalls_GCC.c \
   $(SDK_ROOT)/external/segger_rtt/SEGGER_RTT_printf.c \
+  $(SDK_ROOT)/components/libraries/bootloader/nrf_bootloader.c \
+  $(SDK_ROOT)/components/libraries/bootloader/nrf_bootloader_app_start.c \
+  $(SDK_ROOT)/components/libraries/bootloader/nrf_bootloader_app_start_final.c \
+  $(SDK_ROOT)/components/libraries/bootloader/nrf_bootloader_dfu_timers.c \
+  $(SDK_ROOT)/components/libraries/bootloader/nrf_bootloader_fw_activation.c \
+  $(SDK_ROOT)/components/libraries/bootloader/nrf_bootloader_info.c \
+  $(SDK_ROOT)/components/libraries/bootloader/nrf_bootloader_wdt.c \
   $(SDK_ROOT)/external/nano-pb/pb_common.c \
   $(SDK_ROOT)/external/nano-pb/pb_decode.c \
   $(SDK_ROOT)/components/libraries/bootloader/dfu/dfu-cc.pb.c \
@@ -89,28 +97,30 @@ SRC_FILES += \
   $(SDK_ROOT)/components/libraries/bootloader/dfu/nrf_dfu_validation.c \
   $(SDK_ROOT)/components/libraries/bootloader/dfu/nrf_dfu_ver_validation.c \
   $(SDK_ROOT)/components/libraries/bootloader/serial_dfu/nrf_dfu_serial.c \
-  $(SDK_ROOT)/components/libraries/bootloader/nrf_bootloader.c \
-  $(SDK_ROOT)/components/libraries/bootloader/nrf_bootloader_app_start.c \
-  $(SDK_ROOT)/components/libraries/bootloader/nrf_bootloader_app_start_final.c \
-  $(SDK_ROOT)/components/libraries/bootloader/nrf_bootloader_dfu_timers.c \
-  $(SDK_ROOT)/components/libraries/bootloader/nrf_bootloader_fw_activation.c \
-  $(SDK_ROOT)/components/libraries/bootloader/nrf_bootloader_info.c \
-  $(SDK_ROOT)/components/libraries/bootloader/nrf_bootloader_wdt.c \
+  $(SDK_ROOT)/external/utf_converter/utf.c \
+  $(SDK_ROOT)/components/libraries/crypto/backend/oberon/oberon_backend_chacha_poly_aead.c \
+  $(SDK_ROOT)/components/libraries/crypto/backend/oberon/oberon_backend_ecc.c \
+  $(SDK_ROOT)/components/libraries/crypto/backend/oberon/oberon_backend_ecdh.c \
+  $(SDK_ROOT)/components/libraries/crypto/backend/oberon/oberon_backend_ecdsa.c \
+  $(SDK_ROOT)/components/libraries/crypto/backend/oberon/oberon_backend_eddsa.c \
+  $(SDK_ROOT)/components/libraries/crypto/backend/oberon/oberon_backend_hash.c \
+  $(SDK_ROOT)/components/libraries/crypto/backend/oberon/oberon_backend_hmac.c \
 
 # Include folders common to all targets
 INC_FOLDERS += \
-  $(PROJ_DIR)/config \
+  $(SDK_ROOT)/external/nrf_oberon/include \
   $(SDK_ROOT)/modules/nrfx/drivers/include \
   $(SDK_ROOT)/components/libraries/crypto/backend/micro_ecc \
-  $(SDK_ROOT)/modules/nrfx/hal \
+  $(SDK_ROOT)/components/libraries/memobj \
   $(SDK_ROOT)/components/libraries/crc32 \
   $(SDK_ROOT)/components/libraries/experimental_section_vars \
   $(SDK_ROOT)/components/libraries/mem_manager \
-  $(SDK_ROOT)/components/libraries/crypto/backend/nrf_sw \
+  $(SDK_ROOT)/components/libraries/fstorage \
   $(SDK_ROOT)/components/libraries/util \
   $(SDK_ROOT)/modules/nrfx \
   $(SDK_ROOT)/components/libraries/timer/experimental \
   $(SDK_ROOT)/components/libraries/timer \
+  $(SDK_ROOT)/components/libraries/log \
   $(SDK_ROOT)/components/libraries/crypto/backend/oberon \
   $(SDK_ROOT)/components/libraries/low_power_pwm \
   $(SDK_ROOT)/components/libraries/crypto/backend/cifra \
@@ -119,9 +129,9 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/libraries/crypto/backend/cc310_bl \
   $(SDK_ROOT)/components/drivers_nrf/nrf_soc_nosd \
   $(SDK_ROOT)/components/softdevice/mbr/nrf52840/headers \
+  $(SDK_ROOT)/components/libraries/log/src \
   $(SDK_ROOT)/components/libraries/bootloader/dfu \
   $(SDK_ROOT)/components/libraries/bootloader/serial_dfu \
-  $(SDK_ROOT)/components/libraries/usbd/config \
   $(SDK_ROOT)/external/nrf_cc310_bl/include \
   $(SDK_ROOT)/components/libraries/usbd/class/cdc \
   $(SDK_ROOT)/components/libraries/usbd \
@@ -131,6 +141,7 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/libraries/stack_info \
   $(SDK_ROOT)/components/libraries/crypto/backend/nrf_hw \
   $(SDK_ROOT)/components/libraries/led_softblink \
+  $(SDK_ROOT)/external/nrf_oberon \
   $(SDK_ROOT)/components/libraries/strerror \
   $(SDK_ROOT)/components/libraries/crypto/backend/mbedtls \
   $(SDK_ROOT)/components/boards \
@@ -141,26 +152,27 @@ INC_FOLDERS += \
   ../config \
   $(SDK_ROOT)/components/libraries/scheduler \
   $(SDK_ROOT)/components/libraries/slip \
-  $(SDK_ROOT)/components/libraries/experimental_log/src \
+  $(SDK_ROOT)/modules/nrfx/hal \
+  $(SDK_ROOT)/external/utf_converter \
   $(SDK_ROOT)/components/toolchain/cmsis/include \
   $(SDK_ROOT)/components/libraries/usbd/class/cdc/acm \
   $(SDK_ROOT)/components/libraries/balloc \
   $(SDK_ROOT)/components/libraries/atomic_fifo \
   $(PROJ_DIR) \
   $(SDK_ROOT)/components/libraries/sortlist \
-  $(SDK_ROOT)/components/libraries/fstorage \
+  $(SDK_ROOT)/components/libraries/crypto/backend/nrf_sw \
   $(SDK_ROOT)/modules/nrfx/mdk \
-  $(SDK_ROOT)/components/libraries/mutex \
   $(SDK_ROOT)/external/nrf_cc310/include \
   $(SDK_ROOT)/external/nano-pb \
   $(SDK_ROOT)/components/libraries/queue \
-  $(SDK_ROOT)/components/libraries/experimental_log \
-  $(SDK_ROOT)/components/libraries/experimental_memobj \
+  $(SDK_ROOT)/components/libraries/mutex \
   $(SDK_ROOT)/components/drivers_nrf/usbd \
+  $(SDK_ROOT)/components/libraries/ringbuf \
 
 # Libraries common to all targets
 LIB_FILES += \
-  $(SDK_ROOT)/external/nrf_cc310_bl/lib/libnrf_cc310_bl_0.9.9.a \
+  $(SDK_ROOT)/external/nrf_oberon/lib/nrf52/liboberon_2.0.5.a \
+  $(SDK_ROOT)/external/nrf_cc310_bl/lib/libnrf_cc310_bl_0.9.10.a \
 
 # Optimization flags
 OPT = -Os -g3
@@ -247,9 +259,9 @@ $(foreach target, $(TARGETS), $(call define_target, $(target)))
 .PHONY: flash flash_mbr erase
 
 # Flash the program
-flash: $(OUTPUT_DIRECTORY)/nrf52840_xxaa_debug.hex
-	@echo Flashing: $<
-	nrfjprog -f nrf52 --program $< --sectorerase
+flash: default
+	@echo Flashing: $(OUTPUT_DIRECTORY)/nrf52840_xxaa_debug.hex
+	nrfjprog -f nrf52 --program $(OUTPUT_DIRECTORY)/nrf52840_xxaa_debug.hex --sectorerase
 	nrfjprog -f nrf52 --reset
 
 # Flash softdevice

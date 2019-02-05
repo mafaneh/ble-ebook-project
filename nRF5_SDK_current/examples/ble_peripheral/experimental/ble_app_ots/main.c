@@ -1,30 +1,30 @@
 /**
  * Copyright (c) 2017 - 2018, Nordic Semiconductor ASA
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
  *    such product, must reproduce the above copyright notice, this list of
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
- * 
+ *
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
- * 
+ *
  * 5. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -35,7 +35,7 @@
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 
 /**
@@ -65,32 +65,31 @@
 #include "nrf_log_default_backends.h"
 
 
-#define DEVICE_NAME                          "Nordic_OTS"                               /**< Name of device. Will be included in the advertising data. */
+#define DEVICE_NAME                          "Nordic_OTS"                      /**< Name of device. Will be included in the advertising data. */
 
-#define APP_BLE_OBSERVER_PRIO                3                                          /**< Application's BLE observer priority. You shoulnd't need to modify this value. */
+#define APP_BLE_OBSERVER_PRIO                3                                 /**< Application's BLE observer priority. You shouldn't need to modify this value. */
 
-#define APP_ADV_INTERVAL                     40                                         /**< The advertising interval (in units of 0.625 ms. This value corresponds to 25 ms). */
-#define APP_ADV_DURATION                     18000                                      /**< The advertising duration (180 seconds) in units of 10 milliseconds. */
-#define MIN_CONN_INTERVAL                    MSEC_TO_UNITS(10, UNIT_1_25_MS)           /**< Minimum acceptable connection interval (0.5 seconds). */
-#define MAX_CONN_INTERVAL                    MSEC_TO_UNITS(1000, UNIT_1_25_MS)          /**< Maximum acceptable connection interval (1 second). */
-#define SLAVE_LATENCY                        0                                          /**< Slave latency. */
-#define CONN_SUP_TIMEOUT                     MSEC_TO_UNITS(4000, UNIT_10_MS)           /**< Connection supervisory timeout (4 seconds). */
+#define APP_ADV_INTERVAL                     40                                /**< The advertising interval (in units of 0.625 ms. This value corresponds to 25 ms). */
+#define APP_ADV_DURATION                     18000                             /**< The advertising duration (180 seconds) in units of 10 milliseconds. */
+#define MIN_CONN_INTERVAL                    MSEC_TO_UNITS(10, UNIT_1_25_MS)   /**< Minimum acceptable connection interval (0.5 seconds). */
+#define MAX_CONN_INTERVAL                    MSEC_TO_UNITS(1000, UNIT_1_25_MS) /**< Maximum acceptable connection interval (1 second). */
+#define SLAVE_LATENCY                        0                                 /**< Slave latency. */
+#define CONN_SUP_TIMEOUT                     MSEC_TO_UNITS(4000, UNIT_10_MS)   /**< Connection supervisory timeout (4 seconds). */
 
-#define FIRST_CONN_PARAMS_UPDATE_DELAY       APP_TIMER_TICKS(5000)                      /**< Time from initiating event (connect or start of notification) to first time sd_ble_gap_conn_param_update is called (5 seconds). */
-#define NEXT_CONN_PARAMS_UPDATE_DELAY        APP_TIMER_TICKS(5000)                      /**< Time between each call to sd_ble_gap_conn_param_update after the first call (30 seconds). */
-#define MAX_CONN_PARAMS_UPDATE_COUNT         3                                          /**< Number of attempts before giving up the connection parameter negotiation. */
+#define FIRST_CONN_PARAMS_UPDATE_DELAY       APP_TIMER_TICKS(5000)             /**< Time from initiating event (connect or start of notification) to first time sd_ble_gap_conn_param_update is called (5 seconds). */
+#define NEXT_CONN_PARAMS_UPDATE_DELAY        APP_TIMER_TICKS(5000)             /**< Time between each call to sd_ble_gap_conn_param_update after the first call (30 seconds). */
+#define MAX_CONN_PARAMS_UPDATE_COUNT         3                                 /**< Number of attempts before giving up the connection parameter negotiation. */
 
-#define DEAD_BEEF                            0xDEADBEEF                                 /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
+#define DEAD_BEEF                            0xDEADBEEF                        /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
 #define APP_BLE_CONN_CFG_TAG                 1
-#define MAX_ALLOCATED_OBJECT_SIZE            256
-#define L2CAP_RX_MPS                         60                                        /**< Size of L2CAP Rx MPS (must be at least BLE_L2CAP_MPS_MIN).*/
-#define L2CAP_TX_MPS                         40                                        /**< Size of L2CAP Tx MPS (must be at least BLE_L2CAP_MPS_MIN).*/
-#define L2CAP_RX_MTU                         30                                        /**< Rx L2CAP MTU size (must be at least BLE_L2CAP_MTU_MIN).*/
-
-
-BLE_ADVERTISING_DEF(m_advertising);         /**< Advertising module instance. */
-BLE_OTS_DEF(m_ots);                         /**< Object transfer service instance. */
-NRF_BLE_QWR_DEF(m_qwr);                     /**< Context for the Queued Write module.*/
+#define MAX_ALLOCATED_OBJECT_SIZE            1024
+#define L2CAP_RX_MPS                         60                                /**< Size of L2CAP Rx MPS (must be at least BLE_L2CAP_MPS_MIN).*/
+#define L2CAP_TX_MPS                         40                                /**< Size of L2CAP Tx MPS (must be at least BLE_L2CAP_MPS_MIN).*/
+#define L2CAP_RX_MTU                         30                                /**< Rx L2CAP MTU size (must be at least BLE_L2CAP_MTU_MIN).*/
+                                                                               
+BLE_ADVERTISING_DEF(m_advertising);                                            /**< Advertising module instance. */
+BLE_OTS_DEF(m_ots);                                                            /**< Object transfer service instance. */
+NRF_BLE_QWR_DEF(m_qwr);                                                        /**< Context for the Queued Write module.*/
 
 static uint16_t         m_conn_handle;
 static ble_ots_object_t m_ots_object;
@@ -117,7 +116,6 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
 {
     app_error_handler(DEAD_BEEF, line_num, p_file_name);
 }
-
 
 
 /**@brief Function for the GAP initialization.
@@ -271,6 +269,7 @@ static void services_init(void)
     ots_init.object_chars_init.name_read_access = SEC_OPEN;
     ots_init.object_chars_init.type_read_access = SEC_OPEN;
     ots_init.object_chars_init.size_read_access = SEC_OPEN;
+    ots_init.object_chars_init.properties_read_access = SEC_OPEN;
 
     ots_init.oacp_init.p_ots            = &m_ots;
     ots_init.oacp_init.l2cap_buffer_len = sizeof(m_ots_object);
@@ -307,8 +306,6 @@ static void on_conn_params_evt(ble_conn_params_evt_t * p_evt)
         APP_ERROR_CHECK(err_code);
     }
 }
-
-
 
 
 /**@brief Function for handling a Connection Parameters error.
@@ -401,7 +398,6 @@ static void advertising_init(void)
 static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
 {
     uint32_t err_code;
-
     switch (p_ble_evt->header.evt_id)
     {
         case BLE_GAP_EVT_CONNECTED:
@@ -414,7 +410,9 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             break;
 
         case BLE_GAP_EVT_DISCONNECTED:
-            NRF_LOG_INFO("Peer Disconnected.");
+            NRF_LOG_INFO("Disconnected. conn_handle: 0x%x, reason: 0x%x",
+                         p_ble_evt->evt.gap_evt.conn_handle,
+                         p_ble_evt->evt.gap_evt.params.disconnected.reason);
             m_conn_handle = BLE_CONN_HANDLE_INVALID;
             break;
 
@@ -593,7 +591,7 @@ int main(void)
     conn_params_init();
 
     // Start execution.
-    NRF_LOG_INFO("Object transfer service started.");
+    NRF_LOG_INFO("Object Transfer server example started.");
     advertising_start();
 
     // Enter main loop.
