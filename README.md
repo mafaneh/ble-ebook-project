@@ -5,12 +5,13 @@ This is the companion repository for the e-book: **"Bluetooth 5 &amp; Bluetooth 
 In this repository, you will find a few different folders:
 - **Ellisys sniffer captures**: Capture files that the reader can view in the Ellisys Analyzer Software and analyze to get a better understanding of Bluetooth Low Energy and Bluetooth 5.
 - **Gateway**: Source code for the "Gateway" device, which is part of the book's Main Project (Home Automation) exercise.
-- **HelloWorld with Security**: A simple BLE "Hello World" example with added Security (LE Secure Connections, MITM protection, Numeric Comparison).
-- **HelloWorld**: A simple BLE "Hello World" example.
-- **Main Project SES files**: Main Project Segger Embedded Studio (SES) Solution and Project files.
-- **Remote Control**: Source code for the "Remote Control" device, which is part of the book's Main Project (Home Automation) exercise.
+- **HelloWorld with Security**: A simple BLE "Hello World" example with added Security (LE Secure Connections, MITM protection, Numeric Comparison) (for the nRF52840 chipset).
+- **HelloWorld**: A simple BLE "Hello World" example (for the nRF52840 chipset).
+- **HelloWorld nRF52832**: A simple "Hello World" example implemented for the nRF52832 chipset. 
+- **Main Project SES files**: Main Project Segger Embedded Studio (SES) Solution and Project files. (for the nRF52840 chipset)
+- **Remote Control**: Source code for the "Remote Control" device, which is part of the book's Main Project (Home Automation) exercise. (for the nRF52840 chipset)
 - **Video Tutorials PDFs**: PDFs for the Video Tutorials.
-- **nRF5_SDK_14.2.0_17b948a**: nRF5 SDK snapshot (version 14.2.0).
+- **nRF5_SDK_current**: nRF5 SDK snapshot (version 15.2.0).
 
 ## The "Bluetooth 5 and Bluetooth Low Energy: A Developer's Guide" e-book
 **The FIRST and ONLY practical Bluetooth Low Energy developer guide!**
@@ -31,7 +32,7 @@ The book covers the following topics:
 - Complete source code for building the Main Project for the book
 - **12 Video tutorials including: using the nRF Sniffer, the Ellisys Bluetooth Tracker, the Nordic Power Profiler Kit, and others.**
 
-To get FREE sample chapters or purchase the book, visit this site: https://store.novelbits.io/
+To get a FREE sample chapter or purchase the book, visit this site: https://www.novelbits.io/bluetooth-5-developers-e-book/
 
 ## IMPORTANT NOTE: Licenses
 The source code in this repository includes mixed/multiple Licenses:
