@@ -4,12 +4,12 @@ This is the companion repository for the e-book: **"Bluetooth 5 &amp; Bluetooth 
 
 In this repository, you will find a few different folders:
 - **Ellisys sniffer captures**: Capture files that the reader can view in the Ellisys Analyzer Software and analyze to get a better understanding of Bluetooth Low Energy and Bluetooth 5.
-- **Gateway**: Source code for the "Gateway" device, which is part of the book's Main Project (Home Automation) exercise. (for the nRF52840 chipset)
+- **Gateway**: Source code for the "Gateway" device, which is part of the book's Main Project (Home Automation) exercise (for the nRF52840 chipset).
 - **HelloWorld with Security**: A simple BLE "Hello World" example with added Security (LE Secure Connections, MITM protection, Numeric Comparison) (for the nRF52840 chipset).
 - **HelloWorld**: A simple BLE "Hello World" example (for the nRF52840 chipset).
 - **HelloWorld nRF52832**: A simple "Hello World" example implemented for the nRF52832 chipset. 
 - **Main Project SES files**: Main Project Segger Embedded Studio (SES) Solution and Project files. (for the nRF52840 chipset)
-- **Remote Control**: Source code for the "Remote Control" device, which is part of the book's Main Project (Home Automation) exercise. (for the nRF52840 chipset)
+- **Remote Control**: Source code for the "Remote Control" device, which is part of the book's Main Project (Home Automation) exercise (for the nRF52840 chipset).
 - **Video Tutorials PDFs**: PDFs for the Video Tutorials (video tutorials included only with the **Accelerator** and **Ultimate** bundles).
 - **nRF5_SDK_current**: nRF5 SDK snapshot (version 15.2.0).
 
