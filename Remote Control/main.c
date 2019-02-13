@@ -39,13 +39,17 @@
  */
 
 
-
 #include "main.h"
 
 /**< Structure used to identify the battery service. */
 BLE_BAS_DEF(m_bas);
 
-ble_button_service_t button_service;
+// Define the Button Service
+BLE_BUTTON_SERVICE_DEF(button_service);
+
+// Button ON and OFF Notifications
+bool m_button_off_notification_enabled = false;
+bool m_button_on_notification_enabled  = false;
 
 #define NUM_OF_BUTTONS 2
 
@@ -152,6 +156,35 @@ static void gatt_init(void)
     APP_ERROR_CHECK(err_code);
 }
 
+// Button Service Event Handler
+static void on_button_service_evt(ble_button_service_t * p_button_service, ble_button_evt_t * p_evt)
+{
+    ret_code_t err_code;
+
+    switch (p_evt->evt_type)
+    {
+        case BLE_BUTTON_OFF_EVT_NOTIFICATION_ENABLED:
+          m_button_off_notification_enabled = true;
+          NRF_LOG_INFO("Button OFF notification enabled");
+          break;
+
+        case BLE_BUTTON_OFF_EVT_NOTIFICATION_DISABLED:
+          m_button_off_notification_enabled = false;
+          NRF_LOG_INFO("Button OFF notification disabled");
+          break;
+
+        case BLE_BUTTON_ON_EVT_NOTIFICATION_ENABLED:
+          m_button_on_notification_enabled = true;
+          NRF_LOG_INFO("Button ON notification enabled");
+          break;
+
+        case BLE_BUTTON_ON_EVT_NOTIFICATION_DISABLED:
+          m_button_on_notification_enabled = false;
+          NRF_LOG_INFO("Button ON notification disabled");
+          break;
+    }
+}
+
 /**@brief Function for initializing services that will be used by the application.
  */
 static void services_init(void)
@@ -160,7 +193,7 @@ static void services_init(void)
     ble_bas_init_t bas_init;
 
     // 1. Initialize the Button service
-    err_code = ble_button_service_init(&button_service);
+    err_code = ble_button_service_init(&button_service, on_button_service_evt);
     APP_ERROR_CHECK(err_code);
 
     // 2. Initialize Battery Service.
@@ -324,13 +357,15 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
 {
     ret_code_t err_code = NRF_SUCCESS;
 
-    ble_button_service_on_ble_evt(&button_service, p_ble_evt);
+    ble_gap_evt_t const * p_gap_evt = &p_ble_evt->evt.gap_evt;
 
     switch (p_ble_evt->header.evt_id)
     {
         case BLE_GAP_EVT_DISCONNECTED:
             NRF_LOG_INFO("Disconnected.");
             m_conn_handle = BLE_CONN_HANDLE_INVALID;
+            m_button_off_notification_enabled = false;
+            m_button_on_notification_enabled = false;
             break;
 
         case BLE_GAP_EVT_CONNECTED:
@@ -338,6 +373,8 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             err_code = bsp_indication_set(BSP_INDICATE_CONNECTED);
             APP_ERROR_CHECK(err_code);
             m_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
+            m_button_off_notification_enabled = false;
+            m_button_on_notification_enabled = false;
             break;
 
         case BLE_GATTC_EVT_TIMEOUT:
@@ -356,11 +393,71 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             APP_ERROR_CHECK(err_code);
             break;
 
-        case BLE_GATTS_EVT_SYS_ATTR_MISSING:
-            // No system attributes have been stored.
-            err_code = sd_ble_gatts_sys_attr_set(m_conn_handle, NULL, 0, 0);
+        case BLE_GAP_EVT_CONN_PARAM_UPDATE:
+        {
+            NRF_LOG_INFO("Connection interval updated: 0x%x, 0x%x.",
+                p_gap_evt->params.conn_param_update.conn_params.min_conn_interval,
+                p_gap_evt->params.conn_param_update.conn_params.max_conn_interval);
+        } break;
+
+        case BLE_GAP_EVT_CONN_PARAM_UPDATE_REQUEST:
+        {
+           // Accept parameters requested by the peer.
+           ble_gap_conn_params_t params;
+           params = p_gap_evt->params.conn_param_update_request.conn_params;
+           err_code = sd_ble_gap_conn_param_update(p_gap_evt->conn_handle, &params);
+           APP_ERROR_CHECK(err_code);
+
+           NRF_LOG_INFO("Connection interval updated (upon request): 0x%x, 0x%x.",
+               p_gap_evt->params.conn_param_update_request.conn_params.min_conn_interval,
+               p_gap_evt->params.conn_param_update_request.conn_params.max_conn_interval);
+        } break;
+
+        case BLE_GAP_EVT_DATA_LENGTH_UPDATE_REQUEST:
+        {
+            ble_gap_data_length_params_t dl_params;
+
+            // Clearing the struct will effectively set members to @ref BLE_GAP_DATA_LENGTH_AUTO.
+            memset(&dl_params, 0, sizeof(ble_gap_data_length_params_t));
+            err_code = sd_ble_gap_data_length_update(p_ble_evt->evt.gap_evt.conn_handle, &dl_params, NULL);
             APP_ERROR_CHECK(err_code);
-            break;
+        } break;
+
+        case BLE_GATTS_EVT_SYS_ATTR_MISSING:
+        {
+           NRF_LOG_DEBUG("BLE_GATTS_EVT_SYS_ATTR_MISSING");
+           err_code = sd_ble_gatts_sys_attr_set(p_gap_evt->conn_handle, NULL, 0, 0);
+           APP_ERROR_CHECK(err_code);
+        } break;
+
+        case BLE_GAP_EVT_PHY_UPDATE:
+        {
+            ble_gap_evt_phy_update_t const * p_phy_evt = &p_ble_evt->evt.gap_evt.params.phy_update;
+
+            if (p_phy_evt->status == BLE_HCI_STATUS_CODE_LMP_ERROR_TRANSACTION_COLLISION)
+            {
+                // Ignore LL collisions.
+                NRF_LOG_DEBUG("LL transaction collision during PHY update.");
+                break;
+            }
+
+            ble_gap_phys_t phys = { 0 };
+            phys.tx_phys = p_phy_evt->tx_phy;
+            phys.rx_phys = p_phy_evt->rx_phy;
+
+        } break;
+
+        case BLE_GAP_EVT_PHY_UPDATE_REQUEST:
+        {
+            NRF_LOG_DEBUG("PHY update request.");
+            ble_gap_phys_t const phys =
+            {
+                .rx_phys = BLE_GAP_PHY_AUTO,
+                .tx_phys = BLE_GAP_PHY_AUTO,
+            };
+            err_code = sd_ble_gap_phy_update(p_ble_evt->evt.gap_evt.conn_handle, &phys);
+            APP_ERROR_CHECK(err_code);
+        } break;
 
         default:
             // No implementation needed.
@@ -375,9 +472,12 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_action)
     switch (pin_no)
     {
         case BUTTON_1:
+            NRF_LOG_INFO("Button 1 %s\r\n", button_action == 1 ? "pressed":"released");
+            button_characteristic_update(&button_service, BUTTON_1, &button_action, m_button_off_notification_enabled);
+            break;
         case BUTTON_2:
-            NRF_LOG_INFO("Button %s %s\r\n", pin_no == BUTTON_1? "1":"2", button_action == 1 ? "pressed":"released");
-            button_characteristic_update(&button_service, pin_no, &button_action);
+            NRF_LOG_INFO("Button 2 %s\r\n", button_action == 1 ? "pressed":"released");
+            button_characteristic_update(&button_service, BUTTON_2, &button_action, m_button_off_notification_enabled);
             break;
 
         default:

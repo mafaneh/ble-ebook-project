@@ -23,6 +23,20 @@
 #include "ble.h"
 #include "ble_srv_common.h"
 
+/**@brief Macro for defining a ble_button_service_t instance.
+ *
+ * @param   _name  Name of the instance.
+ * @hideinitializer
+ */
+#define BLE_BUTTON_SERVICE_OBSERVER_PRIO 2
+
+#define BLE_BUTTON_SERVICE_DEF(_name)                          \
+    static ble_button_service_t _name;                         \
+    NRF_SDH_BLE_OBSERVER(_name ## _obs,                        \
+                         BLE_BUTTON_SERVICE_OBSERVER_PRIO,     \
+                         ble_button_service_on_ble_evt,        \
+                         &_name)
+
 // Button service:                     E54B0001-67F5-479E-8711-B3B99198CE6C
 //   ON Button press characteristic:   E54B0002-67F5-479E-8711-B3B99198CE6C
 //   OFF Button press characteristic:  E54B0003-67F5-479E-8711-B3B99198CE6C
@@ -42,21 +56,24 @@
 // Forward declaration of the custom_service_t type.
 typedef struct ble_button_service_s ble_button_service_t;
 
-
 /**@brief Button Service event type. */
 typedef enum
 {
-    BLE_BUTTON_ON_PRESS_EVT_NOTIFICATION_ENABLED,    /**< Button ON press value notification enabled event. */
-    BLE_BUTTON_ON_PRESS_EVT_NOTIFICATION_DISABLED,   /**< Button ON press value notification disabled event. */
-    BLE_BUTTON_OFF_PRESS_EVT_NOTIFICATION_ENABLED,   /**< Button OFF press value notification enabled event. */
-    BLE_BUTTON_OFF_PRESS_EVT_NOTIFICATION_DISABLED   /**< Button OFF press value notification disabled event. */
+    BLE_BUTTON_ON_EVT_NOTIFICATION_ENABLED,    /**< Button ON press value notification enabled event. */
+    BLE_BUTTON_ON_EVT_NOTIFICATION_DISABLED,   /**< Button ON press value notification disabled event. */
+    BLE_BUTTON_OFF_EVT_NOTIFICATION_ENABLED,   /**< Button OFF press value notification enabled event. */
+    BLE_BUTTON_OFF_EVT_NOTIFICATION_DISABLED   /**< Button OFF press value notification disabled event. */
 } ble_button_evt_type_t;
 
 /**@brief Button Service event. */
 typedef struct
 {
     ble_button_evt_type_t evt_type;        /**< Type of event. */
+    uint16_t              conn_handle;     /**< Connection handle. */
 } ble_button_evt_t;
+
+/**@brief Button Service event handler type. */
+typedef void (* ble_button_evt_handler_t) (ble_button_service_t * p_button_service, ble_button_evt_t * p_evt);
 
 /**@brief Button Service structure.
  *        This contains various status information
@@ -67,7 +84,7 @@ typedef struct ble_button_service_s
     uint16_t                         conn_handle;
     uint16_t                         service_handle;
     uint8_t                          uuid_type;
-//    ble_button_evt_handler_t  evt_handler;
+    ble_button_evt_handler_t         evt_handler;
     ble_gatts_char_handles_t         button_on_press_char_handles;
     ble_gatts_char_handles_t         button_off_press_char_handles;
 
@@ -81,7 +98,7 @@ typedef struct ble_button_service_s
  *
  * @return      NRF_SUCCESS on successful initialization of service, otherwise an error code.
  */
-uint32_t ble_button_service_init(ble_button_service_t * p_button_service);
+uint32_t ble_button_service_init(ble_button_service_t * p_button_service, ble_button_evt_handler_t evt_handler);
 
 /**@brief Function for handling the Application's BLE Stack events.
  *
@@ -91,8 +108,8 @@ uint32_t ble_button_service_init(ble_button_service_t * p_button_service);
  * @param[in]   p_button_service  Button Service structure.
  * @param[in]   p_ble_evt         Event received from the BLE stack.
  */
-void ble_button_service_on_ble_evt(ble_button_service_t * p_button_service, ble_evt_t const * p_ble_evt);
+void ble_button_service_on_ble_evt(ble_evt_t const * p_ble_evt, void * p_context);
 
-void button_characteristic_update(ble_button_service_t * p_button_service, uint8_t pin_no, uint8_t *button_action);
+void button_characteristic_update(ble_button_service_t * p_button_service, uint8_t pin_no, uint8_t *button_action, bool button_notifications_enabled);
 
 #endif /* BUTTON_SERVICE_H */
