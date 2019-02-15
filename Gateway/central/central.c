@@ -27,7 +27,7 @@
 #define NRF_LOG_INFO_COLOR CENTRAL_CONFIG_INFO_COLOR
 #define NRF_LOG_DEBUG_COLOR CENTRAL_CONFIG_DEBUG_COLOR
 #else //CENTRAL_CONFIG_LOG_ENABLED
-#define NRF_LOG_LEVEL 3
+#define NRF_LOG_LEVEL 4
 #endif //CENTRAL_CONFIG_LOG_ENABLED
 #include "nrf_log.h"
 NRF_LOG_MODULE_REGISTER();
@@ -210,99 +210,6 @@ static void bas_c_thingy_evt_handler(ble_bas_c_t * p_bas_c, ble_bas_c_evt_t * p_
             NRF_LOG_DEBUG("Battery Level of Thingy Read as %d %%", p_bas_c_evt->params.battery_level);
             m_thingy_battery_level = p_bas_c_evt->params.battery_level;
             send_garage_sensor_battery_level_to_client(m_thingy_battery_level);
-            break;
-
-        default:
-            break;
-    }
-}
-
-/**@brief Function for handling Battery Level Collector events.
- *
- * @param[in] p_bas_c       Pointer to Battery Service Client structure.
- * @param[in] p_bas_c_evt   Pointer to event structure.
- */
-static void bas_c_evt_handler(ble_bas_c_t * p_bas_c, ble_bas_c_evt_t * p_bas_c_evt)
-{
-    ret_code_t err_code;
-
-    NRF_LOG_INFO("Battery Service Client event handler");
-
-    switch (p_bas_c_evt->evt_type)
-    {
-        case BLE_BAS_C_EVT_DISCOVERY_COMPLETE:
-            err_code = ble_bas_c_handles_assign(p_bas_c,
-                                                p_bas_c_evt->conn_handle,
-                                                &p_bas_c_evt->params.bas_db);
-            APP_ERROR_CHECK(err_code);
-
-            // Battery service discovered. Enable notification of Battery Level.
-            NRF_LOG_DEBUG("Battery Service discovered on peer with conn_handle %d. Reading battery level.", p_bas_c_evt->conn_handle);
-
-            if (p_bas_c_evt->conn_handle == m_conn_handle_thingy_client)
-            {
-                NRF_LOG_DEBUG("Discovered on Thingy");
-            }
-            else if (p_bas_c_evt->conn_handle == m_conn_handle_playbulb_client)
-            {
-                NRF_LOG_DEBUG("Discovered on Playbulb");
-            }
-            else if (p_bas_c_evt->conn_handle == m_conn_handle_remote_control_client)
-            {
-                NRF_LOG_DEBUG("Discovered on Remote Control");
-            }
-            else
-            {
-                NRF_LOG_INFO("Discovered on unknown peripheral");
-            }
-            err_code = ble_bas_c_bl_read(p_bas_c);
-            APP_ERROR_CHECK(err_code);
-
-            NRF_LOG_DEBUG("Enabling Battery Level Notification.");
-            err_code = ble_bas_c_bl_notif_enable(p_bas_c);
-            APP_ERROR_CHECK(err_code);
-            break;
-
-        case BLE_BAS_C_EVT_BATT_NOTIFICATION:
-            NRF_LOG_DEBUG("Battery Level received: %d %%", p_bas_c_evt->params.battery_level);
-            if (p_bas_c_evt->conn_handle == m_conn_handle_thingy_client)
-            {
-                m_thingy_battery_level = p_bas_c_evt->params.battery_level;
-                send_garage_sensor_battery_level_to_client(m_thingy_battery_level);
-            }
-            else if (p_bas_c_evt->conn_handle == m_conn_handle_playbulb_client)
-            {
-                m_playbulb_battery_level = p_bas_c_evt->params.battery_level;
-                send_playbulb_battery_level_to_client(m_playbulb_battery_level);
-            }
-            else if (p_bas_c_evt->conn_handle == m_conn_handle_remote_control_client)
-            {
-                m_remote_control_battery_level = p_bas_c_evt->params.battery_level;
-                send_remote_control_battery_level_to_client(m_remote_control_battery_level);
-            }
-            else
-            {
-                NRF_LOG_INFO("Unknown peripheral");
-            }
-            break;
-
-        case BLE_BAS_C_EVT_BATT_READ_RESP:
-            NRF_LOG_DEBUG("Battery Level Read as %d %%", p_bas_c_evt->params.battery_level);
-            if (p_bas_c_evt->conn_handle == m_conn_handle_thingy_client)
-            {
-                m_thingy_battery_level = p_bas_c_evt->params.battery_level;
-                send_garage_sensor_battery_level_to_client(m_thingy_battery_level);
-            }
-            else if (p_bas_c_evt->conn_handle == m_conn_handle_playbulb_client)
-            {
-                m_playbulb_battery_level = p_bas_c_evt->params.battery_level;
-                send_playbulb_battery_level_to_client(m_playbulb_battery_level);
-            }
-            else if (p_bas_c_evt->conn_handle == m_conn_handle_remote_control_client)
-            {
-                m_remote_control_battery_level = p_bas_c_evt->params.battery_level;
-                send_remote_control_battery_level_to_client(m_remote_control_battery_level);
-            }
             break;
 
         default:

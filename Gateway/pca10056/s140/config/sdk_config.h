@@ -7282,6 +7282,112 @@
 #define NRF_LOG_ALLOW_OVERFLOW 1
 #endif
 
+//==========================================================
+// <e> PERIPHERAL_CONFIG_LOG_ENABLED - Enables logging in the module.
+//==========================================================
+#ifndef PERIPHERAL_CONFIG_LOG_ENABLED
+#define PERIPHERAL_CONFIG_LOG_ENABLED 1
+#endif
+// <o> PERIPHERAL_CONFIG_LOG_LEVEL  - Default Severity level
+
+// <0=> Off
+// <1=> Error
+// <2=> Warning
+// <3=> Info
+// <4=> Debug
+
+#ifndef PERIPHERAL_CONFIG_LOG_LEVEL
+#define PERIPHERAL_CONFIG_LOG_LEVEL 3
+#endif
+
+// <o> PERIPHERAL_CONFIG_INFO_COLOR  - ANSI escape code prefix.
+
+// <0=> Default
+// <1=> Black
+// <2=> Red
+// <3=> Green
+// <4=> Yellow
+// <5=> Blue
+// <6=> Magenta
+// <7=> Cyan
+// <8=> White
+
+#ifndef PERIPHERAL_CONFIG_INFO_COLOR
+#define PERIPHERAL_CONFIG_INFO_COLOR 0
+#endif
+
+// <o> PERIPHERAL_CONFIG_DEBUG_COLOR  - ANSI escape code prefix.
+
+// <0=> Default
+// <1=> Black
+// <2=> Red
+// <3=> Green
+// <4=> Yellow
+// <5=> Blue
+// <6=> Magenta
+// <7=> Cyan
+// <8=> White
+
+#ifndef PERIPHERAL_CONFIG_DEBUG_COLOR
+#define PERIPHERAL_CONFIG_DEBUG_COLOR 0
+#endif
+
+// </e>
+
+//==========================================================
+// <e> CENTRAL_CONFIG_LOG_ENABLED - Enables logging in the module.
+//==========================================================
+#ifndef CENTRAL_CONFIG_LOG_ENABLED
+#define CENTRAL_CONFIG_LOG_ENABLED 1
+#endif
+// <o> CENTRAL_CONFIG_LOG_LEVEL  - Default Severity level
+
+// <0=> Off
+// <1=> Error
+// <2=> Warning
+// <3=> Info
+// <4=> Debug
+
+#ifndef CENTRAL_CONFIG_LOG_LEVEL
+#define CENTRAL_CONFIG_LOG_LEVEL 4
+#endif
+
+// <o> CENTRAL_CONFIG_INFO_COLOR  - ANSI escape code prefix.
+
+// <0=> Default
+// <1=> Black
+// <2=> Red
+// <3=> Green
+// <4=> Yellow
+// <5=> Blue
+// <6=> Magenta
+// <7=> Cyan
+// <8=> White
+
+#ifndef CENTRAL_CONFIG_INFO_COLOR
+#define CENTRAL_CONFIG_INFO_COLOR 0
+#endif
+
+// <o> CENTRAL_CONFIG_DEBUG_COLOR  - ANSI escape code prefix.
+
+// <0=> Default
+// <1=> Black
+// <2=> Red
+// <3=> Green
+// <4=> Yellow
+// <5=> Blue
+// <6=> Magenta
+// <7=> Cyan
+// <8=> White
+
+#ifndef CENTRAL_CONFIG_DEBUG_COLOR
+#define CENTRAL_CONFIG_DEBUG_COLOR 0
+#endif
+
+// </e>
+
+
+
 // <e> NRF_LOG_USES_TIMESTAMP - Enable timestamping
 
 // <i> Function for getting the timestamp is provided by the user
