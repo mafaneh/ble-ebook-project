@@ -470,7 +470,7 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_action)
     {
         case BUTTON_1:
             NRF_LOG_INFO("Button 1 %s\r\n", button_action == 1 ? "pressed":"released");
-            button_characteristic_update(&button_service, BUTTON_1, &button_action, m_button_off_notification_enabled);
+            button_characteristic_update(&button_service, BUTTON_1, &button_action, m_button_on_notification_enabled);
             break;
         case BUTTON_2:
             NRF_LOG_INFO("Button 2 %s\r\n", button_action == 1 ? "pressed":"released");
