@@ -47,8 +47,8 @@ BLE_BAS_DEF(m_bas);
 // Define the Button Service
 BLE_BUTTON_SERVICE_DEF(button_service);
 
-// Button ON and OFF Notifications
-bool m_button_off_notification_enabled = false;
+// Button ON and OFF Indications and Notifications
+bool m_button_off_indication_enabled = false;
 bool m_button_on_notification_enabled  = false;
 
 #define NUM_OF_BUTTONS 2
@@ -163,14 +163,14 @@ static void on_button_service_evt(ble_button_service_t * p_button_service, ble_b
 
     switch (p_evt->evt_type)
     {
-        case BLE_BUTTON_OFF_EVT_NOTIFICATION_ENABLED:
-          m_button_off_notification_enabled = true;
-          NRF_LOG_INFO("Button OFF notification enabled");
+        case BLE_BUTTON_OFF_EVT_INDICATION_ENABLED:
+          m_button_off_indication_enabled = true;
+          NRF_LOG_INFO("Button OFF indication enabled");
           break;
 
-        case BLE_BUTTON_OFF_EVT_NOTIFICATION_DISABLED:
-          m_button_off_notification_enabled = false;
-          NRF_LOG_INFO("Button OFF notification disabled");
+        case BLE_BUTTON_OFF_EVT_INDICATION_DISABLED:
+          m_button_off_indication_enabled = false;
+          NRF_LOG_INFO("Button OFF indication disabled");
           break;
 
         case BLE_BUTTON_ON_EVT_NOTIFICATION_ENABLED:
@@ -361,7 +361,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
         case BLE_GAP_EVT_DISCONNECTED:
             NRF_LOG_INFO("Disconnected.");
             m_conn_handle = BLE_CONN_HANDLE_INVALID;
-            m_button_off_notification_enabled = false;
+            m_button_off_indication_enabled = false;
             m_button_on_notification_enabled = false;
             break;
 
@@ -370,7 +370,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             err_code = bsp_indication_set(BSP_INDICATE_CONNECTED);
             APP_ERROR_CHECK(err_code);
             m_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
-            m_button_off_notification_enabled = false;
+            m_button_off_indication_enabled = false;
             m_button_on_notification_enabled = false;
             break;
 
@@ -389,6 +389,11 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
                                              BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
             APP_ERROR_CHECK(err_code);
             break;
+
+        case BLE_GATTS_EVT_HVC:
+        {
+            NRF_LOG_INFO("RX confirmation for message");
+        } break;
 
         case BLE_GAP_EVT_CONN_PARAM_UPDATE:
         {
@@ -474,7 +479,7 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_action)
             break;
         case BUTTON_2:
             NRF_LOG_INFO("Button 2 %s\r\n", button_action == 1 ? "pressed":"released");
-            button_characteristic_update(&button_service, BUTTON_2, &button_action, m_button_off_notification_enabled);
+            button_characteristic_update(&button_service, BUTTON_2, &button_action, m_button_off_indication_enabled);
             break;
 
         default:
@@ -633,7 +638,7 @@ int main(void)
 
     // Start execution.
     NRF_LOG_INFO("Novel Bits Remote Control started.");
-   
+
     application_timers_start();
     advertising_start();
 

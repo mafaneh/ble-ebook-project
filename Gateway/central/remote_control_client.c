@@ -27,6 +27,7 @@
 #define NRF_LOG_LEVEL 0
 #endif //CENTRAL_CONFIG_LOG_ENABLED
 #include "nrf_log.h"
+#include "app_error.h"
 
 // nRF specific includes
 #include "ble_db_discovery.h"
@@ -156,7 +157,8 @@ static void on_hvx(remote_control_client_t * p_remote_control_client, const ble_
     }
 
     // Check if this is an ON Button notification.
-    if (p_ble_evt->evt.gattc_evt.params.hvx.handle == p_remote_control_client->peer_remote_control_db.on_button_handle)
+    if ((p_ble_evt->evt.gattc_evt.params.hvx.handle == p_remote_control_client->peer_remote_control_db.on_button_handle) &&
+        (p_ble_evt->evt.gattc_evt.params.hvx.type   == BLE_GATT_HVX_NOTIFICATION))
     {
         remote_control_client_evt_t remote_control_client_evt;
 
@@ -167,9 +169,16 @@ static void on_hvx(remote_control_client_t * p_remote_control_client, const ble_
 
         p_remote_control_client->evt_handler(p_remote_control_client, &remote_control_client_evt);
     }
-    else if (p_ble_evt->evt.gattc_evt.params.hvx.handle == p_remote_control_client->peer_remote_control_db.off_button_handle)
+    else if ((p_ble_evt->evt.gattc_evt.params.hvx.handle == p_remote_control_client->peer_remote_control_db.off_button_handle) &&
+             (p_ble_evt->evt.gattc_evt.params.hvx.type   == BLE_GATT_HVX_INDICATION))
     {
+        ret_code_t err_code;
         remote_control_client_evt_t remote_control_client_evt;
+
+        // Confirm the indication first
+        err_code = sd_ble_gattc_hv_confirm(p_ble_evt->evt.gattc_evt.conn_handle,
+                                           p_ble_evt->evt.gattc_evt.params.hvx.handle);
+        APP_ERROR_CHECK(err_code);
 
         remote_control_client_evt.evt_type     = REMOTE_CONTROL_EVT_OFF_BUTTON_PRESS_NOTIFICATION;
         remote_control_client_evt.conn_handle  = p_remote_control_client->conn_handle;
@@ -327,9 +336,9 @@ void remote_control_client_on_ble_evt(ble_evt_t const * p_ble_evt, void * p_cont
     }
 }
 
-/**@brief Function for creating a message for writing to the CCCD.
+/**@brief Function for creating a message for writing to the CCCD to enable/disable notifications
  */
-static uint32_t cccd_configure(uint16_t conn_handle, uint16_t handle_cccd, bool enable)
+static uint32_t cccd_configure_notifications(uint16_t conn_handle, uint16_t handle_cccd, bool enable)
 {
     NRF_LOG_DEBUG("Configuring CCCD. CCCD Handle = %d, Connection Handle = %d",
         handle_cccd,conn_handle);
@@ -354,6 +363,32 @@ static uint32_t cccd_configure(uint16_t conn_handle, uint16_t handle_cccd, bool 
     return NRF_SUCCESS;
 }
 
+/**@brief Function for creating a message for writing to the CCCD to enable/disable indications
+ */
+static uint32_t cccd_configure_indications(uint16_t conn_handle, uint16_t handle_cccd, bool enable)
+{
+    NRF_LOG_DEBUG("Configuring CCCD. CCCD Handle = %d, Connection Handle = %d",
+        handle_cccd,conn_handle);
+
+    tx_message_t * p_msg;
+    uint16_t       cccd_val = enable ? BLE_GATT_HVX_INDICATION : 0;
+
+    p_msg              = &m_tx_buffer[m_tx_insert_index++];
+    m_tx_insert_index &= TX_BUFFER_MASK;
+
+    p_msg->req.write_req.gattc_params.handle   = handle_cccd;
+    p_msg->req.write_req.gattc_params.len      = WRITE_MESSAGE_LENGTH;
+    p_msg->req.write_req.gattc_params.p_value  = p_msg->req.write_req.gattc_value;
+    p_msg->req.write_req.gattc_params.offset   = 0;
+    p_msg->req.write_req.gattc_params.write_op = BLE_GATT_OP_WRITE_REQ;
+    p_msg->req.write_req.gattc_value[0]        = LSB_16(cccd_val);
+    p_msg->req.write_req.gattc_value[1]        = MSB_16(cccd_val);
+    p_msg->conn_handle                         = conn_handle;
+    p_msg->type                                = WRITE_REQ;
+
+    tx_buffer_process();
+    return NRF_SUCCESS;
+}
 
 uint32_t remote_control_client_on_button_notify_enable(remote_control_client_t * p_remote_control_client)
 {
@@ -361,20 +396,20 @@ uint32_t remote_control_client_on_button_notify_enable(remote_control_client_t *
 
     NRF_LOG_INFO("Enabling notifications for ON Button presses from Remote Control");
 
-    return cccd_configure(p_remote_control_client->conn_handle,
-                          p_remote_control_client->peer_remote_control_db.on_button_cccd_handle,
-                          true);
+    return cccd_configure_notifications(p_remote_control_client->conn_handle,
+                                        p_remote_control_client->peer_remote_control_db.on_button_cccd_handle,
+                                        true);
 }
 
-uint32_t remote_control_client_off_button_notify_enable(remote_control_client_t * p_remote_control_client)
+uint32_t remote_control_client_off_button_indicate_enable(remote_control_client_t * p_remote_control_client)
 {
     VERIFY_PARAM_NOT_NULL(p_remote_control_client);
 
-    NRF_LOG_INFO("Enabling notifications for OFF Button presses from Remote Control");
+    NRF_LOG_INFO("Enabling indications for OFF Button presses from Remote Control");
 
-    return cccd_configure(p_remote_control_client->conn_handle,
-                          p_remote_control_client->peer_remote_control_db.off_button_cccd_handle,
-                          true);
+    return cccd_configure_indications(p_remote_control_client->conn_handle,
+                                      p_remote_control_client->peer_remote_control_db.off_button_cccd_handle,
+                                      true);
 }
 
 uint32_t remote_control_client_handles_assign(remote_control_client_t * p_remote_control_client,

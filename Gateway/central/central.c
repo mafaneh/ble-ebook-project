@@ -420,7 +420,7 @@ static void remote_control_c_evt_handler(remote_control_client_t * p_remote_cont
                 err_code = remote_control_client_on_button_notify_enable(p_remote_control_c);
                 APP_ERROR_CHECK(err_code);
 
-                err_code = remote_control_client_off_button_notify_enable(p_remote_control_c);
+                err_code = remote_control_client_off_button_indicate_enable(p_remote_control_c);
                 APP_ERROR_CHECK(err_code);
             }
         } break; // REMOTE_CONTROL_CLIENT_EVT_DISCOVERY_COMPLETE

@@ -158,7 +158,7 @@ uint32_t remote_control_client_on_button_notify_enable(remote_control_client_t *
  *          Measurement.
  *
  * @details This function will enable to notification of the Humidity Measurement at the peer
- *          by writing to the CCCD of the Humidity Measurement Characteristic.
+ *          by writing to the CCCD of the Button Off Characteristic.
  *
  * @param   p_remote_control_client Pointer to the remote_control client structure.
  *
@@ -167,6 +167,20 @@ uint32_t remote_control_client_on_button_notify_enable(remote_control_client_t *
  *                      by the SoftDevice API @ref sd_ble_gattc_write.
  */
 uint32_t remote_control_client_off_button_notify_enable(remote_control_client_t * p_remote_control_client);
+
+/**@brief   Function for requesting the peer to start sending indications of Button
+ *          Off events.
+ *
+ * @details This function will enable indication of the Button Off events at the peer
+ *          by writing to the CCCD of the Button Off Characteristic.
+ *
+ * @param   p_remote_control_client Pointer to the remote_control client structure.
+ *
+ * @retval  NRF_SUCCESS If the SoftDevice has been requested to write to the CCCD of the peer.
+ *                      Otherwise, an error code. This function propagates the error code returned
+ *                      by the SoftDevice API @ref sd_ble_gattc_write.
+ */
+uint32_t remote_control_client_off_button_indicate_enable(remote_control_client_t * p_remote_control_client);
 
 /**@brief     Function for handling events from the database discovery module.
  *

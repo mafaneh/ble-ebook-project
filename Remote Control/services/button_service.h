@@ -61,8 +61,8 @@ typedef enum
 {
     BLE_BUTTON_ON_EVT_NOTIFICATION_ENABLED,    /**< Button ON press value notification enabled event. */
     BLE_BUTTON_ON_EVT_NOTIFICATION_DISABLED,   /**< Button ON press value notification disabled event. */
-    BLE_BUTTON_OFF_EVT_NOTIFICATION_ENABLED,   /**< Button OFF press value notification enabled event. */
-    BLE_BUTTON_OFF_EVT_NOTIFICATION_DISABLED   /**< Button OFF press value notification disabled event. */
+    BLE_BUTTON_OFF_EVT_INDICATION_ENABLED,   /**< Button OFF press value indication enabled event. */
+    BLE_BUTTON_OFF_EVT_INDICATION_DISABLED   /**< Button OFF press value indication disabled event. */
 } ble_button_evt_type_t;
 
 /**@brief Button Service event. */
@@ -110,6 +110,6 @@ uint32_t ble_button_service_init(ble_button_service_t * p_button_service, ble_bu
  */
 void ble_button_service_on_ble_evt(ble_evt_t const * p_ble_evt, void * p_context);
 
-void button_characteristic_update(ble_button_service_t * p_button_service, uint8_t pin_no, uint8_t *button_action, bool button_notifications_enabled);
+void button_characteristic_update(ble_button_service_t * p_button_service, uint8_t pin_no, uint8_t *button_action, bool button_notification_or_indication_enabled);
 
 #endif /* BUTTON_SERVICE_H */

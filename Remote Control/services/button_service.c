@@ -62,7 +62,7 @@ static void on_write(ble_button_service_t * p_button_service, ble_evt_t const * 
 
     NRF_LOG_INFO("Write event received");
 
-    // Handle the Button Off Notification enabled/disabled event
+    // Handle the Button Off Indication enabled/disabled event
     if (    (p_evt_write->handle == p_button_service->button_off_press_char_handles.cccd_handle)
         &&  (p_evt_write->len == 2))
     {
@@ -74,16 +74,17 @@ static void on_write(ble_button_service_t * p_button_service, ble_evt_t const * 
 
         ble_button_evt_t evt;
 
-        if (ble_srv_is_notification_enabled(p_evt_write->data))
+        if (ble_srv_is_indication_enabled(p_evt_write->data))
         {
-            NRF_LOG_INFO("Button Off Notification enabled");
-            evt.evt_type = BLE_BUTTON_OFF_EVT_NOTIFICATION_ENABLED;
+            NRF_LOG_INFO("Button Indication enabled");
+            evt.evt_type = BLE_BUTTON_OFF_EVT_INDICATION_ENABLED;
         }
         else
         {
-            NRF_LOG_INFO("Button Off Notification disabled");
-            evt.evt_type = BLE_BUTTON_OFF_EVT_NOTIFICATION_DISABLED;
+            NRF_LOG_INFO("Button Off Indication disabled");
+            evt.evt_type = BLE_BUTTON_OFF_EVT_INDICATION_DISABLED;
         }
+
         evt.conn_handle = p_ble_evt->evt.gatts_evt.conn_handle;
 
         // CCCD written, call application event handler.
@@ -307,7 +308,7 @@ void ble_button_service_on_ble_evt(ble_evt_t const * p_ble_evt, void * p_context
     }
 }
 
-void button_characteristic_update(ble_button_service_t * p_button_service, uint8_t pin_no, uint8_t *button_action, bool button_notifications_enabled)
+void button_characteristic_update(ble_button_service_t * p_button_service, uint8_t pin_no, uint8_t *button_action, bool button_notification_or_indication_enabled)
 {
     if (p_button_service->conn_handle != BLE_CONN_HANDLE_INVALID)
     {
@@ -336,8 +337,8 @@ void button_characteristic_update(ble_button_service_t * p_button_service, uint8
                                               &gatts_value);
         }
 
-        // Only send a Notification if the Client has subscribed
-        if (button_notifications_enabled)
+        // Only send a Notification or Indication if the Client has subscribed
+        if (button_notification_or_indication_enabled)
         {
             ble_gatts_hvx_params_t hvx_params;
             memset(&hvx_params, 0, sizeof(hvx_params));
@@ -345,12 +346,14 @@ void button_characteristic_update(ble_button_service_t * p_button_service, uint8
             if (pin_no == BUTTON_1)
             {
                 hvx_params.handle = p_button_service->button_on_press_char_handles.value_handle;
+                hvx_params.type   = BLE_GATT_HVX_NOTIFICATION;
             }
             else
             {
                 hvx_params.handle = p_button_service->button_off_press_char_handles.value_handle;
+                hvx_params.type   = BLE_GATT_HVX_INDICATION;
             }
-            hvx_params.type   = BLE_GATT_HVX_NOTIFICATION;
+
             hvx_params.offset = 0;
             hvx_params.p_len  = &len;
             hvx_params.p_data = (uint8_t*)button_action;
