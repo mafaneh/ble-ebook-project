@@ -91,7 +91,13 @@ static uint32_t button_1_press_char_add(ble_simple_service_t * p_simple_service)
 
     // Set permissions on the CCCD and Characteristic value
     BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cccd_md.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cccd_md.write_perm);
+
+    // Set Security to Mode 1 Level 2 (Encryption, No Authentication (no MITM protection))
+    // Refer to <nRF5_SDK>/components/softdevice/s140/headers/ble_gap.h for macros to set
+    // specific Security Modes and Levels
+    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&cccd_md.write_perm);
+
+
     BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&attr_md.write_perm);
     BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.read_perm);
 

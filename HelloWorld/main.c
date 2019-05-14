@@ -57,6 +57,7 @@
 #include "app_timer.h"
 #include "fds.h"
 #include "peer_manager.h"
+#include "peer_manager_handler.h"
 #include "bsp_btn_ble.h"
 #include "sensorsim.h"
 #include "ble_conn_state.h"
@@ -141,6 +142,53 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
     app_error_handler(DEAD_BEEF, line_num, p_file_name);
 }
 
+/**@brief Function for handling Peer Manager events.
+ *
+ * @param[in] p_evt  Peer Manager event.
+ */
+static void pm_evt_handler(pm_evt_t const * p_evt)
+{
+    pm_handler_on_pm_evt(p_evt);
+    pm_handler_disconnect_on_sec_failure(p_evt);
+    pm_handler_flash_clean(p_evt);
+
+    switch (p_evt->evt_id)
+    {
+        case PM_EVT_PEERS_DELETE_SUCCEEDED:
+            advertising_start();
+            break;
+
+        default:
+            break;
+    }
+}
+
+static void peer_manager_init()
+{
+    ble_gap_sec_params_t sec_param;
+    ret_code_t err_code;
+    err_code = pm_init();
+    APP_ERROR_CHECK(err_code);
+
+    memset(&sec_param, 0, sizeof(ble_gap_sec_params_t));
+    // Security parameters to be used for all security procedures.
+    sec_param.bond              = SEC_PARAM_BOND;
+    sec_param.mitm              = SEC_PARAM_MITM;
+    sec_param.lesc              = SEC_PARAM_LESC;
+    sec_param.keypress          = SEC_PARAM_KEYPRESS;
+    sec_param.io_caps           = SEC_PARAM_IO_CAPABILITIES;
+    sec_param.oob               = SEC_PARAM_OOB;
+    sec_param.min_key_size      = SEC_PARAM_MIN_KEY_SIZE;
+    sec_param.max_key_size      = SEC_PARAM_MAX_KEY_SIZE;
+    sec_param.kdist_own.enc     = 1;
+    sec_param.kdist_own.id      = 1;
+    sec_param.kdist_peer.enc    = 1;
+    sec_param.kdist_peer.id     = 1;
+    err_code = pm_sec_params_set(&sec_param);
+    APP_ERROR_CHECK(err_code);
+    err_code = pm_register(pm_evt_handler);
+    APP_ERROR_CHECK(err_code);
+}
 
 /**@brief Function for the GAP initialization.
  *
@@ -581,6 +629,7 @@ int main(void)
     advertising_init();
     services_init();
     conn_params_init();
+    peer_manager_init();
 
     // Start execution.
     NRF_LOG_INFO("Novel Bits Hello World application started.");
