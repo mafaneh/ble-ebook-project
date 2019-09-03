@@ -125,6 +125,9 @@ static const app_button_cfg_t app_buttons[NUM_OF_BUTTONS] =
     {BUTTON_1, false, BUTTON_PULL, button_event_handler},
 };
 
+// Define GPIO for External LED (Will be ON when connected and OFF when disconnected)
+#define CONNECT_LED         NRF_GPIO_PIN_MAP(1,10) // Connected to P1.10 on Dev Board
+
 /**@brief Callback function for asserts in the SoftDevice.
  *
  * @details This function will be called in case of an assert in the SoftDevice.
@@ -334,12 +337,16 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             NRF_LOG_INFO("Disconnected.");
             err_code = bsp_indication_set(BSP_INDICATE_IDLE);
             APP_ERROR_CHECK(err_code);
+            // Turn OFF LED (Active state is 0)
+            nrf_gpio_pin_write(CONNECT_LED, 1);
             break;
 
         case BLE_GAP_EVT_CONNECTED:
             NRF_LOG_INFO("Connected.");
             err_code = bsp_indication_set(BSP_INDICATE_CONNECTED);
             APP_ERROR_CHECK(err_code);
+            // Turn ON LED (Active state is 0)
+            nrf_gpio_pin_write(CONNECT_LED, 0);
             m_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
             break;
 
@@ -502,6 +509,10 @@ static void buttons_leds_init()
 
     err_code = app_button_enable();
     APP_ERROR_CHECK(err_code);
+
+    // Configure External LED 
+    nrf_gpio_cfg_output(CONNECT_LED);
+    nrf_gpio_pin_write(CONNECT_LED, 1);
 }
 
 

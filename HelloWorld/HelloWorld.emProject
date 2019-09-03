@@ -90,18 +90,16 @@
       <file file_name="../nRF5_SDK_current/components/libraries/bsp/bsp_nfc.c" />
     </folder>
     <folder Name="Application">
-      <file file_name="./main.c" />
       <file file_name="./sdk_config.h" />
       <file file_name="simple_service.c" />
       <file file_name="simple_service.h" />
-      <file file_name="../nRF_SDK_current/components/libraries/util/sdk_common.h" />
+      <file file_name="main.c" />
     </folder>
     <folder Name="nRF_Segger_RTT">
       <file file_name="../nRF5_SDK_current/external/segger_rtt/SEGGER_RTT.c" />
       <file file_name="../nRF5_SDK_current/external/segger_rtt/SEGGER_RTT_Syscalls_SES.c" />
       <file file_name="../nRF5_SDK_current/external/segger_rtt/SEGGER_RTT_printf.c" />
     </folder>
-
     <folder Name="nRF_BLE">
       <file file_name="../nRF5_SDK_current/components/ble/common/ble_advdata.c" />
       <file file_name="../nRF5_SDK_current/components/ble/ble_advertising/ble_advertising.c" />
