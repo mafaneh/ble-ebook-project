@@ -33,7 +33,7 @@ The book covers the following topics:
 - Complete source code for building the Main Project for the book
 - **11 Video tutorials including: using the nRF Sniffer, the Ellisys Bluetooth Tracker, the Nordic Power Profiler Kit, and others.**
 
-To get a FREE sample chapter or purchase the book, visit this site: https://www.novelbits.io/bluetooth-5-developers-e-book/
+To get a FREE sample chapter or purchase the book, visit this site: https://novelbits.io/bluetooth-5-developers-ebook
 
 ## IMPORTANT NOTE: Licenses
 The source code in this repository includes mixed/multiple Licenses:
